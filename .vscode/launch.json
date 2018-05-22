@@ -8,7 +8,7 @@
             "type": "node",
             "request": "launch",
             "name": "Programm starten",
-            "program": "${workspaceFolder}/music.js",
+            "program": "${workspaceFolder}/music-scanner.js",
             "outFiles": [
                 "${workspaceFolder}/**/*.js"
             ]

@@ -1,5 +1,11 @@
+import * as assertorig from 'assert';
+import * as Fiber from 'fibers';
+const level = require('level');
+const levelgraph = require('levelgraph');
 import * as path from 'path';
 
+/*
+import * as path from 'path';
 const level = require('level');
 import * as fs from 'fs';
 import * as Fiber from 'fibers';
@@ -7,7 +13,9 @@ import * as mm from 'music-metadata';
 import * as https from 'https';
 import * as sax from 'sax';
 import * as assertorig from 'assert';
-
+*/
+//import * as
+/*
 interface Linked {
     next: number;
     previous: number;
@@ -18,17 +26,6 @@ interface Directory {
         [name: string]: number;
     }
 }
-
-/*
-interface File {
-    isDirectory?: false;
-    duration?: number;
-}
-
-interface Directory {
-    isDirectory?: true;
-}
-*/
 
 interface FileSystemEntry extends Directory {
     readonly type: "fileSystemEntry";
@@ -138,7 +135,7 @@ const DELETED: DeletedRecord = {
 
 type Record = LoadedRecord | DeletedRecord;
 
-
+*/
 
 
 type Consumer<T> = (result: T) => void;
@@ -149,6 +146,7 @@ function waitFor<R>(asyncFunction: (consumer: Consumer<R>) => void): R {
     return Fiber.yield();
 }
 
+/*
 interface Pair<F, S> {
     readonly first: F,
     readonly second: S
@@ -163,6 +161,7 @@ function waitFor2<F, S>(asyncFunction: (consumer: Consumer2<F, S>) => void): Pai
     })));
 }
 
+*/
 function fail(): never {
     debugger;
     //assert.fail("failure");
@@ -218,10 +217,7 @@ function assertUndefined(actual: any): void {
     assertEquals(actual, undefined);
 }
 
-
-function taskKey(taskId: number): string {
-    return `task/${taskId}`;
-}
+/*
 
 function isUndefined(value: any): value is undefined {
     return value === undefined;
@@ -232,12 +228,12 @@ function assertDefined(value: any): void {
 }
 
 
-/*
+
 interface AddInfo {
     added: boolean,
     id: number
 }
-*/
+
 interface OpenTagEvent {
     readonly type: 'openTag';
     readonly tag: sax.Tag;
@@ -397,10 +393,45 @@ interface NamedProcessor {
 function expectObject<T>(checkers: NamedProcessor): (actual: T) => boolean {
     return (actual: any) => !processObject(actual, checkers);
 }
+*/
+
+interface GetResult {
+    err: any;
+    list: any;
+}
 
 Fiber(() => {
 
-    const db = level(path.join(__dirname, 'Musik'));
+    const db = levelgraph(level(path.join(__dirname, 'music-scanner')));
+    for (; ;) {
+        const getResult: GetResult = waitFor((consumer: Consumer<GetResult>) => db.get({ subject: 'ms:root', predicate: 'ms:current' }, (err: any, list: any) => consumer({ err: err, list: list })));
+        assertEquals(getResult.err, null);
+        const list = getResult.list;
+        switch (list.length) {
+            case 0:
+                console.log('initializing database');
+                const res = waitFor((consumer: Consumer<any>) => db.put([
+                    { subject: 'ms:root', predicate: 'ms:current', object: 'ms:root' },
+                    { subject: 'ms:root', predicate: 'ms:type', object: 'ms:root' },
+                    { subject: 'ms:root', predicate: 'ms:next', object: 'ms:root' },
+                ], consumer));
+                assertUndefined(res);
+                break;
+            case 1:
+                const statement = list[0];
+                assertEquals(statement.subject, 'ms:root');
+                assertEquals(statement.predicate, 'ms:current');
+                console.log(statement.object);
+                //assert (list[0])
+                fail();
+                break;
+            case 2:
+                fail();
+                break;
+        }
+    }
+
+    /*
     const records: Map<string, Record> = new Map();
 
     function setRecord(id: string, record: Record): void {
@@ -616,6 +647,7 @@ Fiber(() => {
     }
     */
 
+    /*
     let lastMBAccess: number | undefined = undefined;
 
     function getMusicBrainzResource(type: string, mbid: string, path: string): MBResource {
@@ -793,11 +825,6 @@ Fiber(() => {
                                             const fse = currentTask as FileSystemEntry;
                                             const existing = fse[name];
                                             if (existing === actual) {
-                                                /*
-                                                if (existing !== undefined) {
-                                                    console.log(`  ${name}: ${existing}`);
-                                                }
-                                                */
                                                 return false;
                                             }
                                             else {
@@ -901,52 +928,6 @@ Fiber(() => {
                         currentTask.isDirectory = isDirectory;
                         moveToNextTask();
                     }
-                    /*
-                    if (stats.isDirectory()) {
-                        processCurrentDirectory();
-                    }
-                    else {
-                        assert(stats.isFile());
-                        const name = (currentTask as FileSystemEntry).name;
-                        if (name === '.DS_Store') {
-                            console.log('  deleting');
-                            assertEquals(waitFor((consumer: Consumer<any>) => fs.unlink(p, consumer)), null);
-                            moveToNextTask();
-                        }
-                        else {
-                            if (path.extname(name) !== '.flac') {
-                                console.error(`  unknown entry ${name}`);
-                                done = true;
-                            }
-                            else {
-                                const promise: Promise<mm.IAudioMetadata> = mm.parseFile(p);
-                                const fiber = Fiber.current;
-                                promise.then((value: mm.IAudioMetadata) => fiber.run({ type: "metadata", metaData: value }), (err: any) => fiber.run({ type: "error", error: err }));
-                                const r = Fiber.yield();
-                                assertEquals(r.type, 'metadata');
-                                //console.log (r.metaData.common.musicbrainz_recordingid);
-                                const common = r.metaData.common;
-                                const mbid = common.musicbrainz_recordingid;
-                                assertDefined(mbid);
- 
-                                if (!adding(`recording/${mbid}`, {
-                                    mbid: mbid,
-                                    type: "recording",
-                                }, '  ', `recording ${mbid}`).added) {
-                                    assertDefined(common.acoustid_id);
-                                    //console.log(common.acoustid_id);
-                                    const acoustid = common.acoustid_id;
-                                    assert(adding(`acoustid/${acoustid}`, {
-                                        acoustid: common.acoustid_id,
-                                        type: "acoustid"
-                                    }, '  ', `acoustid ${acoustid}`).added);
-                                }
-                                moveToNextTask();
- 
-                            }
-                        }
-                    }
-                    */
                 }
                 break;
             case 'recording':
@@ -956,7 +937,6 @@ Fiber(() => {
                 const next = mbRes.next;
 
                 processStringTag(next, 'title', currentTask, 'title', '  ');
-                /*
                 const length = Number(processTextTag(next, 'length')) / 1000;
                 const seconds = String(length % 60);
                 currentTask.length = length;
@@ -987,7 +967,6 @@ Fiber(() => {
                     }, '  ', `release ${mbid}`);
                     assert(release.added);
                 }
-                */
                 moveToNextTask();
                 break;
             case 'artist':
@@ -1123,7 +1102,6 @@ Fiber(() => {
                     assertEquals((fetchNextEvent(nextEvent, 'closeTag') as CloseTagEvent).name, 'artists');
                     assertEquals((fetchNextEvent(nextEvent, 'closeTag') as CloseTagEvent).name, 'recording');
                     assertEquals((fetchNextEvent(nextEvent, 'closeTag') as CloseTagEvent).name, 'recordings');
-                    */
 
                     const score = Number(processTextTag(nextEvent, 'score'));
                     //console.log(`  score: ${score}`);
@@ -1132,7 +1110,6 @@ Fiber(() => {
                     //currentTask.score = score;
                     console.log(`  score: ${currentTask.score} -> ${score}`);
                     currentTask.score = score;
-                    /*
                     if (currentTask.score !== score) {
                  
                     }                  
@@ -1142,7 +1119,6 @@ Fiber(() => {
                     assertEquals((fetchNextEvent(nextEvent, 'closeTag') as CloseTagEvent).name, 'result');
                     assertEquals((fetchNextEvent(nextEvent, 'closeTag') as CloseTagEvent).name, 'results');
                     assertEquals((fetchNextEvent(nextEvent, 'closeTag') as CloseTagEvent).name, 'response');
-                    */
                     //fail();
                     moveToNextTask();
                 }
@@ -1157,4 +1133,5 @@ Fiber(() => {
                 fail();
         }
     }
+    */
 }).run();

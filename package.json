@@ -1,15 +1,16 @@
 {
-  "name": "music",
+  "name": "music-scanner",
   "version": "1.0.0",
   "description": "music scanner",
-  "main": "music.js",
+  "main": "music-scanner.js",
   "scripts": {
-    "start": "node music.js",
+    "start": "node music-scanner.js",
     "install": "node_modules/.bin/tsc"
   },
   "dependencies": {
     "fibers": "^2.0.2",
     "level": "^2.1.1",
+    "levelgraph": "^2.1.1",
     "music-metadata": "^0.9.13",
     "sax": "^1.2.4",
     "typescript": "^2.4.2"
