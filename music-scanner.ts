@@ -421,7 +421,7 @@ Fiber(() => {
                 const statement = list[0];
                 assertEquals(statement.subject, 'ms:root');
                 assertEquals(statement.predicate, 'ms:current');
-                console.log(statement.object);
+                assertEquals(statement.object, 'ms:root');
                 //assert (list[0])
                 fail();
                 break;
