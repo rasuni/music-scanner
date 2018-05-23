@@ -217,6 +217,14 @@ function assertUndefined(actual: any): void {
     assertEquals(actual, undefined);
 }
 
+function isUndefined(value: any): value is undefined {
+    return value === undefined;
+}
+
+function assertDefined(value: any): void {
+    failIf(isUndefined(value));
+}
+
 /*
 
 function isUndefined(value: any): value is undefined {
@@ -396,147 +404,299 @@ function expectObject<T>(checkers: NamedProcessor): (actual: T) => boolean {
 */
 
 interface GetResult {
-    err: any;
-    list: any;
+    readonly err: any;
+    readonly list: any;
 }
+
+interface Statement {
+    readonly subject: string;
+    readonly predicate: string;
+    readonly object: string;
+}
+
+interface StatementPattern {
+    readonly subject?: string;
+    readonly predicate?: string;
+    readonly object?: string;
+}
+
 
 Fiber(() => {
 
     const db = levelgraph(level(path.join(__dirname, 'music-scanner')));
-    for (; ;) {
-        const getResult: GetResult = waitFor((consumer: Consumer<GetResult>) => db.get({ subject: 'ms:root', predicate: 'ms:current' }, (err: any, list: any) => consumer({ err: err, list: list })));
+
+    function get(pattern: StatementPattern): Statement | undefined {
+        const getResult: GetResult = waitFor((consumer: Consumer<GetResult>) => db.get(pattern, (err: any, list: any) => consumer({ err: err, list: list })));
         assertEquals(getResult.err, null);
         const list = getResult.list;
-        switch (list.length) {
-            case 0:
-                console.log('initializing database');
-                const res = waitFor((consumer: Consumer<any>) => db.put([
-                    { subject: 'ms:root', predicate: 'ms:current', object: 'ms:root' },
-                    { subject: 'ms:root', predicate: 'ms:type', object: 'ms:root' },
-                    { subject: 'ms:root', predicate: 'ms:next', object: 'ms:root' },
-                ], consumer));
-                assertUndefined(res);
-                break;
-            case 1:
-                const statement = list[0];
-                assertEquals(statement.subject, 'ms:root');
-                assertEquals(statement.predicate, 'ms:current');
-                assertEquals(statement.object, 'ms:root');
-                //assert (list[0])
-                fail();
-                break;
-            case 2:
-                fail();
-                break;
+        const length = list.length;
+        if (length === 0) {
+            return undefined;
+        }
+        else {
+            assertEquals(length, 1);
+            return list[0];
         }
     }
 
+    function getObject(subject: string, predicate: string): string | undefined {
+        const statement = get({ subject: subject, predicate: predicate });
+        if (isUndefined(statement)) {
+            return undefined;
+        }
+        else {
+            assertEquals(statement.subject, subject);
+            assertEquals(statement.predicate, predicate);
+            return statement.object;
+        }
+    }
+
+    for (; ;) {
+        const currentTask = getObject('ms:root', 'ms:current');
+        if (isUndefined(currentTask)) {
+            console.log('initializing database');
+            const res = waitFor((consumer: Consumer<any>) => db.put([
+                { subject: 'ms:root', predicate: 'ms:current', object: 'ms:root' },
+                { subject: 'ms:root', predicate: 'ms:type', object: 'ms:root' },
+                { subject: 'ms:root', predicate: 'ms:next', object: 'ms:root' },
+            ], consumer));
+            assertUndefined(res);
+        }
+        else {
+
+            const type = getObject(currentTask, 'ms:type');
+            assertDefined(type);
+            assertEquals(type, 'ms:root');
+            /*
+            const getType: GetResult = waitFor((consumer: Consumer<GetResult>) => db.get({ subject: currentTask, predicate: 'ms:type' }, (err: any, list: any) => consumer({ err: err, list: list })));
+
+            assertEquals(getType.err, null);
+            assertEquals(getType.list, [{ subject: currentTask, predicate: 'ms:type', object: 'ms:root' }])
+            */
+            console.log('root');
+            assertUndefined(get({ subject: 'ms:MusikServer', predicate: 'ms:root', object: 'ms:root' }));
+
+
+            const prevStatement = get({ predicate: 'ms:next', object: currentTask }) as Statement;
+            assertDefined(prevStatement);
+            assertEquals(prevStatement.predicate, 'ms:next');
+            assertEquals(prevStatement.object, currentTask);
+            const prev = prevStatement.subject;
+            //assertEquals(prev.object, )
+
+            const next = getObject(currentTask, 'ms:next');
+            assertDefined(next);
+
+            fail();
+
+            // todo update in
+            console.log('  adding volume /Volumes/Musik')
+
+
+            const putRes = waitFor((consumer: Consumer<any>) => db.put([
+                { subject: 'ms:MusikServer', predicate: 'ms:root', object: 'ms:root' },
+                { subject: 'ms:MusikServer', predicate: 'ms:type', object: 'ms:volume' },
+                { subject: 'ms:MusikServer', predicate: 'ms:path', object: `l:s:${encodeURIComponent('/Volumes/Musik')}` },
+                { subject: 'ms:MusikServer', predicate: 'ms:next', object: currentTask },
+                { subject: prev, predicate: 'ms:next', object: 'ms:MusikServer' },
+                { subject: 'ms:root', predicate: 'ms:current', object: next }
+            ], consumer));
+            assertUndefined(putRes);
+
+
+            const delRes = waitFor((consumer: Consumer<any>) => db.del([
+                { subject: currentTask, predicate: 'ms:next', object: next },
+                { subject: 'ms:root', predicate: 'ms:current', object: currentTask }
+            ], consumer));
+            assertUndefined(delRes);
+
+        }
+    }
     /*
-    const records: Map<string, Record> = new Map();
+    const getResult: GetResult = waitFor((consumer: Consumer<GetResult>) => db.get({ subject: 'ms:root', predicate: 'ms:current' }, (err: any, list: any) => consumer({ err: err, list: list })));
+    assertEquals(getResult.err, null);
+    const list = getResult.list;
+    switch (list.length) {
+        case 0:
+            console.log('initializing database');
+            const res = waitFor((consumer: Consumer<any>) => db.put([
+                { subject: 'ms:root', predicate: 'ms:current', object: 'ms:root' },
+                { subject: 'ms:root', predicate: 'ms:type', object: 'ms:root' },
+                { subject: 'ms:root', predicate: 'ms:next', object: 'ms:root' },
+            ], consumer));
+            assertUndefined(res);
+            break;
+        case 1:
+            const statement = list[0];
+            assertEquals(statement.subject, 'ms:root');
+            assertEquals(statement.predicate, 'ms:current');
+            //assertEquals(statement.object, 'ms:root');
+            const currentTask = statement.object;
 
-    function setRecord(id: string, record: Record): void {
-        records.set(id, record);
+            const getType: GetResult = waitFor((consumer: Consumer<GetResult>) => db.get({ subject: currentTask, predicate: 'ms:type' }, (err: any, list: any) => consumer({ err: err, list: list })));
+
+            assertEquals(getType.err, null);
+            assertEquals(getType.list, [{ subject: currentTask, predicate: 'ms:type', object: 'ms:root' }])
+            console.log('root');
+            const getResult1: GetResult = waitFor((consumer: Consumer<GetResult>) => db.get({ subject: 'ms:MusikServer', predicate: 'ms:root', object: 'ms:root' }, (err: any, list: any) => consumer({ err: err, list: list })));
+            assertEquals(getResult1.err, null);
+            assertEquals(getResult1.list, []);
+
+
+            const getResult2: GetResult = waitFor((consumer: Consumer<GetResult>) => db.get({ predicate: 'ms:next', object: currentTask }, (err: any, list: any) => consumer({ err: err, list: list })));
+            assertEquals(getResult2.err, null);
+            const prevResults = getResult2.list
+            assertEquals(prevResults.length, 1);
+            const prevStatement = prevResults[0];
+            assertEquals(prevStatement.predicate, 'ms:next');
+            assertEquals(prevStatement.object, currentTask);
+            const prev = prevStatement.subject;
+            //assertEquals(prev.object, )
+
+            const getResult3: GetResult = waitFor((consumer: Consumer<GetResult>) => db.get({ subject: currentTask, predicate: 'ms:next' }, (err: any, list: any) => consumer({ err: err, list: list })));
+            assertEquals(getResult3.err, null);
+            const nextResults = getResult3.list
+            assertEquals(nextResults.length, 1);
+            const nextStatement = nextResults[0];
+            assertEquals(nextStatement.predicate, 'ms:next');
+            assertEquals(nextStatement.subject, currentTask);
+            const next = prevStatement.object;
+
+            fail();
+
+
+            db.put([
+                { subject: 'ms:MusikServer', predicate: 'ms:root', object: 'ms:root' },
+                { subject: 'ms:MusikServer', predicate: 'ms:type', object: 'ms:volume' },
+                { subject: 'ms:MusikServer', predicate: 'ms:path', object: `l:s:${encodeURIComponent('/Volumes/Musik')}` },
+                { subject: 'ms:MusikServer', predicate: 'ms:next', object: currentTask },
+                { subject: prev, predicate: 'ms:next', object: 'ms:MusikServer' },
+                { subject: 'ms:root', predicate: 'ms:current', object: next }
+            ]);
+            db.del([
+                { subject: currentTask, predicate: 'ms:next', object: next },
+                { subject: 'ms:root', predicate: 'ms:current', object: currentTask }
+            ])
+
+            //update next of prev
+            //update current
+
+
+            //assert (list[0])
+            fail();
+            break;
+        case 2:
+            fail();
+            break;
     }
+}
 
-    function update(id: string, content: any, loaded: string | undefined): void {
-        setRecord(id, {
-            type: "loaded",
-            currentContent: content,
-            loadedContent: loaded,
-        });
+/*
+const records: Map<string, Record> = new Map();
+
+function setRecord(id: string, record: Record): void {
+    records.set(id, record);
+}
+
+function update(id: string, content: any, loaded: string | undefined): void {
+    setRecord(id, {
+        type: "loaded",
+        currentContent: content,
+        loadedContent: loaded,
+    });
+}
+
+function put(id: string, value: any): void {
+    update(id, value, undefined);
+}
+
+function putTask(taskId: number, task: LinkedTask): void {
+    put(`task/${taskId}`, task);
+}
+
+function deleteRecord(id: string) {
+    setRecord(id, DELETED);
+}
+
+function get(id: string): any {
+    const record = records.get(id);
+    if (isUndefined(record)) {
+        const result = waitFor2((consumer: Consumer2<any, string>) => db.get(id, consumer));
+        const err = result.first;
+        if (err === null) {
+            const value = result.second;
+            const task = JSON.parse(value);
+            update(id, task, value);
+            return task;
+        }
+        else {
+            assertEquals(err.type, 'NotFoundError');
+            update(id, undefined, undefined);
+            return undefined;
+        }
     }
-
-    function put(id: string, value: any): void {
-        update(id, value, undefined);
+    else {
+        return record.type === "loaded" ? record.currentContent : undefined;
     }
+}
 
-    function putTask(taskId: number, task: LinkedTask): void {
-        put(`task/${taskId}`, task);
-    }
-
-    function deleteRecord(id: string) {
-        setRecord(id, DELETED);
-    }
-
-    function get(id: string): any {
-        const record = records.get(id);
-        if (isUndefined(record)) {
-            const result = waitFor2((consumer: Consumer2<any, string>) => db.get(id, consumer));
-            const err = result.first;
-            if (err === null) {
-                const value = result.second;
-                const task = JSON.parse(value);
-                update(id, task, value);
-                return task;
-            }
-            else {
-                assertEquals(err.type, 'NotFoundError');
-                update(id, undefined, undefined);
-                return undefined;
+function commit(): void {
+    //getCurrentTask(db);
+    let batch = db.batch();
+    records.forEach((record: Record, id: string) => {
+        if (record.type === "loaded") {
+            const json = JSON.stringify(record.currentContent);
+            if (json !== record.loadedContent) {
+                batch = batch.put(id, json);
             }
         }
         else {
-            return record.type === "loaded" ? record.currentContent : undefined;
+            batch = batch.del(id);
         }
-    }
+    });
+    assertUndefined(waitFor(consumer => batch.write(consumer)));
+    records.clear();
+}
 
-    function commit(): void {
-        //getCurrentTask(db);
-        let batch = db.batch();
-        records.forEach((record: Record, id: string) => {
-            if (record.type === "loaded") {
-                const json = JSON.stringify(record.currentContent);
-                if (json !== record.loadedContent) {
-                    batch = batch.put(id, json);
-                }
-            }
-            else {
-                batch = batch.del(id);
-            }
-        });
-        assertUndefined(waitFor(consumer => batch.write(consumer)));
-        records.clear();
-    }
+function getTask(taskId: number): LinkedTask {
+    const task = get(taskKey(taskId));
+    assertDefined(task);
+    return task as LinkedTask;
+}
 
-    function getTask(taskId: number): LinkedTask {
-        const task = get(taskKey(taskId));
-        assertDefined(task);
-        return task as LinkedTask;
-    }
+function setNext(previousTaskId: number, nextTaskId: number): void {
+    getTask(previousTaskId).next = nextTaskId;
+}
 
-    function setNext(previousTaskId: number, nextTaskId: number): void {
-        getTask(previousTaskId).next = nextTaskId;
+function getPath(taskId: number): string {
+    const task = getTask(taskId);
+    if (task.type === 'root') {
+        return '/Volumes/Musik';
     }
+    else {
+        assertEquals(task.type, 'fileSystemEntry');
+        const fse = task as FileSystemEntry;
+        return path.join(getPath(fse.directory), fse.name);
+    }
+}
 
-    function getPath(taskId: number): string {
-        const task = getTask(taskId);
-        if (task.type === 'root') {
-            return '/Volumes/Musik';
+/*
+function getRoot(): Root {
+    let root: LinkedTask = get('task/0');
+    if (isUndefined(root)) {
+        console.log("initializing database");
+        root = {
+            nextId: 1,
+            currentTask: 0,
+            next: 0,
+            previous: 0,
+            type: "root",
         }
-        else {
-            assertEquals(task.type, 'fileSystemEntry');
-            const fse = task as FileSystemEntry;
-            return path.join(getPath(fse.directory), fse.name);
-        }
+        putTask(0, root);
     }
-
-    /*
-    function getRoot(): Root {
-        let root: LinkedTask = get('task/0');
-        if (isUndefined(root)) {
-            console.log("initializing database");
-            root = {
-                nextId: 1,
-                currentTask: 0,
-                next: 0,
-                previous: 0,
-                type: "root",
-            }
-            putTask(0, root);
-        }
-        return root as Root;
-    }
-    */
+    return root as Root;
+}
+*/
 
     /*
     function getCurrentTaskId() {
@@ -611,7 +771,7 @@ Fiber(() => {
         const files: string[] = readDirResult.second;
         failIf(files.length === 0);
         const currentTask = getCurrentTask();
-
+ 
         const directory = currentTask as Directory;
         let entries = directory.entries;
         if (isUndefined(entries)) {
@@ -649,7 +809,7 @@ Fiber(() => {
 
     /*
     let lastMBAccess: number | undefined = undefined;
-
+ 
     function getMusicBrainzResource(type: string, mbid: string, path: string): MBResource {
         const now = Date.now();
         if (lastMBAccess !== undefined) {
@@ -673,13 +833,13 @@ Fiber(() => {
             next: nextEvent
         };
     }
-
+ 
     let done: boolean = false;
-
+ 
     function setDone(): void {
         done = true;
     }
-
+ 
     while (!done) {
         let linkedRoot: LinkedTask = get('task/0');
         if (isUndefined(linkedRoot)) {
@@ -694,15 +854,15 @@ Fiber(() => {
             putTask(0, linkedRoot);
         }
         const root = linkedRoot as Root;
-
+ 
         //const root = getRoot()
         const currentTaskId = root.currentTask;
-
-
+ 
+ 
         function getCurrentPath(): string {
             return getPath(currentTaskId);
         }
-
+ 
         function adding(name: string, task: DynamicTask): number {
             console.log(`  adding ${name}`);
             const nextId = root.nextId;
@@ -717,14 +877,14 @@ Fiber(() => {
             root.nextId = nextId + 1;
             return nextId;
         }
-
+ 
         function processCurrentDirectory(): void {
             const readDirResult = waitFor2((consumer: Consumer2<NodeJS.ErrnoException, string[]>) => fs.readdir(getCurrentPath(), consumer));
             assertEquals(readDirResult.first, null);
             const files: string[] = readDirResult.second;
             failIf(files.length === 0);
             //const currentTask = getCurrentTask();
-
+ 
             const directory = currentTask as Directory;
             let entries = directory.entries;
             if (isUndefined(entries)) {
@@ -745,19 +905,19 @@ Fiber(() => {
             };
             moveToNextTask();
         }
-
+ 
         const currentTask = getTask(currentTaskId);
         console.log(currentTask);
-
+ 
         function updateCurrentTask(): void {
             root.currentTask = currentTask.next;
         }
-
+ 
         function moveToNextTask(): void {
             updateCurrentTask();
             commit();
         }
-
+ 
         switch (currentTask.type) {
             case 'root':
                 console.log('processing root');
@@ -779,14 +939,14 @@ Fiber(() => {
                         const next = getTask(nextTaskId);
                         const previousTaskId = currentTask.previous;
                         next.previous = previousTaskId;
-
+ 
                         setNext(previousTaskId, nextTaskId);
                         root.currentTask = nextTaskId;
                         updateCurrentTask();
                         deleteRecord(taskKey(currentTaskId));
                         commit();
-
-
+ 
+ 
                     }
                 }
                 else {
@@ -799,12 +959,12 @@ Fiber(() => {
                         else {
                             assert(stats.isFile());
                             const name = currentTask.name;
-
+ 
                             function unlink(): void {
                                 console.log('  deleting');
                                 assertEquals(waitFor((consumer: Consumer<any>) => fs.unlink(p, consumer)), null);
                             }
-
+ 
                             if (name === '.DS_Store') {
                                 unlink();
                             }
@@ -816,10 +976,10 @@ Fiber(() => {
                                     const fiber = Fiber.current;
                                     promise.then((value: mm.IAudioMetadata) => fiber.run({ type: "metadata", metaData: value }), (err: any) => fiber.run({ type: "error", error: err }));
                                     const r = Fiber.yield();
-
+ 
                                     assertEquals(r.type, 'metadata');
                                     let metaData: mm.IAudioMetadata = r.metaData;
-
+ 
                                     function checkUpdate<T extends keyof FileSystemEntry>(name: T) {
                                         return (actual: FileSystemEntry[T]) => {
                                             const fse = currentTask as FileSystemEntry;
@@ -837,7 +997,7 @@ Fiber(() => {
                                                 }
                                                 return true;
                                             }
-
+ 
                                         }
                                     }
                                     failIf(processObject(metaData, {
@@ -935,7 +1095,7 @@ Fiber(() => {
                 const mbRes = getMusicBrainzResource('recording', currentTask.mbid, `/ws/2/recording/${currentTask.mbid}?inc=artists+releases`);
                 assertEquals(mbRes.attributes, {});
                 const next = mbRes.next;
-
+ 
                 processStringTag(next, 'title', currentTask, 'title', '  ');
                 const length = Number(processTextTag(next, 'length')) / 1000;
                 const seconds = String(length % 60);
@@ -974,7 +1134,7 @@ Fiber(() => {
                 assertUndefined(lastMBAccess);
                 lastMBAccess = now;
                 const nextEvent = getXml('musicbrainz.org', `/ws/2/artist/${currentTask.mbid}`);
-
+ 
                 function nextOpen(name: string, attributes: Attributes): void {
                     assertEquals(nextEvent(), {
                         type: 'openTag',
@@ -1102,10 +1262,10 @@ Fiber(() => {
                     assertEquals((fetchNextEvent(nextEvent, 'closeTag') as CloseTagEvent).name, 'artists');
                     assertEquals((fetchNextEvent(nextEvent, 'closeTag') as CloseTagEvent).name, 'recording');
                     assertEquals((fetchNextEvent(nextEvent, 'closeTag') as CloseTagEvent).name, 'recordings');
-
+ 
                     const score = Number(processTextTag(nextEvent, 'score'));
                     //console.log(`  score: ${score}`);
-
+ 
                     assert(currentTask.score !== score);
                     //currentTask.score = score;
                     console.log(`  score: ${currentTask.score} -> ${score}`);
