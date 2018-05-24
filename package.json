@@ -9,21 +9,24 @@
   },
   "dependencies": {
     "fibers": "^2.0.2",
+    "immutable": "^3.8.2",
     "level": "^2.1.1",
     "levelgraph": "^2.1.1",
     "music-metadata": "^0.9.13",
     "sax": "^1.2.4",
-    "typescript": "^2.4.2"
+    "typescript": "^2.4.2",
+    "uuid": "^3.2.1"
   },
   "devDependencies": {
     "@types/fibers": "0.0.30",
     "@types/node": "^8.5.1",
-    "@types/sax": "^1.0.0"
+    "@types/sax": "^1.0.0",
+    "@types/uuid": "^3.4.3"
   },
   "author": "Ralph Sigrist",
   "repository": {
     "type": "git",
     "url": "https://github.com/rasuni/music-scanner.git"
   },
-  "license": "Apache 2.0"
+  "license": "Apache-2.0"
 }

@@ -3,6 +3,7 @@ import * as Fiber from 'fibers';
 const level = require('level');
 const levelgraph = require('levelgraph');
 import * as path from 'path';
+import * as uuid from 'uuid/v4';
 
 /*
 import * as path from 'path';
@@ -146,7 +147,7 @@ function waitFor<R>(asyncFunction: (consumer: Consumer<R>) => void): R {
     return Fiber.yield();
 }
 
-/*
+
 interface Pair<F, S> {
     readonly first: F,
     readonly second: S
@@ -161,7 +162,7 @@ function waitFor2<F, S>(asyncFunction: (consumer: Consumer2<F, S>) => void): Pai
     })));
 }
 
-*/
+
 function fail(): never {
     debugger;
     //assert.fail("failure");
@@ -213,9 +214,6 @@ function assertEquals(actual: any, expected: any): void {
     assert(deepEquals(actual, expected));
 }
 
-function assertUndefined(actual: any): void {
-    assertEquals(actual, undefined);
-}
 
 function isUndefined(value: any): value is undefined {
     return value === undefined;
@@ -402,16 +400,18 @@ function expectObject<T>(checkers: NamedProcessor): (actual: T) => boolean {
     return (actual: any) => !processObject(actual, checkers);
 }
 */
-
-interface GetResult {
-    readonly err: any;
-    readonly list: any;
+interface Statement<T> {
+    readonly subject: T;
+    readonly predicate: T;
+    readonly object: T;
 }
 
-interface Statement {
-    readonly subject: string;
-    readonly predicate: string;
-    readonly object: string;
+function statement<T>(subject: T, predicate: T, object: T): Statement<T> {
+    return {
+        subject: subject,
+        predicate: predicate,
+        object: object
+    };
 }
 
 interface StatementPattern {
@@ -420,15 +420,62 @@ interface StatementPattern {
     readonly object?: string;
 }
 
+/*
+
+function write(stream: any, subject: string, predicate: string, object: string): void {
+    stream.write({ subject: subject, predicate: predicate, object: object });
+}
+*/
+
+function end(stream: any): void {
+    const currentFiber = Fiber.current;
+    stream.on('close', () => currentFiber.run());
+    stream.end();
+    Fiber.yield();
+}
+
+/*
+interface Updater {
+    put: (subject: string, predicate: string, object: string) => void;
+    updateObject: (subject: string, predicate: string, existingObject: string, newObject: string) => void;
+}
+*/
+
+type UpdateAction = "put" | "del";
+
+interface UpdateStatement extends Statement<string> {
+    action: UpdateAction
+}
+
+function updateStatement(action: UpdateAction, subject: string, predicate: string, object: string): UpdateStatement {
+    return {
+        action: action,
+        subject: subject,
+        predicate: predicate,
+        object: object,
+    }
+}
+
+function put(subject: string, predicate: string, object: string): UpdateStatement {
+    return updateStatement('put', subject, predicate, object);
+}
+
+function updateObject(subject: string, predicate: string, existingObject: string, newObject: string): UpdateStatement[] {
+    return [
+        updateStatement('del', subject, predicate, existingObject),
+        put(subject, predicate, newObject)
+    ]
+}
+
 
 Fiber(() => {
 
     const db = levelgraph(level(path.join(__dirname, 'music-scanner')));
 
-    function get(pattern: StatementPattern): Statement | undefined {
-        const getResult: GetResult = waitFor((consumer: Consumer<GetResult>) => db.get(pattern, (err: any, list: any) => consumer({ err: err, list: list })));
-        assertEquals(getResult.err, null);
-        const list = getResult.list;
+    function get(pattern: StatementPattern): Statement<string> | undefined {
+        const getResult: Pair<any, any> = waitFor2((consumer: Consumer2<any, any>) => db.get(pattern, consumer));
+        assertEquals(getResult.first, null);
+        const list = getResult.second;
         const length = list.length;
         if (length === 0) {
             return undefined;
@@ -451,64 +498,75 @@ Fiber(() => {
         }
     }
 
+    function update(changeSet: UpdateStatement[]): void {
+        const putStream = db.putStream();
+        const delStream = db.delStream();
+        const streams = {
+            put: putStream,
+            del: delStream
+        }
+        for (const s of changeSet) {
+            streams[s.action].write(statement(s.subject, s.predicate, s.object));
+        }
+        end(putStream);
+        end(delStream);
+
+    }
+
     for (; ;) {
-        const currentTask = getObject('ms:root', 'ms:current');
+        const currentTask = getObject('root', 'current');
         if (isUndefined(currentTask)) {
             console.log('initializing database');
-            const res = waitFor((consumer: Consumer<any>) => db.put([
-                { subject: 'ms:root', predicate: 'ms:current', object: 'ms:root' },
-                { subject: 'ms:root', predicate: 'ms:type', object: 'ms:root' },
-                { subject: 'ms:root', predicate: 'ms:next', object: 'ms:root' },
-            ], consumer));
-            assertUndefined(res);
+            update([
+                put('root', 'current', 'root'),
+                put('root', 'type', 'root'),
+                put('root', 'next', 'root')
+            ]);
         }
         else {
 
-            const type = getObject(currentTask, 'ms:type');
-            assertDefined(type);
-            assertEquals(type, 'ms:root');
-            /*
-            const getType: GetResult = waitFor((consumer: Consumer<GetResult>) => db.get({ subject: currentTask, predicate: 'ms:type' }, (err: any, list: any) => consumer({ err: err, list: list })));
+            function getAttribute(name: string): string {
+                const attr = getObject(currentTask as string, name);
+                assertDefined(attr);
+                return attr as string;
+            }
 
-            assertEquals(getType.err, null);
-            assertEquals(getType.list, [{ subject: currentTask, predicate: 'ms:type', object: 'ms:root' }])
-            */
+            const type = getAttribute('type');
+
+            assertEquals(type, 'root');
             console.log('root');
-            assertUndefined(get({ subject: 'ms:MusikServer', predicate: 'ms:root', object: 'ms:root' }));
+            const vVolume = db.v('volume');
+            const path = `s/${encodeURIComponent('/Volumes/Musik')}`;
+            assertEquals(waitFor2((consumer: Consumer2<any, any>) => db.search([
+                statement(vVolume, 'type', 'volume'),
+                statement(vVolume, 'path', path)
+            ], consumer)), { first: null, second: [] });
 
-
-            const prevStatement = get({ predicate: 'ms:next', object: currentTask }) as Statement;
+            const prevStatement = get({ predicate: 'next', object: currentTask }) as Statement<string>;
             assertDefined(prevStatement);
-            assertEquals(prevStatement.predicate, 'ms:next');
+
+            assertEquals(prevStatement.predicate, 'next');
             assertEquals(prevStatement.object, currentTask);
             const prev = prevStatement.subject;
-            //assertEquals(prev.object, )
 
-            const next = getObject(currentTask, 'ms:next');
-            assertDefined(next);
 
-            fail();
 
             // todo update in
             console.log('  adding volume /Volumes/Musik')
 
+            const volumeId = `task/${uuid()}`;
 
-            const putRes = waitFor((consumer: Consumer<any>) => db.put([
-                { subject: 'ms:MusikServer', predicate: 'ms:root', object: 'ms:root' },
-                { subject: 'ms:MusikServer', predicate: 'ms:type', object: 'ms:volume' },
-                { subject: 'ms:MusikServer', predicate: 'ms:path', object: `l:s:${encodeURIComponent('/Volumes/Musik')}` },
-                { subject: 'ms:MusikServer', predicate: 'ms:next', object: currentTask },
-                { subject: prev, predicate: 'ms:next', object: 'ms:MusikServer' },
-                { subject: 'ms:root', predicate: 'ms:current', object: next }
-            ], consumer));
-            assertUndefined(putRes);
+            update([
+                put(volumeId, 'type', 'volume'),
+                put(volumeId, 'path', path),
+                put(volumeId, 'next', currentTask),
+                ...updateObject(prev, 'next', currentTask, volumeId)
+            ])
 
+            const next = getAttribute('next');
 
-            const delRes = waitFor((consumer: Consumer<any>) => db.del([
-                { subject: currentTask, predicate: 'ms:next', object: next },
-                { subject: 'ms:root', predicate: 'ms:current', object: currentTask }
-            ], consumer));
-            assertUndefined(delRes);
+            update(updateObject('root', 'current', currentTask, next));
+
 
         }
     }
