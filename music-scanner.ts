@@ -7,6 +7,7 @@ import * as uuid from 'uuid/v4';
 import * as commander from 'commander';
 import * as immutable from 'immutable';
 import * as fs from 'fs';
+import * as rimraf from 'rimraf';
 
 commander.version('0.0.1').description('music scanner command line tool');
 
@@ -481,7 +482,10 @@ Fiber(() => {
             executed = true;
         });
     }
-    const db = levelgraph(level(path.join(__dirname, 'music-scanner')), { joinAlgorithm: 'basic' });
+
+    const dbPath = path.join(__dirname, 'music-scanner');
+
+    const db = levelgraph(level(dbPath), { joinAlgorithm: 'basic' });
 
     function get(pattern: StatementPattern): Statement<string> | undefined {
         const getResult: Pair<any, any> = waitFor2((consumer: Consumer2<any, any>) => db.get(pattern, consumer));
@@ -655,6 +659,15 @@ Fiber(() => {
         }
     }
 
+    specCommand("query", "queries the database", (query) => {
+        search(query, {
+            data: (data: any) => console.log(query.select.map((field: string) => {
+                const fieldName = field.slice(1);
+                return `${fieldName}: ${data[fieldName]}`
+            }).join(', '))
+        })
+    });
+
 
     specCommand("update", "update the database (experimental)", query => {
         let actions: UpdateStatement[] = [];
@@ -684,13 +697,9 @@ Fiber(() => {
         });
     });
 
-    specCommand("query", "queries the database", (query) => {
-        search(query, {
-            data: (data: any) => console.log(query.select.map((field: string) => {
-                const fieldName = field.slice(1);
-                return `${fieldName}: ${data[fieldName]}`
-            }).join(', '))
-        })
+    defineCommand("purge", "removes all triples from the database, empties the database", [], () => {
+        db.close();
+        rimraf(dbPath, throwError)
     });
 
     commander.parse(process.argv);
