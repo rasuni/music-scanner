@@ -1,0 +1,48 @@
+{
+    "select": [
+        "?country",
+        "?text"
+    ],
+    "where": [
+        {
+            "subject": "?referencingTable",
+            "predicate": "sdu:name",
+            "object": "sdu:literal/string/A_Country"
+        },
+        {
+            "subject": "?referencingTable",
+            "predicate": "sdu:column",
+            "object": "?fkColumn"
+        },
+        {
+            "subject": "?fkColumn",
+            "predicate": "sdu:name",
+            "object": "sdu:literal/string/Name_FK"
+        },
+        {
+            "subject": "?country",
+            "predicate": "?fkColumn",
+            "object": "?textId"
+        },
+        {
+            "subject": "?text",
+            "predicate": "?pkColumn",
+            "object": "?textId"
+        },
+        {
+            "subject": "?pkColumn",
+            "predicate": "sdu:name",
+            "object": "sdu:literal/string/TID"
+        },
+        {
+            "subject": "?referencedTable",
+            "predicate": "sdu:column",
+            "object": "?pkColumn"
+        },
+        {
+            "subject": "?referencedTable",
+            "predicate": "sdu:name",
+            "object": "sdu:literal/string/BO_Text"
+        }
+    ]
+}

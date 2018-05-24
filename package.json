@@ -8,6 +8,7 @@
     "install": "node_modules/.bin/tsc"
   },
   "dependencies": {
+    "commander": "^2.15.1",
     "fibers": "^2.0.2",
     "immutable": "^3.8.2",
     "level": "^2.1.1",

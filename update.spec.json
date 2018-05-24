@@ -1,0 +1,28 @@
+{
+    "update": [
+        {
+            "operation": "put",
+            "subject": "?country",
+            "predicate": "sdu:fk/A_Country/Name_FK",
+            "object": "?text"
+        },
+        {
+            "operation": "del",
+            "subject": "?country",
+            "predicate": "sdu:data/A_Country/Name_FK",
+            "object": "?textId"
+        }
+    ],
+    "where": [
+        {
+            "subject": "?country",
+            "predicate": "sdu:data/A_Country/Name_FK",
+            "object": "?textId"
+        },
+        {
+            "subject": "?text",
+            "predicate": "sdu:data/BO_Text/TID",
+            "object": "?textId"
+        }
+    ]
+}

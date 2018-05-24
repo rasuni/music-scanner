@@ -4,23 +4,17 @@ const level = require('level');
 const levelgraph = require('levelgraph');
 import * as path from 'path';
 import * as uuid from 'uuid/v4';
+import * as commander from 'commander';
+import * as immutable from 'immutable';
+import * as fs from 'fs';
+
+commander.version('0.0.1').description('music scanner command line tool');
+
 
 /*
-import * as path from 'path';
-const level = require('level');
-import * as fs from 'fs';
-import * as Fiber from 'fibers';
 import * as mm from 'music-metadata';
 import * as https from 'https';
 import * as sax from 'sax';
-import * as assertorig from 'assert';
-*/
-//import * as
-/*
-interface Linked {
-    next: number;
-    previous: number;
-}
 
 interface Directory {
     entries?: {
@@ -441,15 +435,15 @@ interface Updater {
 }
 */
 
-type UpdateAction = "put" | "del";
+type Operation = "put" | "del";
 
 interface UpdateStatement extends Statement<string> {
-    action: UpdateAction
+    operation: Operation
 }
 
-function updateStatement(action: UpdateAction, subject: string, predicate: string, object: string): UpdateStatement {
+function updateStatement(action: Operation, subject: string, predicate: string, object: string): UpdateStatement {
     return {
-        action: action,
+        operation: action,
         subject: subject,
         predicate: predicate,
         object: object,
@@ -467,10 +461,27 @@ function updateObject(subject: string, predicate: string, existingObject: string
     ]
 }
 
+function throwError(err: any): void {
+    if (err) {
+        throw err;
+    }
+}
 
 Fiber(() => {
 
-    const db = levelgraph(level(path.join(__dirname, 'music-scanner')));
+    let executed = false;
+
+    function defineCommand(cmdSyntax: string, description: string, options: string[], action: (...args: any[]) => void) {
+        var cmd = commander.command(cmdSyntax).description(description);
+        for (const option of options) {
+            cmd = cmd.option(option);
+        }
+        cmd.action((...args: any[]) => {
+            action(...args);
+            executed = true;
+        });
+    }
+    const db = levelgraph(level(path.join(__dirname, 'music-scanner')), { joinAlgorithm: 'basic' });
 
     function get(pattern: StatementPattern): Statement<string> | undefined {
         const getResult: Pair<any, any> = waitFor2((consumer: Consumer2<any, any>) => db.get(pattern, consumer));
@@ -506,14 +517,15 @@ Fiber(() => {
             del: delStream
         }
         for (const s of changeSet) {
-            streams[s.action].write(statement(s.subject, s.predicate, s.object));
+            streams[s.operation].write(statement(s.subject, s.predicate, s.object));
         }
         end(putStream);
         end(delStream);
 
     }
 
-    for (; ;) {
+
+    function processCurrent(): void {
         const currentTask = getObject('root', 'current');
         if (isUndefined(currentTask)) {
             console.log('initializing database');
@@ -567,9 +579,126 @@ Fiber(() => {
 
             update(updateObject('root', 'current', currentTask, next));
 
+        }
 
+    }
+    defineCommand("next", "process current task", [], processCurrent);
+
+    defineCommand("run", "continously process all tasks until manual intervention is required", [], () => {
+        for (; ;) {
+            processCurrent();
+        }
+    });
+
+    function getAll(subject: string | undefined, predicate: string | undefined, object: string | undefined, cb: (line: string) => void): void {
+        db.getStream(statement(subject, predicate, object)).on('data', (triple: any) => {
+            cb(`subject=${triple.subject} predicate=${triple.predicate} object=${triple.object}`)
+        });
+    }
+
+
+    defineCommand("get", "retrieve triples from database", ["-s, --subject <IRI>", "-p, --predicate <IRI>", "-o, --object <IRI>"], options => {
+        getAll(options.subject, options.predicate, options.object, console.log);
+    });
+
+
+    defineCommand("browse <uri>", "browse URI, shows triples where URI is used either as subject, predicate or object", [], uri => {
+        var listed = immutable.Set();
+        function browse(subject: any, predicate: any, object: any) {
+            getAll(subject, predicate, object, line => {
+                if (!listed.contains(line)) {
+                    console.log(line);
+                    listed = listed.add(line);
+                }
+            });
+        }
+        browse(uri, undefined, undefined);
+        browse(undefined, uri, undefined);
+        browse(undefined, undefined, uri);
+    });
+
+    function tripleCommand(commandName: string, description: string, functionName: string) {
+        defineCommand(`${commandName} <subject> <predicate> <object>`, description, [], (subject, predicate, object) => db[functionName](statement(subject, predicate, object), throwError));
+    }
+
+
+    tripleCommand("put", "store a triple in the database", "put");
+
+    tripleCommand("delete", "removes a triple from the database", "del");
+
+    function wrapCallBack<T>(cb: (content: T) => void): (err: any, content: T) => void {
+        return (err, content) => {
+            throwError(err);
+            cb(content);
         }
     }
+
+
+    function specCommand(cmdName: string, description: string, specHandler: (content: any) => void) {
+        defineCommand(`${cmdName} <${cmdName}spec>`, description, [], (spec) => fs.readFile(spec, 'utf8', wrapCallBack(content => specHandler(JSON.parse(content)))));
+    }
+
+    function replaceVariables(source: Statement<string>, mapper: (value: string) => any) {
+        const mapVariable = (value: string) => {
+            return value.startsWith('?') ? mapper(value.slice(1)) : value;
+        };
+        return statement(mapVariable(source.subject), mapVariable(source.predicate), mapVariable(source.object));
+    }
+
+
+    function search(query: Statement<string>[], handlers: any): void {
+        const stream = db.searchStream(query.map((source: any) => {
+            return replaceVariables(source, db.v);
+        }));
+        for (const name in handlers) {
+            stream.on(name, handlers[name]);
+        }
+    }
+
+
+    specCommand("update", "update the database (experimental)", query => {
+        let actions: UpdateStatement[] = [];
+        search(query, {
+            data: (data: any) => {
+                query.update.forEach((action: any) => {
+                    actions.push({ operation: action.type, ...replaceVariables(action, variableName => data[variableName]) })
+                })
+            },
+            end: () => {
+                const putStream = db.putStream();
+                const delStream = db.delStream();
+                const streams: any = {
+                    put: putStream,
+                    del: delStream
+                }
+                actions.forEach((action: UpdateStatement) => {
+                    const type = action.operation;
+                    const s = statement(action.subject, action.predicate, action.object);
+                    console.log(`${type} subject: ${s.subject} predicate=${s.predicate} object=${s.object}`)
+                    streams[type].write(statement);
+                });
+                putStream.end();
+                delStream.end();
+                console.log('processed!')
+            }
+        });
+    });
+
+    specCommand("query", "queries the database", (query) => {
+        search(query, {
+            data: (data: any) => console.log(query.select.map((field: string) => {
+                const fieldName = field.slice(1);
+                return `${fieldName}: ${data[fieldName]}`
+            }).join(', '))
+        })
+    });
+
+    commander.parse(process.argv);
+    if (!executed) {
+        commander.outputHelp();
+    }
+
+
     /*
     const getResult: GetResult = waitFor((consumer: Consumer<GetResult>) => db.get({ subject: 'ms:root', predicate: 'ms:current' }, (err: any, list: any) => consumer({ err: err, list: list })));
     assertEquals(getResult.err, null);
