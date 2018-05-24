@@ -6,14 +6,10 @@ import * as path from 'path';
 import * as uuid from 'uuid/v4';
 
 /*
-import * as path from 'path';
-const level = require('level');
 import * as fs from 'fs';
-import * as Fiber from 'fibers';
 import * as mm from 'music-metadata';
 import * as https from 'https';
 import * as sax from 'sax';
-import * as assertorig from 'assert';
 */
 //import * as
 /*
@@ -525,13 +521,13 @@ Fiber(() => {
         }
         else {
 
-            function getAttribute(name: string): string {
+            function getProperty(name: string): string {
                 const attr = getObject(currentTask as string, name);
                 assertDefined(attr);
                 return attr as string;
             }
 
-            const type = getAttribute('type');
+            const type = getProperty('type');
 
             assertEquals(type, 'root');
             console.log('root');
@@ -563,9 +559,8 @@ Fiber(() => {
                 ...updateObject(prev, 'next', currentTask, volumeId)
             ])
 
-            const next = getAttribute('next');
 
-            update(updateObject('root', 'current', currentTask, next));
+            update(updateObject('root', 'current', currentTask, getProperty('next')));
 
 
         }
