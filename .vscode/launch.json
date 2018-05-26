@@ -9,6 +9,9 @@
             "request": "launch",
             "name": "Programm starten",
             "program": "${workspaceFolder}/music-scanner.js",
+            "args": [
+                "run"
+            ],
             "outFiles": [
                 "${workspaceFolder}/**/*.js"
             ]
