@@ -4,19 +4,18 @@ const level = require('level');
 const levelgraph = require('levelgraph');
 import * as path from 'path';
 import * as uuid from 'uuid/v4';
+import * as commander from 'commander';
+import * as immutable from 'immutable';
+import * as fs from 'fs';
+import * as rimraf from 'rimraf';
+
+commander.version('0.0.1').description('music scanner command line tool');
+
 
 /*
-import * as fs from 'fs';
 import * as mm from 'music-metadata';
 import * as https from 'https';
 import * as sax from 'sax';
-*/
-//import * as
-/*
-interface Linked {
-    next: number;
-    previous: number;
-}
 
 interface Directory {
     entries?: {
@@ -161,9 +160,7 @@ function waitFor2<F, S>(asyncFunction: (consumer: Consumer2<F, S>) => void): Pai
 
 function fail(): never {
     debugger;
-    //assert.fail("failure");
-    assertorig.fail("failure");
-    throw new Error('AssertionFailure');
+    return assertorig.fail("failure");
 }
 
 function failIf(condition: boolean): void {
@@ -172,8 +169,16 @@ function failIf(condition: boolean): void {
     }
 }
 
-function isObject(value: any): boolean {
+interface AnyObject {
+    readonly [name: string]: any
+}
+
+function isObject(value: any): value is AnyObject | null {
     return typeof value === 'object';
+}
+
+function isNull(value: any): value is null {
+    return value === null;
 }
 
 function deepEquals(actual: any, expected: any): boolean {
@@ -182,17 +187,27 @@ function deepEquals(actual: any, expected: any): boolean {
     }
     else {
         if (isObject(actual) && isObject(expected)) {
-            const actualKeys = Object.keys(actual);
-            if (actualKeys.length !== Object.keys(expected).length) {
-                return false;
+            if (isNull(actual)) {
+                return isNull(expected);
             }
             else {
-                for (const key of actualKeys) {
-                    if (!deepEquals(actual[key], expected[key])) {
+                if (isNull(expected)) {
+                    return false;
+                }
+                else {
+                    const actualKeys = Object.keys(actual);
+                    if (actualKeys.length !== Object.keys(expected).length) {
                         return false;
                     }
+                    else {
+                        for (const key of actualKeys) {
+                            if (!deepEquals(actual[key], expected[key])) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    }
                 }
-                return true;
             }
         }
         else {
@@ -219,69 +234,72 @@ function assertDefined(value: any): void {
     failIf(isUndefined(value));
 }
 
+function assertUndefined(value: any): void {
+    assert(isUndefined(value));
+}
 /*
-
+ 
 function isUndefined(value: any): value is undefined {
     return value === undefined;
 }
-
+ 
 function assertDefined(value: any): void {
     failIf(isUndefined(value));
 }
-
-
-
+ 
+ 
+ 
 interface AddInfo {
     added: boolean,
     id: number
 }
-
+ 
 interface OpenTagEvent {
     readonly type: 'openTag';
     readonly tag: sax.Tag;
 }
-
+ 
 interface TextEvent {
     readonly type: 'text';
     readonly text: string;
 }
-
+ 
 interface CloseTagEvent {
     readonly type: 'closeTag';
     readonly name: string;
 }
-
+ 
 type SaxEvent = OpenTagEvent | TextEvent | CloseTagEvent;
-
-
+ 
+ 
 function fetchNextEvent(nextEvent: () => SaxEvent, type: string): SaxEvent {
     const event = nextEvent();
     assertEquals(event.type, type);
     return event;
 }
-
+ 
 interface Attributes {
     readonly [name: string]: string;
 }
-
+ 
 function fetchAttributes(nextEvent: () => SaxEvent, name: string): Attributes {
     const tag = (fetchNextEvent(nextEvent, 'openTag') as OpenTagEvent).tag;
     assertEquals(tag.name, name);
     return tag.attributes;
-
+ 
 }
-
+ 
 function expectOpenTag(nextEvent: () => SaxEvent, name: string, attributes?: Attributes): void {
     assertEquals(fetchAttributes(nextEvent, name), isUndefined(attributes) ? {} : attributes);
 }
-
+ 
 function processTextTag(nextEvent: () => SaxEvent, name: string): string {
     expectOpenTag(nextEvent, name);
     const result = (fetchNextEvent(nextEvent, 'text') as TextEvent).text;
     assertEquals((fetchNextEvent(nextEvent, 'closeTag') as CloseTagEvent).name, name);
     return result;
 }
-
+ 
 function stat(path: string): fs.Stats | undefined {
     const statResult = waitFor2((consumer: Consumer2<NodeJS.ErrnoException, fs.Stats>) => fs.stat(path, consumer));
     const err = statResult.first;
@@ -293,21 +311,21 @@ function stat(path: string): fs.Stats | undefined {
         return undefined;
     }
 }
-
-
+ 
+ 
 interface MBResource {
     readonly attributes: Attributes;
     readonly next: () => SaxEvent;
 }
-
+ 
 //let requested = false;
-
+ 
 function handleError(err: any): void {
     console.log(err);
     fail();
 }
-
-
+ 
+ 
 function getXml(hostName: string, path: string): () => SaxEvent {
     console.log(`https://${hostName}${path}`)
     const currentFiber = Fiber.current
@@ -351,7 +369,7 @@ function getXml(hostName: string, path: string): () => SaxEvent {
         }
     }
 }
-
+ 
 function processStringTag<T extends DynamicTask>(nextEvent: () => SaxEvent, name: string, task: T, key: keyof T, ident: string): void {
     const value = processTextTag(nextEvent, name);
     const existing: any = task[key];
@@ -359,27 +377,27 @@ function processStringTag<T extends DynamicTask>(nextEvent: () => SaxEvent, name
     task[key] = value as any;
     console.log(`${ident}${name}: ${existing} -> ${value}`);
 }
-
-
-
+ 
+ 
+ 
 function expectEqual(expectedValue: any): (actual: any) => boolean {
     return (value: any) => {
         assertEquals(value, expectedValue);
         return false;
     }
 }
-
+ 
 type Checker<T> = {
     readonly [P in keyof T]: (value: T[P]) => boolean;
 }
-
-
+ 
+ 
 function processObject<T>(data: T, checks: Checker<T>): boolean {
     const keys = new Set(Object.keys(data));
     for (const name in checks) {
         const checker = checks[name];
         if (checker(data[name])) {
-
+ 
             return false;
         }
         keys.delete(name);
@@ -387,11 +405,11 @@ function processObject<T>(data: T, checks: Checker<T>): boolean {
     assertEquals(keys.size, 0);
     return true;
 }
-
+ 
 interface NamedProcessor {
     readonly [name: string]: (actual: any) => boolean
 }
-
+ 
 function expectObject<T>(checkers: NamedProcessor): (actual: T) => boolean {
     return (actual: any) => !processObject(actual, checkers);
 }
@@ -417,7 +435,7 @@ interface StatementPattern {
 }
 
 /*
-
+ 
 function write(stream: any, subject: string, predicate: string, object: string): void {
     stream.write({ subject: subject, predicate: predicate, object: object });
 }
@@ -437,15 +455,15 @@ interface Updater {
 }
 */
 
-type UpdateAction = "put" | "del";
+type Operation = "put" | "del";
 
 interface UpdateStatement extends Statement<string> {
-    action: UpdateAction
+    operation: Operation
 }
 
-function updateStatement(action: UpdateAction, subject: string, predicate: string, object: string): UpdateStatement {
+function updateStatement(action: Operation, subject: string, predicate: string, object: string): UpdateStatement {
     return {
-        action: action,
+        operation: action,
         subject: subject,
         predicate: predicate,
         object: object,
@@ -463,23 +481,65 @@ function updateObject(subject: string, predicate: string, existingObject: string
     ]
 }
 
+function wait2Success<S>(asyncFunction: (consumer: Consumer2<object, S>) => void): S {
+    const result: Pair<object, any> = waitFor2(asyncFunction);
+    assertEquals(result.first, null);
+    return result.second;
+}
+
+interface AttributeValue {
+    readonly predicate: string;
+    readonly object: string;
+}
+
+function decodeStringLiteral(stringLiteral: string) {
+    const segments = stringLiteral.split('/');
+    assertEquals(segments.length, 2);
+    assertEquals(segments[0], 's');
+    return decodeURIComponent(segments[1]);
+}
+
+function prepareStream(stream: any): void {
+    stream.on('error', fail);
+    const currentFiber = Fiber.current;
+    stream.on('data', (data: any) => currentFiber.run(data));
+    stream.on('end', () => currentFiber.run(undefined));
+}
+
+function streamOpt(stream: any): any {
+    prepareStream(stream);
+    const data = Fiber.yield();
+    if (isUndefined(data)) {
+        return undefined;
+    }
+    else {
+        assertUndefined(Fiber.yield());
+        return data;
+    }
+}
 
 Fiber(() => {
 
-    const db = levelgraph(level(path.join(__dirname, 'music-scanner')));
+    let executed = false;
+
+    function defineCommand(cmdSyntax: string, description: string, options: string[], action: (...args: any[]) => void) {
+        var cmd = commander.command(cmdSyntax).description(description);
+        for (const option of options) {
+            cmd = cmd.option(option);
+        }
+        cmd.action((...args: any[]) => {
+            action(...args);
+            executed = true;
+        });
+    }
+
+    const dbPath = path.join(__dirname, 'music-scanner');
+
+    const db = levelgraph(level(dbPath), { joinAlgorithm: 'basic' });
+
 
     function get(pattern: StatementPattern): Statement<string> | undefined {
-        const getResult: Pair<any, any> = waitFor2((consumer: Consumer2<any, any>) => db.get(pattern, consumer));
-        assertEquals(getResult.first, null);
-        const list = getResult.second;
-        const length = list.length;
-        if (length === 0) {
-            return undefined;
-        }
-        else {
-            assertEquals(length, 1);
-            return list[0];
-        }
+        return streamOpt(db.getStream(pattern));
     }
 
     function getObject(subject: string, predicate: string): string | undefined {
@@ -494,6 +554,12 @@ Fiber(() => {
         }
     }
 
+    function getProperty(subject: string, name: string): string {
+        const attr = getObject(subject, name);
+        assertDefined(attr);
+        return attr as string;
+    }
+
     function update(changeSet: UpdateStatement[]): void {
         const putStream = db.putStream();
         const delStream = db.delStream();
@@ -502,69 +568,304 @@ Fiber(() => {
             del: delStream
         }
         for (const s of changeSet) {
-            streams[s.action].write(statement(s.subject, s.predicate, s.object));
+            streams[s.operation].write(statement(s.subject, s.predicate, s.object));
         }
         end(putStream);
         end(delStream);
 
     }
 
-    for (; ;) {
-        const currentTask = getObject('root', 'current');
-        if (isUndefined(currentTask)) {
+
+    function processCurrent(): boolean {
+        const currentTaskOpt = getObject('root', 'current');
+        if (isUndefined(currentTaskOpt)) {
             console.log('initializing database');
             update([
                 put('root', 'current', 'root'),
                 put('root', 'type', 'root'),
                 put('root', 'next', 'root')
             ]);
+            return true;
         }
         else {
+            const currentTask = currentTaskOpt;
 
-            function getProperty(name: string): string {
-                const attr = getObject(currentTask as string, name);
-                assertDefined(attr);
-                return attr as string;
+            function getPropertyFromCurrent(name: string): string {
+                return getProperty(currentTask, name);
             }
 
-            const type = getProperty('type');
 
-            assertEquals(type, 'root');
-            console.log('root');
-            const vVolume = db.v('volume');
-            const path = `s/${encodeURIComponent('/Volumes/Musik')}`;
-            assertEquals(waitFor2((consumer: Consumer2<any, any>) => db.search([
-                statement(vVolume, 'type', 'volume'),
-                statement(vVolume, 'path', path)
-            ], consumer)), { first: null, second: [] });
+            function enqueueTask(name: string, type: string, namePredicate: string, additionalAttribute: AttributeValue | undefined): boolean {
+                const nameLiteral = `s/${encodeURIComponent(name)}`;
 
-            const prevStatement = get({ predicate: 'next', object: currentTask }) as Statement<string>;
-            assertDefined(prevStatement);
+                function mapAttributeValues<S, T>(mapper: (subject: S, predicate: string, object: string) => T, subject: S): T[] {
 
-            assertEquals(prevStatement.predicate, 'next');
-            assertEquals(prevStatement.object, currentTask);
-            const prev = prevStatement.subject;
+                    const result: T[] = [];
 
+                    function add(predicate: string, object: string): void {
+                        result.push(mapper(subject, predicate, object))
+                    }
 
-
-            // todo update in
-            console.log('  adding volume /Volumes/Musik')
-
-            const volumeId = `task/${uuid()}`;
-
-            update([
-                put(volumeId, 'type', 'volume'),
-                put(volumeId, 'path', path),
-                put(volumeId, 'next', currentTask),
-                ...updateObject(prev, 'next', currentTask, volumeId)
-            ])
+                    add('type', type);
+                    add(namePredicate, nameLiteral);
+                    if (additionalAttribute !== undefined) {
+                        add(additionalAttribute.predicate, additionalAttribute.object);
+                    }
+                    return result;
+                }
 
 
-            update(updateObject('root', 'current', currentTask, getProperty('next')));
+                const result = streamOpt(db.searchStream(mapAttributeValues(statement, db.v('s'))));
+
+                if (isUndefined(result)) {
+
+                    const prevStatement = get({ predicate: 'next', object: currentTask }) as Statement<string>;
+                    assertDefined(prevStatement);
+
+                    assertEquals(prevStatement.predicate, 'next');
+                    assertEquals(prevStatement.object, currentTask);
+                    const prev = prevStatement.subject;
+                    console.log(`  adding ${type} ${name}`);
+                    const taskId = `task/${uuid()}`;
+
+                    update([
+                        ...mapAttributeValues(put, taskId),
+                        put(taskId, 'next', currentTask),
+                        ...updateObject(prev, 'next', currentTask, taskId)
+                    ])
 
 
+                    update(updateObject('root', 'current', currentTask, getPropertyFromCurrent('next')));
+                    return true;
+                }
+                else {
+                    return false;
+
+                }
+
+            }
+
+            function getStringProperty(predicate: string) {
+                return decodeStringLiteral(getPropertyFromCurrent(predicate));
+            }
+
+            const type = getPropertyFromCurrent('type');
+
+            function processFileSystemPath<T>(path: string, directory: () => T, file: () => T, missing: () => T): T {
+                console.log(`processing ${type} ${path}`);
+                const result: Pair<NodeJS.ErrnoException, fs.Stats> = waitFor2((consumer: Consumer2<NodeJS.ErrnoException, fs.Stats>) => fs.stat(path, consumer));
+                const err = result.first;
+                if (isNull(err)) {
+                    return result.second.isDirectory() ? directory() : file();
+                }
+                else {
+                    assertEquals(err.code, 'ENOENT');
+                    return missing();
+                }
+            }
+
+            switch (type) {
+                case 'root':
+                    console.log('processing root');
+                    let found = true;
+                    for (const path of ['/Volumes/Musik', '/Volumes/music', '/Volumes/Qmultimedia', '/Users/ralph.sigrist/Music/iTunes/ITunes Media/Music']) {
+                        if (enqueueTask(path, 'volume', 'path', undefined)) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    assert(found);
+                    return true;
+                case 'volume':
+                    const volumePath = getStringProperty('path');
+                    processFileSystemPath(volumePath, () => {
+                        const files = wait2Success((consumer: Consumer2<NodeJS.ErrnoException, string[]>) => fs.readdir(volumePath, consumer));
+                        failIf(files.length === 0);
+                        assert(enqueueTask(files[0], 'fileSystemEntry', 'name', { predicate: 'directory', object: currentTask }));
+                    }, fail, fail);
+                    return true;
+                case 'fileSystemEntry':
+                    const entryLiteral = getPropertyFromCurrent('name');
+                    const entryName = decodeStringLiteral(entryLiteral);
+                    const directoryId = getPropertyFromCurrent('directory');
+                    assertEquals(getObject(directoryId, 'type'), 'volume');
+                    return processFileSystemPath(path.join(decodeStringLiteral(getProperty(directoryId, 'path')), entryName), fail, () => {
+                        assertEquals(entryName, '.DS_Store');
+                        console.error('unknown file type!');
+                        return false;
+                        // .DS_Store
+                    }, () => {
+                        assertUndefined(get({ predicate: 'directory', object: currentTask }));
+                        const next = getPropertyFromCurrent('next');
+                        const prevStatement = get({ predicate: 'next', object: currentTask }) as Statement<string>;
+                        assertDefined(prevStatement);
+
+                        assertEquals(prevStatement.predicate, 'next');
+                        assertEquals(prevStatement.object, currentTask);
+                        const prev = prevStatement.subject;
+                        //getStream
+                        prepareStream(db.getStream({ subject: currentTask }));
+                        const objects: any = {
+                            type: 'fileSystemEntry',
+                            name: entryLiteral,
+                            directory: directoryId,
+                            next: next
+                        }
+                        for (; ;) {
+                            const statement = Fiber.yield();
+                            if (isUndefined(statement)) {
+                                break;
+                            }
+                            assertEquals(statement.subject, currentTask);
+                            const predicate = statement.predicate;
+                            assertEquals(statement.object, objects[predicate]);
+                            delete objects[predicate];
+                        }
+                        //ssertUndefined(get({  object: currentTask }));
+                        assertEquals(objects, {});
+
+                        assertUndefined(get({ predicate: currentTask }));
+                        update([
+                            ...updateObject(prev, 'next', currentTask, next),
+                            ...updateObject('root', 'current', currentTask, next),
+
+                            updateStatement('del', currentTask, 'next', next),
+                            updateStatement('del', currentTask, 'type', 'fileSystemEntry'),
+                            updateStatement('del', currentTask, 'name', entryLiteral),
+                            updateStatement('del', currentTask, 'directory', directoryId)
+
+                        ]);
+                        assertUndefined(get({ object: currentTask }));
+                        assertUndefined(get({ subject: currentTask }));
+                        return true;
+                    });
+                // .DS_Store
+                //return false;
+                default:
+                    fail();
+                    return false;
+            }
         }
     }
+
+    defineCommand("next", "process current task", [], processCurrent);
+
+    defineCommand("run", "continously process all tasks until manual intervention is required", [], () => {
+        while (processCurrent()) {
+        }
+    });
+
+    function getAll(subject: string | undefined, predicate: string | undefined, object: string | undefined, cb: (line: string) => void): void {
+        db.getStream(statement(subject, predicate, object)).on('data', (triple: any) => {
+            cb(`subject=${triple.subject} predicate=${triple.predicate} object=${triple.object}`)
+        });
+    }
+
+
+    defineCommand("get", "retrieve triples from database", ["-s, --subject <IRI>", "-p, --predicate <IRI>", "-o, --object <IRI>"], options => {
+        getAll(options.subject, options.predicate, options.object, console.log);
+    });
+
+
+    defineCommand("browse <uri>", "browse URI, shows triples where URI is used either as subject, predicate or object", [], uri => {
+        var listed = immutable.Set();
+        function browse(subject: any, predicate: any, object: any) {
+            getAll(subject, predicate, object, line => {
+                if (!listed.contains(line)) {
+                    console.log(line);
+                    listed = listed.add(line);
+                }
+            });
+        }
+        browse(uri, undefined, undefined);
+        browse(undefined, uri, undefined);
+        browse(undefined, undefined, uri);
+    });
+
+    function tripleCommand(commandName: string, description: string, functionName: string) {
+        defineCommand(`${commandName} <subject> <predicate> <object>`, description, [], (subject, predicate, object) => assertUndefined(waitFor(consumer => db[functionName](statement(subject, predicate, object), consumer))));
+    }
+
+
+    tripleCommand("put", "store a triple in the database", "put");
+
+    tripleCommand("delete", "removes a triple from the database", "del");
+
+
+    function specCommand(cmdName: string, description: string, specHandler: (content: any) => void) {
+        defineCommand(`${cmdName} <${cmdName}spec>`, description, [], (spec) => {
+            const res: Pair<NodeJS.ErrnoException, string> = waitFor2(callback => fs.readFile(spec, 'utf8', callback));
+            assertUndefined(res.first);
+            specHandler(JSON.parse(res.second));
+        })
+    }
+
+    function replaceVariables(source: Statement<string>, mapper: (value: string) => any) {
+        const mapVariable = (value: string) => {
+            return value.startsWith('?') ? mapper(value.slice(1)) : value;
+        };
+        return statement(mapVariable(source.subject), mapVariable(source.predicate), mapVariable(source.object));
+    }
+
+
+    function search(query: Statement<string>[], handlers: any): void {
+        const stream = db.searchStream(query.map((source: any) => {
+            return replaceVariables(source, db.v);
+        }));
+        for (const name in handlers) {
+            stream.on(name, handlers[name]);
+        }
+    }
+
+    specCommand("query", "queries the database", (query) => {
+        search(query, {
+            data: (data: any) => console.log(query.select.map((field: string) => {
+                const fieldName = field.slice(1);
+                return `${fieldName}: ${data[fieldName]}`
+            }).join(', '))
+        })
+    });
+
+
+    specCommand("update", "update the database (experimental)", query => {
+        let actions: UpdateStatement[] = [];
+        search(query, {
+            data: (data: any) => {
+                query.update.forEach((action: any) => {
+                    actions.push({ operation: action.type, ...replaceVariables(action, variableName => data[variableName]) })
+                })
+            },
+            end: () => {
+                const putStream = db.putStream();
+                const delStream = db.delStream();
+                const streams: any = {
+                    put: putStream,
+                    del: delStream
+                }
+                actions.forEach((action: UpdateStatement) => {
+                    const type = action.operation;
+                    const s = statement(action.subject, action.predicate, action.object);
+                    console.log(`${type} subject: ${s.subject} predicate=${s.predicate} object=${s.object}`)
+                    streams[type].write(statement);
+                });
+                putStream.end();
+                delStream.end();
+                console.log('processed!')
+            }
+        });
+    });
+
+    defineCommand("purge", "removes all triples from the database, empties the database", [], () => {
+        db.close();
+        assertUndefined(waitFor(callback => rimraf(dbPath, callback)));
+    });
+
+    commander.parse(process.argv);
+    if (!executed) {
+        commander.outputHelp();
+    }
+
+
     /*
     const getResult: GetResult = waitFor((consumer: Consumer<GetResult>) => db.get({ subject: 'ms:root', predicate: 'ms:current' }, (err: any, list: any) => consumer({ err: err, list: list })));
     assertEquals(getResult.err, null);
@@ -585,17 +886,17 @@ Fiber(() => {
             assertEquals(statement.predicate, 'ms:current');
             //assertEquals(statement.object, 'ms:root');
             const currentTask = statement.object;
-
+ 
             const getType: GetResult = waitFor((consumer: Consumer<GetResult>) => db.get({ subject: currentTask, predicate: 'ms:type' }, (err: any, list: any) => consumer({ err: err, list: list })));
-
+ 
             assertEquals(getType.err, null);
             assertEquals(getType.list, [{ subject: currentTask, predicate: 'ms:type', object: 'ms:root' }])
             console.log('root');
             const getResult1: GetResult = waitFor((consumer: Consumer<GetResult>) => db.get({ subject: 'ms:MusikServer', predicate: 'ms:root', object: 'ms:root' }, (err: any, list: any) => consumer({ err: err, list: list })));
             assertEquals(getResult1.err, null);
             assertEquals(getResult1.list, []);
-
-
+ 
+ 
             const getResult2: GetResult = waitFor((consumer: Consumer<GetResult>) => db.get({ predicate: 'ms:next', object: currentTask }, (err: any, list: any) => consumer({ err: err, list: list })));
             assertEquals(getResult2.err, null);
             const prevResults = getResult2.list
@@ -605,7 +906,7 @@ Fiber(() => {
             assertEquals(prevStatement.object, currentTask);
             const prev = prevStatement.subject;
             //assertEquals(prev.object, )
-
+ 
             const getResult3: GetResult = waitFor((consumer: Consumer<GetResult>) => db.get({ subject: currentTask, predicate: 'ms:next' }, (err: any, list: any) => consumer({ err: err, list: list })));
             assertEquals(getResult3.err, null);
             const nextResults = getResult3.list
@@ -614,10 +915,10 @@ Fiber(() => {
             assertEquals(nextStatement.predicate, 'ms:next');
             assertEquals(nextStatement.subject, currentTask);
             const next = prevStatement.object;
-
+ 
             fail();
-
-
+ 
+ 
             db.put([
                 { subject: 'ms:MusikServer', predicate: 'ms:root', object: 'ms:root' },
                 { subject: 'ms:MusikServer', predicate: 'ms:type', object: 'ms:volume' },
@@ -630,11 +931,11 @@ Fiber(() => {
                 { subject: currentTask, predicate: 'ms:next', object: next },
                 { subject: 'ms:root', predicate: 'ms:current', object: currentTask }
             ])
-
+ 
             //update next of prev
             //update current
-
-
+ 
+ 
             //assert (list[0])
             fail();
             break;
@@ -643,14 +944,14 @@ Fiber(() => {
             break;
     }
 }
-
+ 
 /*
 const records: Map<string, Record> = new Map();
-
+ 
 function setRecord(id: string, record: Record): void {
     records.set(id, record);
 }
-
+ 
 function update(id: string, content: any, loaded: string | undefined): void {
     setRecord(id, {
         type: "loaded",
@@ -658,19 +959,19 @@ function update(id: string, content: any, loaded: string | undefined): void {
         loadedContent: loaded,
     });
 }
-
+ 
 function put(id: string, value: any): void {
     update(id, value, undefined);
 }
-
+ 
 function putTask(taskId: number, task: LinkedTask): void {
     put(`task/${taskId}`, task);
 }
-
+ 
 function deleteRecord(id: string) {
     setRecord(id, DELETED);
 }
-
+ 
 function get(id: string): any {
     const record = records.get(id);
     if (isUndefined(record)) {
@@ -692,7 +993,7 @@ function get(id: string): any {
         return record.type === "loaded" ? record.currentContent : undefined;
     }
 }
-
+ 
 function commit(): void {
     //getCurrentTask(db);
     let batch = db.batch();
@@ -710,17 +1011,17 @@ function commit(): void {
     assertUndefined(waitFor(consumer => batch.write(consumer)));
     records.clear();
 }
-
+ 
 function getTask(taskId: number): LinkedTask {
     const task = get(taskKey(taskId));
     assertDefined(task);
     return task as LinkedTask;
 }
-
+ 
 function setNext(previousTaskId: number, nextTaskId: number): void {
     getTask(previousTaskId).next = nextTaskId;
 }
-
+ 
 function getPath(taskId: number): string {
     const task = getTask(taskId);
     if (task.type === 'root') {
@@ -732,7 +1033,7 @@ function getPath(taskId: number): string {
         return path.join(getPath(fse.directory), fse.name);
     }
 }
-
+ 
 /*
 function getRoot(): Root {
     let root: LinkedTask = get('task/0');
