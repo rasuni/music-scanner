@@ -142,7 +142,6 @@ function waitFor<R>(asyncFunction: (consumer: Consumer<R>) => void): R {
     return Fiber.yield();
 }
 
-
 interface Pair<F, S> {
     readonly first: F,
     readonly second: S
@@ -187,6 +186,7 @@ function deepEquals(actual: any, expected: any): boolean {
     }
     else {
         if (isObject(actual) && isObject(expected)) {
+
             if (isNull(actual)) {
                 return isNull(expected);
             }
@@ -230,9 +230,11 @@ function isUndefined(value: any): value is undefined {
     return value === undefined;
 }
 
+/*
 function assertDefined(value: any): void {
     failIf(isUndefined(value));
 }
+*/
 
 function assertUndefined(value: any): void {
     assert(isUndefined(value));
@@ -474,13 +476,18 @@ function put(subject: string, predicate: string, object: string): UpdateStatemen
     return updateStatement('put', subject, predicate, object);
 }
 
+function del(subject: string, predicate: string, object: string): UpdateStatement {
+    return updateStatement('del', subject, predicate, object);
+}
+
+/*
 function updateObject(subject: string, predicate: string, existingObject: string, newObject: string): UpdateStatement[] {
     return [
-        updateStatement('del', subject, predicate, existingObject),
+        del(subject, predicate, existingObject),
         put(subject, predicate, newObject)
     ]
 }
-
+*/
 function wait2Success<S>(asyncFunction: (consumer: Consumer2<object, S>) => void): S {
     const result: Pair<object, any> = waitFor2(asyncFunction);
     assertEquals(result.first, null);
@@ -506,16 +513,25 @@ function prepareStream(stream: any): void {
     stream.on('end', () => currentFiber.run(undefined));
 }
 
-function streamOpt(stream: any): any {
+function streamOpt<T>(stream: any, onEmpty: () => T, onData: (data: any) => T): T {
     prepareStream(stream);
     const data = Fiber.yield();
     if (isUndefined(data)) {
-        return undefined;
+        return onEmpty();
     }
     else {
         assertUndefined(Fiber.yield());
-        return data;
+        return onData(data);
     }
+}
+
+function logError(message: string): boolean {
+    console.error(message);
+    return false;
+}
+
+function volumeNotMounted(): boolean {
+    return logError('Volume not mounted. Please mount!');
 }
 
 Fiber(() => {
@@ -538,26 +554,22 @@ Fiber(() => {
     const db = levelgraph(level(dbPath), { joinAlgorithm: 'basic' });
 
 
-    function get(pattern: StatementPattern): Statement<string> | undefined {
-        return streamOpt(db.getStream(pattern));
+    function get<T>(pattern: StatementPattern, onEmpty: () => T, onStatement: (statement: Statement<string>) => T): T {
+        return streamOpt(db.getStream(pattern), onEmpty, onStatement);
     }
 
-    function getObject(subject: string, predicate: string): string | undefined {
-        const statement = get({ subject: subject, predicate: predicate });
-        if (isUndefined(statement)) {
-            return undefined;
-        }
-        else {
+    function getObject<T>(subject: string, predicate: string, notFound: () => T, found: (object: string) => T): T {
+        return get({ subject: subject, predicate: predicate }, notFound, statement => {
             assertEquals(statement.subject, subject);
             assertEquals(statement.predicate, predicate);
-            return statement.object;
-        }
+            return found(statement.object);
+        });
     }
 
     function getProperty(subject: string, name: string): string {
-        const attr = getObject(subject, name);
-        assertDefined(attr);
-        return attr as string;
+        return getObject(subject, name, fail, obj => obj);
+        //assertDefined(attr);
+        //return attr as string;
     }
 
     function update(changeSet: UpdateStatement[]): void {
@@ -577,8 +589,7 @@ Fiber(() => {
 
 
     function processCurrent(): boolean {
-        const currentTaskOpt = getObject('root', 'current');
-        if (isUndefined(currentTaskOpt)) {
+        return getObject('root', 'current', () => {
             console.log('initializing database');
             update([
                 put('root', 'current', 'root'),
@@ -586,12 +597,33 @@ Fiber(() => {
                 put('root', 'next', 'root')
             ]);
             return true;
-        }
-        else {
-            const currentTask = currentTaskOpt;
+        }, currentTask => {
 
             function getPropertyFromCurrent(name: string): string {
                 return getProperty(currentTask, name);
+            }
+
+            function updateObjectFromCurrent(subject: string, predicate: string, newObject: string): UpdateStatement[] {
+                return [
+                    del(subject, predicate, currentTask),
+                    put(subject, predicate, newObject)
+                ]
+            }
+
+            function appendToPrev(taskId: string): UpdateStatement[] {
+                return get({ predicate: 'next', object: currentTask }, fail, prevStatement => {
+                    assertEquals(prevStatement.predicate, 'next');
+                    assertEquals(prevStatement.object, currentTask);
+                    return updateObjectFromCurrent(prevStatement.subject, 'next', taskId);
+                });
+            }
+
+            function setCurrent(newCurrent: string): UpdateStatement[] {
+                return updateObjectFromCurrent('root', 'current', newCurrent);
+            }
+
+            function moveToNext(): UpdateStatement[] {
+                return setCurrent(getPropertyFromCurrent('next'));
             }
 
 
@@ -599,7 +631,6 @@ Fiber(() => {
                 const nameLiteral = `s/${encodeURIComponent(name)}`;
 
                 function mapAttributeValues<S, T>(mapper: (subject: S, predicate: string, object: string) => T, subject: S): T[] {
-
                     const result: T[] = [];
 
                     function add(predicate: string, object: string): void {
@@ -614,54 +645,50 @@ Fiber(() => {
                     return result;
                 }
 
-
-                const result = streamOpt(db.searchStream(mapAttributeValues(statement, db.v('s'))));
-
-                if (isUndefined(result)) {
-
-                    const prevStatement = get({ predicate: 'next', object: currentTask }) as Statement<string>;
-                    assertDefined(prevStatement);
-
-                    assertEquals(prevStatement.predicate, 'next');
-                    assertEquals(prevStatement.object, currentTask);
-                    const prev = prevStatement.subject;
+                return streamOpt(db.searchStream(mapAttributeValues(statement, db.v('s'))), () => {
                     console.log(`  adding ${type} ${name}`);
                     const taskId = `task/${uuid()}`;
-
                     update([
                         ...mapAttributeValues(put, taskId),
                         put(taskId, 'next', currentTask),
-                        ...updateObject(prev, 'next', currentTask, taskId)
+                        ...appendToPrev(taskId)
                     ])
-
-
-                    update(updateObject('root', 'current', currentTask, getPropertyFromCurrent('next')));
+                    // needs a second update, because the attribute 'next' might have been set just before
+                    // when appending a task to prev.
+                    update(moveToNext());
                     return true;
-                }
-                else {
-                    return false;
-
-                }
-
+                }, () => false);
             }
 
             function getStringProperty(predicate: string) {
                 return decodeStringLiteral(getPropertyFromCurrent(predicate));
             }
 
+            function delCurrent(predicate: string, object: string): UpdateStatement {
+                return del(currentTask, predicate, object);
+            }
+
             const type = getPropertyFromCurrent('type');
 
-            function processFileSystemPath<T>(path: string, directory: () => T, file: () => T, missing: () => T): T {
-                console.log(`processing ${type} ${path}`);
+            function stat<T>(path: string, success: (stats: fs.Stats) => T, missing: () => T): T {
                 const result: Pair<NodeJS.ErrnoException, fs.Stats> = waitFor2((consumer: Consumer2<NodeJS.ErrnoException, fs.Stats>) => fs.stat(path, consumer));
                 const err = result.first;
                 if (isNull(err)) {
-                    return result.second.isDirectory() ? directory() : file();
+                    return success(result.second);
                 }
                 else {
                     assertEquals(err.code, 'ENOENT');
                     return missing();
                 }
+            }
+
+            function processFileSystemPath<T>(path: string, directory: () => T, file: () => T, missing: () => T): T {
+                console.log(`processing ${type} ${path}`);
+                return stat(path, stat => (stat.isDirectory() ? directory : file)(), missing);
+            }
+
+            function assertMissing(pattern: StatementPattern): void {
+                get(pattern, () => { }, fail);
             }
 
             switch (type) {
@@ -678,66 +705,73 @@ Fiber(() => {
                     return true;
                 case 'volume':
                     const volumePath = getStringProperty('path');
-                    processFileSystemPath(volumePath, () => {
+                    return processFileSystemPath(volumePath, () => {
                         const files = wait2Success((consumer: Consumer2<NodeJS.ErrnoException, string[]>) => fs.readdir(volumePath, consumer));
                         failIf(files.length === 0);
-                        assert(enqueueTask(files[0], 'fileSystemEntry', 'name', { predicate: 'directory', object: currentTask }));
-                    }, fail, fail);
-                    return true;
+                        let found = false;
+                        for (const file of files) {
+                            if (enqueueTask(file, 'fileSystemEntry', 'name', { predicate: 'directory', object: currentTask })) {
+                                found = true;
+                                break;
+                            }
+                        }
+                        assert(found);
+                        return true;
+                    }, fail, volumeNotMounted);
                 case 'fileSystemEntry':
                     const entryLiteral = getPropertyFromCurrent('name');
                     const entryName = decodeStringLiteral(entryLiteral);
                     const directoryId = getPropertyFromCurrent('directory');
-                    assertEquals(getObject(directoryId, 'type'), 'volume');
-                    return processFileSystemPath(path.join(decodeStringLiteral(getProperty(directoryId, 'path')), entryName), fail, () => {
-                        assertEquals(entryName, '.DS_Store');
-                        console.error('unknown file type!');
-                        return false;
-                        // .DS_Store
-                    }, () => {
-                        assertUndefined(get({ predicate: 'directory', object: currentTask }));
-                        const next = getPropertyFromCurrent('next');
-                        const prevStatement = get({ predicate: 'next', object: currentTask }) as Statement<string>;
-                        assertDefined(prevStatement);
-
-                        assertEquals(prevStatement.predicate, 'next');
-                        assertEquals(prevStatement.object, currentTask);
-                        const prev = prevStatement.subject;
-                        //getStream
-                        prepareStream(db.getStream({ subject: currentTask }));
-                        const objects: any = {
-                            type: 'fileSystemEntry',
-                            name: entryLiteral,
-                            directory: directoryId,
-                            next: next
-                        }
-                        for (; ;) {
-                            const statement = Fiber.yield();
-                            if (isUndefined(statement)) {
-                                break;
-                            }
-                            assertEquals(statement.subject, currentTask);
-                            const predicate = statement.predicate;
-                            assertEquals(statement.object, objects[predicate]);
-                            delete objects[predicate];
-                        }
-                        //ssertUndefined(get({  object: currentTask }));
-                        assertEquals(objects, {});
-
-                        assertUndefined(get({ predicate: currentTask }));
+                    assertEquals(getProperty(directoryId, 'type'), 'volume');
+                    const vPath = decodeStringLiteral(getProperty(directoryId, 'path'))
+                    return processFileSystemPath(path.join(vPath, entryName), () => {
+                        getObject(currentTask, 'isDirectory', () => { }, fail);
+                        console.log('  isDirectory: undefined --> true');
                         update([
-                            ...updateObject(prev, 'next', currentTask, next),
-                            ...updateObject('root', 'current', currentTask, next),
-
-                            updateStatement('del', currentTask, 'next', next),
-                            updateStatement('del', currentTask, 'type', 'fileSystemEntry'),
-                            updateStatement('del', currentTask, 'name', entryLiteral),
-                            updateStatement('del', currentTask, 'directory', directoryId)
-
+                            put(currentTask, 'isDirectory', 'b/true'),
+                            ...moveToNext(),
                         ]);
-                        assertUndefined(get({ object: currentTask }));
-                        assertUndefined(get({ subject: currentTask }));
                         return true;
+                    }, () => {
+                        assertEquals(getProperty(currentTask, 'isDirectory'), 'b/false');
+                        assertEquals(entryName, '.DS_Store');
+                        return logError('unknown file type!');
+                    }, () => {
+                        return stat(vPath, () => {
+                            assertMissing({ predicate: 'directory', object: currentTask });
+                            const next = getPropertyFromCurrent('next');
+                            prepareStream(db.getStream({ subject: currentTask }));
+                            const objects: any = {
+                                type: 'fileSystemEntry',
+                                name: entryLiteral,
+                                directory: directoryId,
+                                next: next
+                            }
+                            for (; ;) {
+                                const statement = Fiber.yield();
+                                if (isUndefined(statement)) {
+                                    break;
+                                }
+                                assertEquals(statement.subject, currentTask);
+                                const predicate = statement.predicate;
+                                assertEquals(statement.object, objects[predicate]);
+                                delete objects[predicate];
+                            }
+                            assertEquals(objects, {});
+                            assertMissing({ predicate: currentTask });
+                            console.log('  missing -> remove entry');
+                            update([
+                                ...appendToPrev(next),
+                                ...setCurrent(next),
+                                delCurrent('next', next),
+                                delCurrent('type', 'fileSystemEntry'),
+                                delCurrent('name', entryLiteral),
+                                delCurrent('directory', directoryId)
+                            ]);
+                            assertMissing({ object: currentTask });
+                            assertMissing({ subject: currentTask });
+                            return true;
+                        }, volumeNotMounted);
                     });
                 // .DS_Store
                 //return false;
@@ -745,7 +779,7 @@ Fiber(() => {
                     fail();
                     return false;
             }
-        }
+        });
     }
 
     defineCommand("next", "process current task", [], processCurrent);
