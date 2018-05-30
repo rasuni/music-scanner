@@ -534,365 +534,405 @@ function volumeNotMounted(): boolean {
     return logError('Volume not mounted. Please mount!');
 }
 
-Fiber(() => {
+const join = path.join;
 
-    let executed = false;
+const dbPath = join(__dirname, 'music-scanner');
 
-    function defineCommand(cmdSyntax: string, description: string, options: string[], action: (...args: any[]) => void) {
-        var cmd = commander.command(cmdSyntax).description(description);
-        for (const option of options) {
-            cmd = cmd.option(option);
-        }
-        cmd.action((...args: any[]) => {
-            action(...args);
-            executed = true;
-        });
+let executed = false;
+
+function defineCommand(cmdSyntax: string, description: string, options: string[], action: (...args: any[]) => void) {
+    var cmd = commander.command(cmdSyntax).description(description);
+    for (const option of options) {
+        cmd = cmd.option(option);
     }
-
-    const dbPath = path.join(__dirname, 'music-scanner');
-
-    const db = levelgraph(level(dbPath), { joinAlgorithm: 'basic' });
-
-
-    function get<T>(pattern: StatementPattern, onEmpty: () => T, onStatement: (statement: Statement<string>) => T): T {
-        return streamOpt(db.getStream(pattern), onEmpty, onStatement);
-    }
-
-    function getObject<T>(subject: string, predicate: string, notFound: () => T, found: (object: string) => T): T {
-        return get({ subject: subject, predicate: predicate }, notFound, statement => {
-            assertEquals(statement.subject, subject);
-            assertEquals(statement.predicate, predicate);
-            return found(statement.object);
-        });
-    }
-
-    function getProperty(subject: string, name: string): string {
-        return getObject(subject, name, fail, obj => obj);
-        //assertDefined(attr);
-        //return attr as string;
-    }
-
-    function update(changeSet: UpdateStatement[]): void {
-        const putStream = db.putStream();
-        const delStream = db.delStream();
-        const streams = {
-            put: putStream,
-            del: delStream
-        }
-        for (const s of changeSet) {
-            streams[s.operation].write(statement(s.subject, s.predicate, s.object));
-        }
-        end(putStream);
-        end(delStream);
-
-    }
-
-
-    function processCurrent(): boolean {
-        return getObject('root', 'current', () => {
-            console.log('initializing database');
-            update([
-                put('root', 'current', 'root'),
-                put('root', 'type', 'root'),
-                put('root', 'next', 'root')
-            ]);
-            return true;
-        }, currentTask => {
-
-            function getPropertyFromCurrent(name: string): string {
-                return getProperty(currentTask, name);
-            }
-
-            function updateObjectFromCurrent(subject: string, predicate: string, newObject: string): UpdateStatement[] {
-                return [
-                    del(subject, predicate, currentTask),
-                    put(subject, predicate, newObject)
-                ]
-            }
-
-            function appendToPrev(taskId: string): UpdateStatement[] {
-                return get({ predicate: 'next', object: currentTask }, fail, prevStatement => {
-                    assertEquals(prevStatement.predicate, 'next');
-                    assertEquals(prevStatement.object, currentTask);
-                    return updateObjectFromCurrent(prevStatement.subject, 'next', taskId);
-                });
-            }
-
-            function setCurrent(newCurrent: string): UpdateStatement[] {
-                return updateObjectFromCurrent('root', 'current', newCurrent);
-            }
-
-            function moveToNext(): UpdateStatement[] {
-                return setCurrent(getPropertyFromCurrent('next'));
-            }
-
-
-            function enqueueTask(name: string, type: string, namePredicate: string, additionalAttribute: AttributeValue | undefined): boolean {
-                const nameLiteral = `s/${encodeURIComponent(name)}`;
-
-                function mapAttributeValues<S, T>(mapper: (subject: S, predicate: string, object: string) => T, subject: S): T[] {
-                    const result: T[] = [];
-
-                    function add(predicate: string, object: string): void {
-                        result.push(mapper(subject, predicate, object))
-                    }
-
-                    add('type', type);
-                    add(namePredicate, nameLiteral);
-                    if (additionalAttribute !== undefined) {
-                        add(additionalAttribute.predicate, additionalAttribute.object);
-                    }
-                    return result;
-                }
-
-                return streamOpt(db.searchStream(mapAttributeValues(statement, db.v('s'))), () => {
-                    console.log(`  adding ${type} ${name}`);
-                    const taskId = `task/${uuid()}`;
-                    update([
-                        ...mapAttributeValues(put, taskId),
-                        put(taskId, 'next', currentTask),
-                        ...appendToPrev(taskId)
-                    ])
-                    // needs a second update, because the attribute 'next' might have been set just before
-                    // when appending a task to prev.
-                    update(moveToNext());
-                    return true;
-                }, () => false);
-            }
-
-            function getStringProperty(predicate: string) {
-                return decodeStringLiteral(getPropertyFromCurrent(predicate));
-            }
-
-            function delCurrent(predicate: string, object: string): UpdateStatement {
-                return del(currentTask, predicate, object);
-            }
-
-            const type = getPropertyFromCurrent('type');
-
-            function stat<T>(path: string, success: (stats: fs.Stats) => T, missing: () => T): T {
-                const result: Pair<NodeJS.ErrnoException, fs.Stats> = waitFor2((consumer: Consumer2<NodeJS.ErrnoException, fs.Stats>) => fs.stat(path, consumer));
-                const err = result.first;
-                if (isNull(err)) {
-                    return success(result.second);
-                }
-                else {
-                    assertEquals(err.code, 'ENOENT');
-                    return missing();
-                }
-            }
-
-            function processFileSystemPath<T>(path: string, directory: () => T, file: () => T, missing: () => T): T {
-                console.log(`processing ${type} ${path}`);
-                return stat(path, stat => (stat.isDirectory() ? directory : file)(), missing);
-            }
-
-            function assertMissing(pattern: StatementPattern): void {
-                get(pattern, () => { }, fail);
-            }
-
-            switch (type) {
-                case 'root':
-                    console.log('processing root');
-                    let found = true;
-                    for (const path of ['/Volumes/Musik', '/Volumes/music', '/Volumes/Qmultimedia', '/Users/ralph.sigrist/Music/iTunes/ITunes Media/Music']) {
-                        if (enqueueTask(path, 'volume', 'path', undefined)) {
-                            found = true;
-                            break;
-                        }
-                    }
-                    assert(found);
-                    return true;
-                case 'volume':
-                    const volumePath = getStringProperty('path');
-                    return processFileSystemPath(volumePath, () => {
-                        const files = wait2Success((consumer: Consumer2<NodeJS.ErrnoException, string[]>) => fs.readdir(volumePath, consumer));
-                        failIf(files.length === 0);
-                        let found = false;
-                        for (const file of files) {
-                            if (enqueueTask(file, 'fileSystemEntry', 'name', { predicate: 'directory', object: currentTask })) {
-                                found = true;
-                                break;
-                            }
-                        }
-                        assert(found);
-                        return true;
-                    }, fail, volumeNotMounted);
-                case 'fileSystemEntry':
-                    const entryLiteral = getPropertyFromCurrent('name');
-                    const entryName = decodeStringLiteral(entryLiteral);
-                    const directoryId = getPropertyFromCurrent('directory');
-                    assertEquals(getProperty(directoryId, 'type'), 'volume');
-                    const vPath = decodeStringLiteral(getProperty(directoryId, 'path'))
-                    return processFileSystemPath(path.join(vPath, entryName), () => {
-                        getObject(currentTask, 'isDirectory', () => { }, fail);
-                        console.log('  isDirectory: undefined --> true');
-                        update([
-                            put(currentTask, 'isDirectory', 'b/true'),
-                            ...moveToNext(),
-                        ]);
-                        return true;
-                    }, () => {
-                        assertEquals(getProperty(currentTask, 'isDirectory'), 'b/false');
-                        assertEquals(entryName, '.DS_Store');
-                        return logError('unknown file type!');
-                    }, () => {
-                        return stat(vPath, () => {
-                            assertMissing({ predicate: 'directory', object: currentTask });
-                            const next = getPropertyFromCurrent('next');
-                            prepareStream(db.getStream({ subject: currentTask }));
-                            const objects: any = {
-                                type: 'fileSystemEntry',
-                                name: entryLiteral,
-                                directory: directoryId,
-                                next: next
-                            }
-                            for (; ;) {
-                                const statement = Fiber.yield();
-                                if (isUndefined(statement)) {
-                                    break;
-                                }
-                                assertEquals(statement.subject, currentTask);
-                                const predicate = statement.predicate;
-                                assertEquals(statement.object, objects[predicate]);
-                                delete objects[predicate];
-                            }
-                            assertEquals(objects, {});
-                            assertMissing({ predicate: currentTask });
-                            console.log('  missing -> remove entry');
-                            update([
-                                ...appendToPrev(next),
-                                ...setCurrent(next),
-                                delCurrent('next', next),
-                                delCurrent('type', 'fileSystemEntry'),
-                                delCurrent('name', entryLiteral),
-                                delCurrent('directory', directoryId)
-                            ]);
-                            assertMissing({ object: currentTask });
-                            assertMissing({ subject: currentTask });
-                            return true;
-                        }, volumeNotMounted);
-                    });
-                // .DS_Store
-                //return false;
-                default:
-                    fail();
-                    return false;
-            }
-        });
-    }
-
-    defineCommand("next", "process current task", [], processCurrent);
-
-    defineCommand("run", "continously process all tasks until manual intervention is required", [], () => {
-        while (processCurrent()) {
-        }
+    cmd.action((...args: any[]) => {
+        action(...args);
+        executed = true;
     });
-
-    function getAll(subject: string | undefined, predicate: string | undefined, object: string | undefined, cb: (line: string) => void): void {
-        db.getStream(statement(subject, predicate, object)).on('data', (triple: any) => {
-            cb(`subject=${triple.subject} predicate=${triple.predicate} object=${triple.object}`)
-        });
-    }
+}
 
 
-    defineCommand("get", "retrieve triples from database", ["-s, --subject <IRI>", "-p, --predicate <IRI>", "-o, --object <IRI>"], options => {
-        getAll(options.subject, options.predicate, options.object, console.log);
+const db = levelgraph(level(dbPath), { joinAlgorithm: 'basic' });
+
+
+function get<T>(pattern: StatementPattern, onEmpty: () => T, onStatement: (statement: Statement<string>) => T): T {
+    return streamOpt(db.getStream(pattern), onEmpty, onStatement);
+}
+
+function getObject<T>(subject: string, predicate: string, notFound: () => T, found: (object: string) => T): T {
+    return get({ subject: subject, predicate: predicate }, notFound, statement => {
+        assertEquals(statement.subject, subject);
+        assertEquals(statement.predicate, predicate);
+        return found(statement.object);
     });
+}
 
+function getProperty(subject: string, name: string): string {
+    return getObject(subject, name, fail, obj => obj);
+    //assertDefined(attr);
+    //return attr as string;
+}
 
-    defineCommand("browse <uri>", "browse URI, shows triples where URI is used either as subject, predicate or object", [], uri => {
-        var listed = immutable.Set();
-        function browse(subject: any, predicate: any, object: any) {
-            getAll(subject, predicate, object, line => {
-                if (!listed.contains(line)) {
-                    console.log(line);
-                    listed = listed.add(line);
-                }
+function update(changeSet: UpdateStatement[]): void {
+    const putStream = db.putStream();
+    const delStream = db.delStream();
+    const streams = {
+        put: putStream,
+        del: delStream
+    }
+    for (const s of changeSet) {
+        streams[s.operation].write(statement(s.subject, s.predicate, s.object));
+    }
+    end(putStream);
+    end(delStream);
+}
+
+function processCurrent(): boolean {
+    return getObject('root', 'current', () => {
+        console.log('initializing database');
+        update([
+            put('root', 'current', 'root'),
+            put('root', 'type', 'root'),
+            put('root', 'next', 'root')
+        ]);
+        return true;
+    }, currentTask => {
+
+        function getPropertyFromCurrent(name: string): string {
+            return getProperty(currentTask, name);
+        }
+
+        function updateObjectFromCurrent(subject: string, predicate: string, newObject: string): UpdateStatement[] {
+            return [
+                del(subject, predicate, currentTask),
+                put(subject, predicate, newObject)
+            ]
+        }
+
+        function appendToPrev(taskId: string): UpdateStatement[] {
+            return get({ predicate: 'next', object: currentTask }, fail, prevStatement => {
+                assertEquals(prevStatement.predicate, 'next');
+                assertEquals(prevStatement.object, currentTask);
+                return updateObjectFromCurrent(prevStatement.subject, 'next', taskId);
             });
         }
-        browse(uri, undefined, undefined);
-        browse(undefined, uri, undefined);
-        browse(undefined, undefined, uri);
-    });
 
-    function tripleCommand(commandName: string, description: string, functionName: string) {
-        defineCommand(`${commandName} <subject> <predicate> <object>`, description, [], (subject, predicate, object) => assertUndefined(waitFor(consumer => db[functionName](statement(subject, predicate, object), consumer))));
-    }
-
-
-    tripleCommand("put", "store a triple in the database", "put");
-
-    tripleCommand("delete", "removes a triple from the database", "del");
-
-
-    function specCommand(cmdName: string, description: string, specHandler: (content: any) => void) {
-        defineCommand(`${cmdName} <${cmdName}spec>`, description, [], (spec) => {
-            const res: Pair<NodeJS.ErrnoException, string> = waitFor2(callback => fs.readFile(spec, 'utf8', callback));
-            assertUndefined(res.first);
-            specHandler(JSON.parse(res.second));
-        })
-    }
-
-    function replaceVariables(source: Statement<string>, mapper: (value: string) => any) {
-        const mapVariable = (value: string) => {
-            return value.startsWith('?') ? mapper(value.slice(1)) : value;
-        };
-        return statement(mapVariable(source.subject), mapVariable(source.predicate), mapVariable(source.object));
-    }
-
-
-    function search(query: Statement<string>[], handlers: any): void {
-        const stream = db.searchStream(query.map((source: any) => {
-            return replaceVariables(source, db.v);
-        }));
-        for (const name in handlers) {
-            stream.on(name, handlers[name]);
+        function setCurrent(newCurrent: string): UpdateStatement[] {
+            return updateObjectFromCurrent('root', 'current', newCurrent);
         }
-    }
 
-    specCommand("query", "queries the database", (query) => {
-        search(query, {
-            data: (data: any) => console.log(query.select.map((field: string) => {
-                const fieldName = field.slice(1);
-                return `${fieldName}: ${data[fieldName]}`
-            }).join(', '))
-        })
-    });
+        function moveToNextStatements(): UpdateStatement[] {
+            return setCurrent(getPropertyFromCurrent('next'));
+        }
+
+        function moveToNext(): void {
+            update(moveToNextStatements());
+        }
 
 
-    specCommand("update", "update the database (experimental)", query => {
-        let actions: UpdateStatement[] = [];
-        search(query, {
-            data: (data: any) => {
-                query.update.forEach((action: any) => {
-                    actions.push({ operation: action.type, ...replaceVariables(action, variableName => data[variableName]) })
-                })
-            },
-            end: () => {
-                const putStream = db.putStream();
-                const delStream = db.delStream();
-                const streams: any = {
-                    put: putStream,
-                    del: delStream
+        function enqueueTask(name: string, type: string, namePredicate: string, additionalAttribute: AttributeValue | undefined): boolean {
+            const nameLiteral = `s/${encodeURIComponent(name)}`;
+
+            function mapAttributeValues<S, T>(mapper: (subject: S, predicate: string, object: string) => T, subject: S): T[] {
+                const result: T[] = [];
+
+                function add(predicate: string, object: string): void {
+                    result.push(mapper(subject, predicate, object))
                 }
-                actions.forEach((action: UpdateStatement) => {
-                    const type = action.operation;
-                    const s = statement(action.subject, action.predicate, action.object);
-                    console.log(`${type} subject: ${s.subject} predicate=${s.predicate} object=${s.object}`)
-                    streams[type].write(statement);
-                });
-                putStream.end();
-                delStream.end();
-                console.log('processed!')
+
+                add('type', type);
+                add(namePredicate, nameLiteral);
+                if (additionalAttribute !== undefined) {
+                    add(additionalAttribute.predicate, additionalAttribute.object);
+                }
+                return result;
+            }
+
+            return streamOpt(db.searchStream(mapAttributeValues(statement, db.v('s'))), () => {
+                console.log(`  adding ${type} ${name}`);
+                const taskId = `task/${uuid()}`;
+                update([
+                    ...mapAttributeValues(put, taskId),
+                    put(taskId, 'next', currentTask),
+                    ...appendToPrev(taskId)
+                ])
+                // needs a second update, because the attribute 'next' might have been set just before
+                // when appending a task to prev.
+                moveToNext();
+                return true;
+            }, () => false);
+        }
+
+        function getStringProperty(predicate: string) {
+            return decodeStringLiteral(getPropertyFromCurrent(predicate));
+        }
+
+        function delCurrent(predicate: string, object: string): UpdateStatement {
+            return del(currentTask, predicate, object);
+        }
+
+
+        function stat<T>(path: string, success: (stats: fs.Stats) => T, missing: () => T): T {
+            const result: Pair<NodeJS.ErrnoException, fs.Stats> = waitFor2((consumer: Consumer2<NodeJS.ErrnoException, fs.Stats>) => fs.stat(path, consumer));
+            const err = result.first;
+            if (isNull(err)) {
+                return success(result.second);
+            }
+            else {
+                assertEquals(err.code, 'ENOENT');
+                return missing();
+            }
+        }
+
+        function assertMissing(pattern: StatementPattern): void {
+            get(pattern, () => { }, fail);
+        }
+
+        function processDirectory(path: string): boolean {
+            const files = wait2Success((consumer: Consumer2<NodeJS.ErrnoException, string[]>) => fs.readdir(path, consumer));
+            failIf(files.length === 0);
+            let found = false;
+            for (const file of files) {
+                if (enqueueTask(file, 'fileSystemEntry', 'name', { predicate: 'directory', object: currentTask })) {
+                    found = true;
+                    break;
+                }
+            }
+            assert(found);
+            return true;
+        }
+
+        function updateEntryType(bValue: string, alreadyUpdated: () => boolean): boolean {
+            return getObject(currentTask, 'isDirectory', () => {
+                console.log(`  isDirectory: undefined --> ${bValue}`);
+                update([
+                    put(currentTask, 'isDirectory', `b/${bValue}`),
+                    ...moveToNextStatements(),
+                ]);
+                return true;
+            }, (object: string) => {
+                assertEquals(object, `b/${bValue}`);
+                return alreadyUpdated();
+            })
+        }
+
+
+
+
+        const type = getPropertyFromCurrent('type');
+
+        function processFileSystemPath<T>(path: string, directory: () => T, file: () => T, missing: () => T): T {
+            console.log(`processing ${type} ${path}`);
+            return stat(path, stat => (stat.isDirectory() ? directory : file)(), missing);
+        }
+
+
+
+        switch (type) {
+            case 'root':
+                console.log('processing root');
+                if (isUndefined(['/Volumes/Musik', '/Volumes/music', '/Volumes/Qmultimedia', '/Users/ralph.sigrist/Music/iTunes/ITunes Media/Music'].find(path => enqueueTask(path, 'volume', 'path', undefined)))) {
+                    console.log('  completed');
+                    moveToNext();
+                }
+                return true;
+            case 'volume':
+                const volumePath = getStringProperty('path');
+                return processFileSystemPath(volumePath, () => processDirectory(volumePath), fail, volumeNotMounted);
+            case 'fileSystemEntry':
+                const entryLiteral = getPropertyFromCurrent('name');
+                let entryName = decodeStringLiteral(entryLiteral);
+                let directoryId = getPropertyFromCurrent('directory');
+
+                function getPropertyFromDirectory(name: string) {
+                    return getProperty(directoryId, name);
+                }
+
+                function getStringPropertyFromDirectory(name: string) {
+                    return decodeStringLiteral(getPropertyFromDirectory(name));
+                }
+
+                function joinEntryPath(prepend: string): string {
+                    return join(prepend, entryName);
+                }
+
+                for (; ;) {
+                    const type = getPropertyFromDirectory('type');
+                    if (type === 'volume') {
+                        break;
+                    }
+                    assertEquals(type, 'fileSystemEntry');
+                    entryName = joinEntryPath(getStringPropertyFromDirectory('name'));
+                    directoryId = getPropertyFromDirectory('directory');
+                }
+                const vPath = getStringPropertyFromDirectory('path');
+                const entryPath = joinEntryPath(vPath);
+                return processFileSystemPath(entryPath,
+                    () => updateEntryType('true', () => processDirectory(entryPath)),
+                    () => updateEntryType('false', () => {
+                        assertEquals(entryName, '.DS_Store');
+                        // .DS_Store
+                        return logError('unknown file type!');
+                    }), () => stat(vPath, () => {
+                        assertMissing({ predicate: 'directory', object: currentTask });
+                        const next = getPropertyFromCurrent('next');
+                        prepareStream(db.getStream({ subject: currentTask }));
+                        const objects: any = {
+                            type: 'fileSystemEntry',
+                            name: entryLiteral,
+                            directory: directoryId,
+                            next: next
+                        }
+                        for (; ;) {
+                            const statement = Fiber.yield();
+                            if (isUndefined(statement)) {
+                                break;
+                            }
+                            assertEquals(statement.subject, currentTask);
+                            const predicate = statement.predicate;
+                            assertEquals(statement.object, objects[predicate]);
+                            delete objects[predicate];
+                        }
+                        assertEquals(objects, {});
+                        assertMissing({ predicate: currentTask });
+                        console.log('  missing -> remove entry');
+                        update([
+                            ...appendToPrev(next),
+                            ...setCurrent(next),
+                            delCurrent('next', next),
+                            delCurrent('type', 'fileSystemEntry'),
+                            delCurrent('name', entryLiteral),
+                            delCurrent('directory', directoryId)
+                        ]);
+                        assertMissing({ object: currentTask });
+                        assertMissing({ subject: currentTask });
+                        return true;
+                    }, volumeNotMounted));
+            // .DS_Store
+            //return false;
+            default:
+                fail();
+                return false;
+        }
+    });
+}
+
+defineCommand("next", "process current task", [], processCurrent);
+
+defineCommand("run", "continously process all tasks until manual intervention is required", [], () => {
+    while (processCurrent()) {
+    }
+});
+
+function getAll(subject: string | undefined, predicate: string | undefined, object: string | undefined, cb: (line: string) => void): void {
+    db.getStream(statement(subject, predicate, object)).on('data', (triple: any) => {
+        cb(`subject=${triple.subject} predicate=${triple.predicate} object=${triple.object}`)
+    });
+}
+
+
+defineCommand("get", "retrieve triples from database", ["-s, --subject <IRI>", "-p, --predicate <IRI>", "-o, --object <IRI>"], options => {
+    getAll(options.subject, options.predicate, options.object, console.log);
+});
+
+
+defineCommand("browse <uri>", "browse URI, shows triples where URI is used either as subject, predicate or object", [], uri => {
+    var listed = immutable.Set();
+    function browse(subject: any, predicate: any, object: any) {
+        getAll(subject, predicate, object, line => {
+            if (!listed.contains(line)) {
+                console.log(line);
+                listed = listed.add(line);
             }
         });
-    });
+    }
+    browse(uri, undefined, undefined);
+    browse(undefined, uri, undefined);
+    browse(undefined, undefined, uri);
+});
 
-    defineCommand("purge", "removes all triples from the database, empties the database", [], () => {
-        db.close();
-        assertUndefined(waitFor(callback => rimraf(dbPath, callback)));
+function tripleCommand(commandName: string, description: string, functionName: string) {
+    defineCommand(`${commandName} <subject> <predicate> <object>`, description, [], (subject, predicate, object) => assertUndefined(waitFor(consumer => db[functionName](statement(subject, predicate, object), consumer))));
+}
+
+
+tripleCommand("put", "store a triple in the database", "put");
+
+tripleCommand("delete", "removes a triple from the database", "del");
+
+
+function specCommand(cmdName: string, description: string, specHandler: (content: any) => void) {
+    defineCommand(`${cmdName} <${cmdName}spec>`, description, [], (spec) => {
+        const res: Pair<NodeJS.ErrnoException, string> = waitFor2(callback => fs.readFile(spec, 'utf8', callback));
+        assertUndefined(res.first);
+        specHandler(JSON.parse(res.second));
+    })
+}
+
+function replaceVariables(source: Statement<string>, mapper: (value: string) => any) {
+    const mapVariable = (value: string) => {
+        return value.startsWith('?') ? mapper(value.slice(1)) : value;
+    };
+    return statement(mapVariable(source.subject), mapVariable(source.predicate), mapVariable(source.object));
+}
+
+
+function search(query: Statement<string>[], handlers: any): void {
+    const stream = db.searchStream(query.map((source: any) => {
+        return replaceVariables(source, db.v);
+    }));
+    for (const name in handlers) {
+        stream.on(name, handlers[name]);
+    }
+}
+
+
+specCommand("query", "queries the database", (query) => {
+    search(query, {
+        data: (data: any) => console.log(query.select.map((field: string) => {
+            const fieldName = field.slice(1);
+            return `${fieldName}: ${data[fieldName]}`
+        }).join(', '))
+    })
+});
+
+
+specCommand("update", "update the database (experimental)", query => {
+    let actions: UpdateStatement[] = [];
+    search(query, {
+        data: (data: any) => {
+            query.update.forEach((action: any) => {
+                actions.push({ operation: action.type, ...replaceVariables(action, variableName => data[variableName]) })
+            })
+        },
+        end: () => {
+            const putStream = db.putStream();
+            const delStream = db.delStream();
+            const streams: any = {
+                put: putStream,
+                del: delStream
+            }
+            actions.forEach((action: UpdateStatement) => {
+                const type = action.operation;
+                const s = statement(action.subject, action.predicate, action.object);
+                console.log(`${type} subject: ${s.subject} predicate=${s.predicate} object=${s.object}`)
+                streams[type].write(statement);
+            });
+            putStream.end();
+            delStream.end();
+            console.log('processed!')
+        }
     });
+});
+
+
+defineCommand("purge", "removes all triples from the database, empties the database", [], () => {
+    db.close();
+    assertUndefined(waitFor(callback => rimraf(dbPath, callback)));
+});
+
+
+Fiber(() => {
 
     commander.parse(process.argv);
     if (!executed) {
