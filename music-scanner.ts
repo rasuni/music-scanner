@@ -136,9 +136,14 @@ type Record = LoadedRecord | DeletedRecord;
 
 type Consumer<T> = (result: T) => void;
 
+function getRunner(): (value?: any) => void {
+    const currentFiber = Fiber.current;
+    return (value?: any) => currentFiber.run(value);
+}
+
 function waitFor<R>(asyncFunction: (consumer: Consumer<R>) => void): R {
-    const fiber = Fiber.current;
-    asyncFunction((result: R) => fiber.run(result));
+    const run = getRunner();
+    asyncFunction((result: R) => run(result));
     return Fiber.yield();
 }
 
@@ -172,69 +177,42 @@ interface AnyObject {
     readonly [name: string]: any
 }
 
-function isObject(value: any): value is AnyObject | null {
-    return typeof value === 'object';
-}
-
 function isNull(value: any): value is null {
     return value === null;
 }
-
-function deepEquals(actual: any, expected: any): boolean {
-    if (actual === expected) {
-        return true;
-    }
-    else {
-        if (isObject(actual) && isObject(expected)) {
-
-            if (isNull(actual)) {
-                return isNull(expected);
-            }
-            else {
-                if (isNull(expected)) {
-                    return false;
-                }
-                else {
-                    const actualKeys = Object.keys(actual);
-                    if (actualKeys.length !== Object.keys(expected).length) {
-                        return false;
-                    }
-                    else {
-                        for (const key of actualKeys) {
-                            if (!deepEquals(actual[key], expected[key])) {
-                                return false;
-                            }
-                        }
-                        return true;
-                    }
-                }
-            }
-        }
-        else {
-            return false;
-        }
-    }
-}
-
 
 function assert(condition: boolean): void {
     failIf(!condition);
 }
 
+function assertSame(actual: any, expected: any) {
+    assert(actual === expected);
+}
+
+function assertObject(value: any) {
+    assertSame(typeof value, 'object');
+}
+
 function assertEquals(actual: any, expected: any): void {
-    assert(deepEquals(actual, expected));
+    if (actual !== expected) {
+        assertObject(actual);
+        assertObject(expected);
+        if (isNull(actual)) {
+            assert(isNull(expected));
+        }
+        else {
+            failIf(isNull(expected));
+            const actualKeys = Object.keys(actual);
+            assertSame(actualKeys.length, Object.keys(expected as AnyObject).length);
+            actualKeys.forEach(key => assertEquals(actual[key], (expected as AnyObject)[key]));
+        }
+    }
 }
 
 
 function isUndefined(value: any): value is undefined {
     return value === undefined;
 }
-
-/*
-function assertDefined(value: any): void {
-    failIf(isUndefined(value));
-}
-*/
 
 function assertUndefined(value: any): void {
     assert(isUndefined(value));
@@ -444,8 +422,7 @@ function write(stream: any, subject: string, predicate: string, object: string):
 */
 
 function end(stream: any): void {
-    const currentFiber = Fiber.current;
-    stream.on('close', () => currentFiber.run());
+    stream.on('close', getRunner());
     stream.end();
     Fiber.yield();
 }
@@ -507,10 +484,15 @@ function decodeStringLiteral(stringLiteral: string) {
 }
 
 function prepareStream(stream: any): void {
-    stream.on('error', fail);
-    const currentFiber = Fiber.current;
-    stream.on('data', (data: any) => currentFiber.run(data));
-    stream.on('end', () => currentFiber.run(undefined));
+
+    function on(event: string, handler: any): void {
+        stream.on(event, handler);
+    }
+
+    on('error', fail);
+    const run = getRunner();
+    on('data', (data: any) => run(data));
+    on('end', run);
 }
 
 function streamOpt<T>(stream: any, onEmpty: () => T, onData: (data: any) => T): T {
@@ -569,22 +551,27 @@ function getObject<T>(subject: string, predicate: string, notFound: () => T, fou
 
 function getProperty(subject: string, name: string): string {
     return getObject(subject, name, fail, obj => obj);
-    //assertDefined(attr);
-    //return attr as string;
+}
+
+function withStream(type: string, consumer: (stream: (subject: string, predicate: string, object: string) => void) => void): void {
+    const stream = db[type]();
+    consumer((subject: string, predicate: string, object: string) => stream.write(statement(subject, predicate, object)));
+    end(stream);
 }
 
 function update(changeSet: UpdateStatement[]): void {
-    const putStream = db.putStream();
-    const delStream = db.delStream();
-    const streams = {
-        put: putStream,
-        del: delStream
-    }
-    for (const s of changeSet) {
-        streams[s.operation].write(statement(s.subject, s.predicate, s.object));
-    }
-    end(putStream);
-    end(delStream);
+    withStream('putStream', putStream => {
+        withStream('delStream', delStream => {
+            const streams = {
+                put: putStream,
+                del: delStream
+            }
+            //transaction (putStream, delStream)
+            for (const s of changeSet) {
+                streams[s.operation](s.subject, s.predicate, s.object);
+            }
+        })
+    })
 }
 
 function processCurrent(): boolean {
@@ -642,6 +629,7 @@ function processCurrent(): boolean {
 
                 add('type', type);
                 add(namePredicate, nameLiteral);
+                //additionalAttributeValues (add);
                 if (additionalAttribute !== undefined) {
                     add(additionalAttribute.predicate, additionalAttribute.object);
                 }
@@ -663,9 +651,20 @@ function processCurrent(): boolean {
             }, () => false);
         }
 
+        function enqueueTasks(items: string[], type: string, predicate: string, additionalAttribute: AttributeValue | undefined): boolean {
+            if (isUndefined(items.find(name => enqueueTask(name, type, predicate, additionalAttribute)))) {
+                console.log('  completed');
+                moveToNext();
+            }
+            return true;
+        }
+
+
+        /*
         function getStringProperty(predicate: string) {
             return decodeStringLiteral(getPropertyFromCurrent(predicate));
         }
+        */
 
         function delCurrent(predicate: string, object: string): UpdateStatement {
             return del(currentTask, predicate, object);
@@ -679,7 +678,7 @@ function processCurrent(): boolean {
                 return success(result.second);
             }
             else {
-                assertEquals(err.code, 'ENOENT');
+                assertSame(err.code, 'ENOENT');
                 return missing();
             }
         }
@@ -691,15 +690,7 @@ function processCurrent(): boolean {
         function processDirectory(path: string): boolean {
             const files = wait2Success((consumer: Consumer2<NodeJS.ErrnoException, string[]>) => fs.readdir(path, consumer));
             failIf(files.length === 0);
-            let found = false;
-            for (const file of files) {
-                if (enqueueTask(file, 'fileSystemEntry', 'name', { predicate: 'directory', object: currentTask })) {
-                    found = true;
-                    break;
-                }
-            }
-            assert(found);
-            return true;
+            return enqueueTasks(files, 'fileSystemEntry', 'name', { predicate: 'directory', object: currentTask });
         }
 
         function updateEntryType(bValue: string, alreadyUpdated: () => boolean): boolean {
@@ -717,8 +708,6 @@ function processCurrent(): boolean {
         }
 
 
-
-
         const type = getPropertyFromCurrent('type');
 
         function processFileSystemPath<T>(path: string, directory: () => T, file: () => T, missing: () => T): T {
@@ -726,18 +715,12 @@ function processCurrent(): boolean {
             return stat(path, stat => (stat.isDirectory() ? directory : file)(), missing);
         }
 
-
-
         switch (type) {
             case 'root':
                 console.log('processing root');
-                if (isUndefined(['/Volumes/Musik', '/Volumes/music', '/Volumes/Qmultimedia', '/Users/ralph.sigrist/Music/iTunes/ITunes Media/Music'].find(path => enqueueTask(path, 'volume', 'path', undefined)))) {
-                    console.log('  completed');
-                    moveToNext();
-                }
-                return true;
+                return enqueueTasks(['/Volumes/Musik', '/Volumes/music', '/Volumes/Qmultimedia', '/Users/ralph.sigrist/Music/iTunes/ITunes Media/Music'], 'volume', 'path', undefined);
             case 'volume':
-                const volumePath = getStringProperty('path');
+                const volumePath = decodeStringLiteral(getPropertyFromCurrent('path')); // getStringProperty('path');
                 return processFileSystemPath(volumePath, () => processDirectory(volumePath), fail, volumeNotMounted);
             case 'fileSystemEntry':
                 const entryLiteral = getPropertyFromCurrent('name');
@@ -752,8 +735,10 @@ function processCurrent(): boolean {
                     return decodeStringLiteral(getPropertyFromDirectory(name));
                 }
 
+                let path = entryName;
+
                 function joinEntryPath(prepend: string): string {
-                    return join(prepend, entryName);
+                    return join(prepend, path);
                 }
 
                 for (; ;) {
@@ -762,7 +747,7 @@ function processCurrent(): boolean {
                         break;
                     }
                     assertEquals(type, 'fileSystemEntry');
-                    entryName = joinEntryPath(getStringPropertyFromDirectory('name'));
+                    path = joinEntryPath(getStringPropertyFromDirectory('name'));
                     directoryId = getPropertyFromDirectory('directory');
                 }
                 const vPath = getStringPropertyFromDirectory('path');
@@ -770,39 +755,35 @@ function processCurrent(): boolean {
                 return processFileSystemPath(entryPath,
                     () => updateEntryType('true', () => processDirectory(entryPath)),
                     () => updateEntryType('false', () => {
-                        assertEquals(entryName, '.DS_Store');
-                        // .DS_Store
-                        return logError('unknown file type!');
+                        if (entryName === '.DS_Store') {
+                            console.log('  deleting');
+                            assertSame(waitFor(cb => fs.unlink(entryPath, cb)), null);
+                            moveToNext();
+                            return true;
+                        }
+                        else {
+                            assertEquals(entryName, '.DS_Store');
+                            return logError('unknown file type!');
+                        }
                     }), () => stat(vPath, () => {
                         assertMissing({ predicate: 'directory', object: currentTask });
                         const next = getPropertyFromCurrent('next');
                         prepareStream(db.getStream({ subject: currentTask }));
-                        const objects: any = {
-                            type: 'fileSystemEntry',
-                            name: entryLiteral,
-                            directory: directoryId,
-                            next: next
-                        }
+                        const updateStatements: UpdateStatement[] = [];
                         for (; ;) {
                             const statement = Fiber.yield();
                             if (isUndefined(statement)) {
                                 break;
                             }
                             assertEquals(statement.subject, currentTask);
-                            const predicate = statement.predicate;
-                            assertEquals(statement.object, objects[predicate]);
-                            delete objects[predicate];
+                            updateStatements.push(delCurrent(statement.predicate, statement.object));
                         }
-                        assertEquals(objects, {});
                         assertMissing({ predicate: currentTask });
                         console.log('  missing -> remove entry');
                         update([
                             ...appendToPrev(next),
                             ...setCurrent(next),
-                            delCurrent('next', next),
-                            delCurrent('type', 'fileSystemEntry'),
-                            delCurrent('name', entryLiteral),
-                            delCurrent('directory', directoryId)
+                            ...updateStatements
                         ]);
                         assertMissing({ object: currentTask });
                         assertMissing({ subject: currentTask });
