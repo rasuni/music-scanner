@@ -14,7 +14,6 @@ commander.version('0.0.1').description('music scanner command line tool');
 
 
 /*
-import * as mm from 'music-metadata';
 import * as https from 'https';
 import * as sax from 'sax';
 
@@ -152,9 +151,9 @@ interface Pair<F, S> {
     readonly second: S
 }
 
-//type Consumer2<F, S> = (first: F, second: S) => void;
+type BiConsumer<F, S> = (first: F, second: S) => void;
 
-function waitFor2<F, S>(asyncFunction: (consumer: (first: F, second: S) => void) => void): Pair<F, S> {
+function waitFor2<F, S>(asyncFunction: (consumer: BiConsumer<F, S>) => void): Pair<F, S> {
     return waitFor((consumer: (result: Pair<F, S>) => void) => asyncFunction((first: F, second: S) => consumer({
         first: first,
         second: second
@@ -185,15 +184,19 @@ function assertSame(actual: any, expected: any) {
     assert(actual === expected);
 }
 
+function assertType(value: any, expectedType: string) {
+    assertSame(typeof value, expectedType);
+}
+
 function assertObject(value: any) {
-    assertSame(typeof value, 'object');
+    assertType(value, 'object');
 }
 
 interface Dictionary<T> {
     readonly [name: string]: T;
 }
 
-function compareObjects<T>(actual: Dictionary<any>, expected: Dictionary<T>, compare: (actual: any, expected: T) => void) {
+function compareObjects<T>(actual: Dictionary<any>, expected: Dictionary<T>, compare: BiConsumer<any, T>) {
     new Set([
         ...Object.keys(actual),
         ...Object.keys(expected)
@@ -211,7 +214,6 @@ function assertEquals(actual: any, expected: any): void {
         else {
             failIf(expectedIsNull);
             compareObjects(actual, expected, assertEquals);
-            //new Set([...Object.keys(actual), ...Object.keys(expected)]).forEach((key) => assertEquals(actual[key], expected[key]));
         }
     }
 }
@@ -225,13 +227,6 @@ function assertUndefined(value: any): void {
     assert(isUndefined(value));
 }
 /*
- 
- 
-function assertDefined(value: any): void {
-    failIf(isUndefined(value));
-}
- 
- 
  
 interface AddInfo {
     added: boolean,
@@ -399,9 +394,9 @@ function expectObject<T>(checkers: NamedProcessor): (actual: T) => boolean {
 }
 */
 interface Statement<T> {
-    readonly subject: T;
-    readonly predicate: T;
-    readonly object: T;
+    subject: T;
+    predicate: T;
+    object: T;
 }
 
 function statement<T>(subject: T, predicate: T, object: T): Statement<T> {
@@ -412,11 +407,7 @@ function statement<T>(subject: T, predicate: T, object: T): Statement<T> {
     };
 }
 
-interface StatementPattern {
-    readonly subject?: string;
-    readonly predicate?: string;
-    readonly object?: string;
-}
+type StatementPattern = Partial<Statement<string>>;
 
 /*
  
@@ -463,24 +454,6 @@ function del(subject: string, predicate: string, object: string): UpdateStatemen
     return updateStatement('del', subject, predicate, object);
 }
 
-/*
-function updateObject(subject: string, predicate: string, existingObject: string, newObject: string): UpdateStatement[] {
-    return [
-        del(subject, predicate, existingObject),
-        put(subject, predicate, newObject)
-    ]
-}
-*/
-function wait2Success<S>(asyncFunction: (consumer: (first: object, second: S) => void) => void): S {
-    const result: Pair<object, any> = waitFor2(asyncFunction);
-    assertEquals(result.first, null);
-    return result.second;
-}
-
-interface AttributeValue {
-    readonly predicate: string;
-    readonly object: string;
-}
 
 function decodeStringLiteral(stringLiteral: string) {
     const segments = stringLiteral.split('/');
@@ -497,7 +470,7 @@ function prepareStream(stream: any): void {
 
     on('error', fail);
     const run = getRunner();
-    on('data', (data: any) => run(data));
+    on('data', run);
     on('end', run);
 }
 
@@ -513,13 +486,12 @@ function streamOpt<T>(stream: any, onEmpty: () => T, onData: (data: any) => T): 
     }
 }
 
-function logError(message: string): boolean {
+function logError(message: string): void {
     console.error(message);
-    return false;
 }
 
-function volumeNotMounted(): boolean {
-    return logError('Volume not mounted. Please mount!');
+function volumeNotMounted(): void {
+    logError('Volume not mounted. Please mount!');
 }
 
 const join = path.join;
@@ -542,44 +514,69 @@ function defineCommand(cmdSyntax: string, description: string, options: string[]
 
 const db = levelgraph(level(dbPath), { joinAlgorithm: 'basic' });
 
-
 function get<T>(pattern: StatementPattern, onEmpty: () => T, onStatement: (statement: Statement<string>) => T): T {
     return streamOpt(db.getStream(pattern), onEmpty, onStatement);
 }
 
-function getObject<T>(subject: string, predicate: string, notFound: () => T, found: (object: string) => T): T {
-    return get({ subject: subject, predicate: predicate }, notFound, statement => {
-        assertEquals(statement.subject, subject);
-        assertEquals(statement.predicate, predicate);
-        return found(statement.object);
+//type Direction = "out" | "in";
+
+function navigate<T>(source: string, predicate: string, isOutDirection: boolean, notFound: () => T, found: (target: string) => T): T {
+
+    const pattern: StatementPattern = { predicate: predicate };
+    const sourceKey = isOutDirection ? 'subject' : 'object';
+    pattern[sourceKey] = source;
+    return get(pattern, notFound, statement => {
+
+        function verify(key: keyof Statement<string>, expected: string) {
+            assertEquals(statement[key], expected);
+        }
+
+        verify('subject', source);
+        verify('predicate', predicate);
+
+        return found(statement[isOutDirection ? 'object' : 'subject']);
     });
 }
+
+function getObject<T>(subject: string, predicate: string, notFound: () => T, found: (object: string) => T): T {
+    return navigate(subject, predicate, true, notFound, found);
+    /*
+    return get({ subject: subject, predicate: predicate }, notFound, statement => {
+
+        function verify(key: keyof Statement<string>, expected: string) {
+            assertEquals(statement[key], expected);
+        }
+
+        verify('subject', subject);
+        verify('predicate', predicate);
+
+        return found(statement.object);
+    });
+    */
+}
+
 
 function getProperty(subject: string, name: string): string {
     return getObject(subject, name, fail, obj => obj);
 }
 
-type StreamType = "put" | "del";
 
-function withStream(type: StreamType, consumer: (stream: (subject: string, predicate: string, object: string) => void) => void): void {
+function persist(type: Operation, statements: Statement<string>[]): void {
+    assertUndefined(waitFor(callback => db[type](statements, callback)));
+}
+
+function withStream(type: Operation, consumer: (stream: (subject: string, predicate: string, object: string) => void) => void): void {
     const statements: Statement<string>[] = [];
-    //const stream = db[type]();
     consumer((subject: string, predicate: string, object: string) => statements.push(statement(subject, predicate, object)));
     if (statements.length !== 0) {
-        assertSame(waitFor(callback => db[type](statements, callback)), undefined);
+        persist(type, statements);
     }
-    /*
-    stream.end();
-    stream.on('close', getRunner());
-    Fiber.yield();
-    */
-    // end(stream);
 }
 
 function verifyObject(object: Dictionary<any>, checkers: Dictionary<(value: any) => void>) {
     compareObjects(object, checkers, (actual, checker) => {
-        assertSame(typeof checker, 'function');
-        checker(actual)
+        assertType(checker, 'function');
+        checker(actual);
     })
 }
 
@@ -594,7 +591,6 @@ function update(changeSet: UpdateStatement[]): void {
                 put: putStream,
                 del: delStream
             }
-            //transaction (putStream, delStream)
             for (const s of changeSet) {
                 streams[s.operation](s.subject, s.predicate, s.object);
             }
@@ -614,11 +610,20 @@ const expectJpgImage = expectObject({
 function processCurrent(): boolean {
     return getObject('root', 'current', () => {
         console.log('initializing database');
+
+        function link(predicate: string): Statement<string> {
+            return statement('root', predicate, 'root');
+        }
+
+        persist('put', [link('current'), link('type'), link('next')]);
+
+        /*
         update([
             put('root', 'current', 'root'),
             put('root', 'type', 'root'),
             put('root', 'next', 'root')
         ]);
+        */
         return true;
     }, currentTask => {
 
@@ -634,11 +639,21 @@ function processCurrent(): boolean {
         }
 
         function appendToPrev(taskId: string): UpdateStatement[] {
-            return get({ predicate: 'next', object: currentTask }, fail, prevStatement => {
-                assertEquals(prevStatement.predicate, 'next');
-                assertEquals(prevStatement.object, currentTask);
+            return navigate(currentTask, 'next', false, fail, subject => updateObjectFromCurrent(subject, 'next', taskId));
+            /*
+            {
+
+                function verify(key: keyof Statement<string>, expected: string) {
+                    assertEquals(prevStatement[key], expected);
+                }
+
+                verify('predicate', 'next');
+                verify('object', currentTask);
+
                 return updateObjectFromCurrent(prevStatement.subject, 'next', taskId);
             });
+            */
+            //...similarity
         }
 
         function setCurrent(newCurrent: string): UpdateStatement[] {
@@ -661,8 +676,8 @@ function processCurrent(): boolean {
             return true;
         }
 
-        function enqueueTask(name: string, type: string, namePredicate: string, additionalAttribute: AttributeValue | undefined): boolean {
-            const nameLiteral = `s/${encodeURIComponent(name)}`;
+        function enqueueTask<T>(nameObject: string, name: string, type: string, namePredicate: string, additionalAttributes: (add: BiConsumer<string, string>) => void, enqueued: T, alreadyAdded: () => T): T {
+            //const nameLiteral = id;
 
             function mapAttributeValues<S, T>(mapper: (subject: S, predicate: string, object: string) => T, subject: S): T[] {
                 const result: T[] = [];
@@ -672,11 +687,13 @@ function processCurrent(): boolean {
                 }
 
                 add('type', type);
-                add(namePredicate, nameLiteral);
-                //additionalAttributeValues (add);
+                add(namePredicate, nameObject);
+                additionalAttributes(add);
+                /*
                 if (additionalAttribute !== undefined) {
                     add(additionalAttribute.predicate, additionalAttribute.object);
                 }
+                */
                 return result;
             }
 
@@ -691,12 +708,12 @@ function processCurrent(): boolean {
                 // needs a second update, because the attribute 'next' might have been set just before
                 // when appending a task to prev.
                 moveToNext();
-                return true;
-            }, () => false);
+                return enqueued;
+            }, alreadyAdded);
         }
 
-        function enqueueTasks(items: string[], type: string, predicate: string, additionalAttribute: AttributeValue | undefined): boolean {
-            if (isUndefined(items.find(name => enqueueTask(name, type, predicate, additionalAttribute)))) {
+        function enqueueTasks(items: string[], type: string, predicate: string, additionalAttribute: (add: BiConsumer<string, string>) => void): boolean {
+            if (isUndefined(items.find(name => enqueueTask(`s/${encodeURIComponent(name)}`, name, type, predicate, additionalAttribute, true, () => false)))) {
                 console.log('  completed');
                 moveToNext();
             }
@@ -732,8 +749,12 @@ function processCurrent(): boolean {
         }
 
         function processDirectory(path: string): boolean {
-            const files = wait2Success((consumer: (first: NodeJS.ErrnoException, second: string[]) => void) => fs.readdir(path, consumer));
-            return files.length === 0 ? remove('  remove empty directory', 'rmdir', path) : enqueueTasks(files, 'fileSystemEntry', 'name', { predicate: 'directory', object: currentTask });
+            const result: Pair<object, any> = waitFor2(consumer => fs.readdir(path, consumer));
+            assertEquals(result.first, null);
+            const files = result.second;
+
+            //const files = wait2Success((consumer: (first: NodeJS.ErrnoException, second: string[]) => void) => fs.readdir(path, consumer));
+            return files.length === 0 ? remove('  remove empty directory', 'rmdir', path) : enqueueTasks(files, 'fileSystemEntry', 'name', add => add('directory', currentTask));
         }
 
         function updateEntryType(bValue: string, alreadyUpdated: () => boolean): boolean {
@@ -761,10 +782,13 @@ function processCurrent(): boolean {
         switch (type) {
             case 'root':
                 console.log('processing root');
-                return enqueueTasks(['/Volumes/Musik', '/Volumes/music', '/Volumes/Qmultimedia', '/Users/ralph.sigrist/Music/iTunes/ITunes Media/Music'], 'volume', 'path', undefined);
+                return enqueueTasks(['/Volumes/Musik', '/Volumes/music', '/Volumes/Qmultimedia', '/Users/ralph.sigrist/Music/iTunes/ITunes Media/Music'], 'volume', 'path', () => { });
             case 'volume':
                 const volumePath = decodeStringLiteral(getPropertyFromCurrent('path')); // getStringProperty('path');
-                return processFileSystemPath(volumePath, () => processDirectory(volumePath), fail, volumeNotMounted);
+                return processFileSystemPath(volumePath, () => processDirectory(volumePath), fail, () => {
+                    volumeNotMounted();
+                    return false;
+                });
             case 'fileSystemEntry':
                 const entryLiteral = getPropertyFromCurrent('name');
                 let entryName = decodeStringLiteral(entryLiteral);
@@ -889,11 +913,13 @@ function processCurrent(): boolean {
                                     }),
                                     native: expectEquals(undefined)
                                 });
-                                fail();
-                                return false;
+                                enqueueTask("mb:artist/9132d515-dc0e-4494-85ae-20f06eed14f9", "9132d515-dc0e-4494-85ae-20f06eed14f9", 'mb:artist', 'mb:mbid', () => { }, undefined, fail);
+                                //fail();
+                                return true;
                             }
                             else {
-                                return logError('unknown file type!');
+                                logError('unknown file type!');
+                                return false;
                             }
 
                         }
@@ -920,7 +946,10 @@ function processCurrent(): boolean {
                         assertMissing({ object: currentTask });
                         assertMissing({ subject: currentTask });
                         return true;
-                    }, volumeNotMounted));
+                    }, () => {
+                        volumeNotMounted();
+                        return false;
+                    }));
             // .DS_Store
             //return false;
             default:
