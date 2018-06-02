@@ -134,16 +134,15 @@ type Record = LoadedRecord | DeletedRecord;
 */
 
 
-type Consumer<T> = (result: T) => void;
+//type Consumer<T> = (result: T) => void;
 
 function getRunner(): (value?: any) => void {
     const currentFiber = Fiber.current;
     return (value?: any) => currentFiber.run(value);
 }
 
-function waitFor<R>(asyncFunction: (consumer: Consumer<R>) => void): R {
-    const run = getRunner();
-    asyncFunction((result: R) => run(result));
+function waitFor<R>(asyncFunction: (consumer: (result: R) => void) => void): R {
+    asyncFunction(getRunner());
     return Fiber.yield();
 }
 
@@ -152,9 +151,9 @@ interface Pair<F, S> {
     readonly second: S
 }
 
-type Consumer2<F, S> = (first: F, second: S) => void;
+//type Consumer2<F, S> = (first: F, second: S) => void;
 
-function waitFor2<F, S>(asyncFunction: (consumer: Consumer2<F, S>) => void): Pair<F, S> {
+function waitFor2<F, S>(asyncFunction: (consumer: (first: F, second: S) => void) => void): Pair<F, S> {
     return waitFor((consumer: (result: Pair<F, S>) => void) => asyncFunction((first: F, second: S) => consumer({
         first: first,
         second: second
@@ -171,10 +170,6 @@ function failIf(condition: boolean): void {
     if (condition) {
         fail();
     }
-}
-
-interface AnyObject {
-    readonly [name: string]: any
 }
 
 function isNull(value: any): value is null {
@@ -202,9 +197,12 @@ function assertEquals(actual: any, expected: any): void {
         }
         else {
             failIf(isNull(expected));
+            new Set([...Object.keys(actual), ...Object.keys(expected)]).forEach((key) => assertEquals(actual[key], expected[key]));
+            /*
             const actualKeys = Object.keys(actual);
             assertSame(actualKeys.length, Object.keys(expected as AnyObject).length);
             actualKeys.forEach(key => assertEquals(actual[key], (expected as AnyObject)[key]));
+            */
         }
     }
 }
@@ -421,12 +419,14 @@ function write(stream: any, subject: string, predicate: string, object: string):
 }
 */
 
+
+/*
 function end(stream: any): void {
     stream.on('close', getRunner());
     stream.end();
     Fiber.yield();
 }
-
+*/
 /*
 interface Updater {
     put: (subject: string, predicate: string, object: string) => void;
@@ -465,7 +465,7 @@ function updateObject(subject: string, predicate: string, existingObject: string
     ]
 }
 */
-function wait2Success<S>(asyncFunction: (consumer: Consumer2<object, S>) => void): S {
+function wait2Success<S>(asyncFunction: (consumer: (first: object, second: S) => void) => void): S {
     const result: Pair<object, any> = waitFor2(asyncFunction);
     assertEquals(result.first, null);
     return result.second;
@@ -553,15 +553,26 @@ function getProperty(subject: string, name: string): string {
     return getObject(subject, name, fail, obj => obj);
 }
 
-function withStream(type: string, consumer: (stream: (subject: string, predicate: string, object: string) => void) => void): void {
-    const stream = db[type]();
-    consumer((subject: string, predicate: string, object: string) => stream.write(statement(subject, predicate, object)));
-    end(stream);
+type StreamType = "put" | "del";
+
+function withStream(type: StreamType, consumer: (stream: (subject: string, predicate: string, object: string) => void) => void): void {
+    const statements: Statement<string>[] = [];
+    //const stream = db[type]();
+    consumer((subject: string, predicate: string, object: string) => statements.push(statement(subject, predicate, object)));
+    if (statements.length !== 0) {
+        assertSame(waitFor(callback => db[type](statements, callback)), undefined);
+    }
+    /*
+    stream.end();
+    stream.on('close', getRunner());
+    Fiber.yield();
+    */
+    // end(stream);
 }
 
 function update(changeSet: UpdateStatement[]): void {
-    withStream('putStream', putStream => {
-        withStream('delStream', delStream => {
+    withStream('put', putStream => {
+        withStream('del', delStream => {
             const streams = {
                 put: putStream,
                 del: delStream
@@ -672,7 +683,7 @@ function processCurrent(): boolean {
 
 
         function stat<T>(path: string, success: (stats: fs.Stats) => T, missing: () => T): T {
-            const result: Pair<NodeJS.ErrnoException, fs.Stats> = waitFor2((consumer: Consumer2<NodeJS.ErrnoException, fs.Stats>) => fs.stat(path, consumer));
+            const result: Pair<NodeJS.ErrnoException, fs.Stats> = waitFor2((consumer: (first: NodeJS.ErrnoException, second: fs.Stats) => void) => fs.stat(path, consumer));
             const err = result.first;
             if (isNull(err)) {
                 return success(result.second);
@@ -688,7 +699,7 @@ function processCurrent(): boolean {
         }
 
         function processDirectory(path: string): boolean {
-            const files = wait2Success((consumer: Consumer2<NodeJS.ErrnoException, string[]>) => fs.readdir(path, consumer));
+            const files = wait2Success((consumer: (first: NodeJS.ErrnoException, second: string[]) => void) => fs.readdir(path, consumer));
             failIf(files.length === 0);
             return enqueueTasks(files, 'fileSystemEntry', 'name', { predicate: 'directory', object: currentTask });
         }
