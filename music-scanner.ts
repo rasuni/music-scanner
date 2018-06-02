@@ -8,6 +8,7 @@ import * as commander from 'commander';
 import * as immutable from 'immutable';
 import * as fs from 'fs';
 import * as rimraf from 'rimraf';
+import * as mm from 'music-metadata';
 
 commander.version('0.0.1').description('music scanner command line tool');
 
@@ -188,16 +189,29 @@ function assertObject(value: any) {
     assertSame(typeof value, 'object');
 }
 
+interface Dictionary<T> {
+    readonly [name: string]: T;
+}
+
+function compareObjects<T>(actual: Dictionary<any>, expected: Dictionary<T>, compare: (actual: any, expected: T) => void) {
+    new Set([
+        ...Object.keys(actual),
+        ...Object.keys(expected)
+    ]).forEach((key) => compare(actual[key], expected[key]));
+}
+
 function assertEquals(actual: any, expected: any): void {
     if (actual !== expected) {
         assertObject(actual);
         assertObject(expected);
+        const expectedIsNull = isNull(expected);
         if (isNull(actual)) {
-            assert(isNull(expected));
+            assert(expectedIsNull);
         }
         else {
-            failIf(isNull(expected));
-            new Set([...Object.keys(actual), ...Object.keys(expected)]).forEach((key) => assertEquals(actual[key], expected[key]));
+            failIf(expectedIsNull);
+            compareObjects(actual, expected, assertEquals);
+            //new Set([...Object.keys(actual), ...Object.keys(expected)]).forEach((key) => assertEquals(actual[key], expected[key]));
         }
     }
 }
@@ -212,9 +226,6 @@ function assertUndefined(value: any): void {
 }
 /*
  
-function isUndefined(value: any): value is undefined {
-    return value === undefined;
-}
  
 function assertDefined(value: any): void {
     failIf(isUndefined(value));
@@ -565,6 +576,17 @@ function withStream(type: StreamType, consumer: (stream: (subject: string, predi
     // end(stream);
 }
 
+function verifyObject(object: Dictionary<any>, checkers: Dictionary<(value: any) => void>) {
+    compareObjects(object, checkers, (actual, checker) => {
+        assertSame(typeof checker, 'function');
+        checker(actual)
+    })
+}
+
+function expectEquals(expected: any): (actual: any) => void {
+    return actual => assertEquals(actual, expected);
+}
+
 function update(changeSet: UpdateStatement[]): void {
     withStream('put', putStream => {
         withStream('del', delStream => {
@@ -579,6 +601,15 @@ function update(changeSet: UpdateStatement[]): void {
         })
     })
 }
+
+function expectObject(checkers: Dictionary<(value: any) => void>) {
+    return (object: Dictionary<any>) => verifyObject(object, checkers)
+}
+
+const expectJpgImage = expectObject({
+    format: expectEquals("jpg"),
+    data: () => { }
+});
 
 function processCurrent(): boolean {
     return getObject('root', 'current', () => {
@@ -747,10 +778,10 @@ function processCurrent(): boolean {
                     return decodeStringLiteral(getPropertyFromDirectory(name));
                 }
 
-                let path = entryName;
+                let ePath = entryName;
 
                 function joinEntryPath(prepend: string): string {
-                    return join(prepend, path);
+                    return join(prepend, ePath);
                 }
 
                 for (; ;) {
@@ -759,7 +790,7 @@ function processCurrent(): boolean {
                         break;
                     }
                     assertEquals(type, 'fileSystemEntry');
-                    path = joinEntryPath(getStringPropertyFromDirectory('name'));
+                    ePath = joinEntryPath(getStringPropertyFromDirectory('name'));
                     directoryId = getPropertyFromDirectory('directory');
                 }
                 const vPath = getStringPropertyFromDirectory('path');
@@ -771,8 +802,100 @@ function processCurrent(): boolean {
                             return remove('  deleting', 'unlink', entryPath);
                         }
                         else {
-                            assertEquals(entryName, '.DS_Store');
-                            return logError('unknown file type!');
+                            const extension = path.extname(entryName);
+                            if (extension === '.flac') {
+                                const promise: Promise<mm.IAudioMetadata> = mm.parseFile(entryPath);
+                                const fiber = Fiber.current;
+                                promise.then((value: mm.IAudioMetadata) => fiber.run({ type: "metadata", metaData: value }), (err: any) => fiber.run({ type: "error", error: err }));
+                                const r = Fiber.yield();
+
+                                assertEquals(r.type, 'metadata');
+                                let metaData: mm.IAudioMetadata = r.metaData;
+                                verifyObject(metaData, {
+                                    format: expectEquals({
+                                        dataformat: "flac",
+                                        lossless: true,
+                                        numberOfChannels: 2,
+                                        bitsPerSample: 16,
+                                        sampleRate: 44100,
+                                        duration: 60.29333333333334,
+                                        tagTypes: ["vorbis"],
+                                    }),
+                                    common: expectObject({
+                                        track: expectEquals({
+                                            no: 1,
+                                            of: 19
+                                        }),
+                                        disk: expectEquals({
+                                            no: 1,
+                                            of: 1
+                                        }),
+                                        barcode: expectEquals(786127302127),
+                                        producer: expectEquals(["Kevin Wales", "Harve Pierre", "Diddy", "J-Dub"]),
+                                        title: expectEquals("Room 112 (intro)"),
+                                        releasecountry: expectEquals("DE"),
+                                        label: expectEquals("BMG"),
+                                        musicbrainz_albumartistid: expectEquals(["9132d515-dc0e-4494-85ae-20f06eed14f9"]),
+                                        year: expectEquals(1998),
+                                        date: expectEquals("1998-11-16"),
+                                        musicbrainz_trackid: expectEquals("562abb04-da87-3ab1-9866-ce8f24853701"),
+                                        asin: expectEquals("B00000D9VN"),
+                                        albumartistsort: expectEquals("112"),
+                                        originaldate: expectEquals("1998-11-10"),
+                                        language: expectEquals("eng"),
+                                        script: expectEquals("Latn"),
+                                        work: expectEquals("Room 112 (intro)"),
+                                        musicbrainz_albumid: expectEquals("9ce47bcf-97d1-4534-b77e-b19ba6c98511"),
+                                        releasestatus: expectEquals("official"),
+                                        albumartist: expectEquals("112"),
+                                        acoustid_id: expectEquals("91b4acf0-f50a-4087-9a65-48ae0034854b"),
+                                        catalognumber: expectEquals("78612-73021-2"),
+                                        album: expectEquals("Room 112"),
+                                        musicbrainz_artistid: expectEquals(["9132d515-dc0e-4494-85ae-20f06eed14f9"]),
+                                        media: expectEquals("CD"),
+                                        releasetype: expectEquals(["album"]),
+                                        mixer: expectEquals(["Michael Patterson"]),
+                                        originalyear: expectEquals(1998),
+                                        isrc: expectEquals("USAR19800507"),
+                                        musicbrainz_releasegroupid: expectEquals("a15cf6a3-c02a-316f-8e3d-15cd8ddf95f0"),
+                                        artist: expectEquals("112"),
+                                        writer: expectEquals(["Michael Keith", "Quinnes Parker", "J-Dub", "Lamont Maxwell", "Slim", "Daron Jones"]),
+                                        musicbrainz_workid: expectEquals("af499b43-2556-45c6-87e9-4879f5cf7abe"),
+                                        musicbrainz_recordingid: expectEquals("9b871449-7109-42fe-835b-6957a006e25d"),
+                                        artistsort: expectEquals("112"),
+                                        artists: expectEquals(["112"]),
+                                        genre: expectEquals(["R B"]),
+                                        picture: expectObject({
+                                            0: expectJpgImage,
+                                            1: expectJpgImage,
+                                            2: expectJpgImage,
+                                            3: expectJpgImage,
+                                            4: expectJpgImage,
+                                            5: expectJpgImage,
+                                            6: expectJpgImage,
+                                            7: expectJpgImage,
+                                            8: expectJpgImage,
+                                            9: expectJpgImage,
+                                            10: expectJpgImage,
+                                            11: expectJpgImage,
+                                            12: expectJpgImage,
+                                            13: expectJpgImage,
+                                            14: expectJpgImage,
+                                            15: expectJpgImage,
+                                            16: expectJpgImage,
+                                            17: expectJpgImage,
+                                            18: expectJpgImage,
+                                        }),
+                                    }),
+                                    native: expectEquals(undefined)
+                                });
+                                fail();
+                                return false;
+                            }
+                            else {
+                                return logError('unknown file type!');
+                            }
+
                         }
                     }), () => stat(vPath, () => {
                         assertMissing({ predicate: 'directory', object: currentTask });
