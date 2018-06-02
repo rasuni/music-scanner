@@ -769,11 +769,6 @@ function processCurrent(): boolean {
                     () => updateEntryType('false', () => {
                         if (entryName === '.DS_Store') {
                             return remove('  deleting', 'unlink', entryPath);
-                            /*
-                            assertSame(waitFor(cb => fs.unlink(entryPath, cb)), null);
-                            moveToNext();
-                            return true;
-                            */
                         }
                         else {
                             assertEquals(entryName, '.DS_Store');
