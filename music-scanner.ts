@@ -198,11 +198,6 @@ function assertEquals(actual: any, expected: any): void {
         else {
             failIf(isNull(expected));
             new Set([...Object.keys(actual), ...Object.keys(expected)]).forEach((key) => assertEquals(actual[key], expected[key]));
-            /*
-            const actualKeys = Object.keys(actual);
-            assertSame(actualKeys.length, Object.keys(expected as AnyObject).length);
-            actualKeys.forEach(key => assertEquals(actual[key], (expected as AnyObject)[key]));
-            */
         }
     }
 }
@@ -628,6 +623,13 @@ function processCurrent(): boolean {
         }
 
 
+        function remove(message: string, removeMethod: 'unlink' | 'rmdir', path: string): boolean {
+            console.log(message);
+            assertSame(waitFor(cb => fs[removeMethod](path, cb)), null);
+            moveToNext();
+            return true;
+        }
+
         function enqueueTask(name: string, type: string, namePredicate: string, additionalAttribute: AttributeValue | undefined): boolean {
             const nameLiteral = `s/${encodeURIComponent(name)}`;
 
@@ -700,8 +702,7 @@ function processCurrent(): boolean {
 
         function processDirectory(path: string): boolean {
             const files = wait2Success((consumer: (first: NodeJS.ErrnoException, second: string[]) => void) => fs.readdir(path, consumer));
-            failIf(files.length === 0);
-            return enqueueTasks(files, 'fileSystemEntry', 'name', { predicate: 'directory', object: currentTask });
+            return files.length === 0 ? remove('  remove empty directory', 'rmdir', path) : enqueueTasks(files, 'fileSystemEntry', 'name', { predicate: 'directory', object: currentTask });
         }
 
         function updateEntryType(bValue: string, alreadyUpdated: () => boolean): boolean {
@@ -767,10 +768,12 @@ function processCurrent(): boolean {
                     () => updateEntryType('true', () => processDirectory(entryPath)),
                     () => updateEntryType('false', () => {
                         if (entryName === '.DS_Store') {
-                            console.log('  deleting');
+                            return remove('  deleting', 'unlink', entryPath);
+                            /*
                             assertSame(waitFor(cb => fs.unlink(entryPath, cb)), null);
                             moveToNext();
                             return true;
+                            */
                         }
                         else {
                             assertEquals(entryName, '.DS_Store');
