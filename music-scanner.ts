@@ -9,51 +9,13 @@ import * as immutable from 'immutable';
 import * as fs from 'fs';
 import * as rimraf from 'rimraf';
 import * as mm from 'music-metadata';
+import * as https from 'https';
+import * as sax from 'sax';
 
 commander.version('0.0.1').description('music scanner command line tool');
 
 
 /*
-import * as https from 'https';
-import * as sax from 'sax';
-
-interface Directory {
-    entries?: {
-        [name: string]: number;
-    }
-}
-
-interface FileSystemEntry extends Directory {
-    readonly type: "fileSystemEntry";
-    readonly name: string;
-    readonly directory: number;
-    isDirectory?: boolean;
-
-    duration?: number;
-    trackNumber?: number;
-    bitsPerSample?: number;
-    title?: string;
-    totalTracks?: number;
-    barcode?: number;
-    label?: string;
-    albumArtist?: number;
-    sampleRate?: number;
-    releaseCountry?: string;
-    // when directory
-    // entry/<name>
-
-    // TODO:
-    // when file
-    // acoustid?: number    
-
-}
-
-interface Root extends Directory {
-    readonly type: "root";
-    nextId: number;
-    currentTask: number;
-    // entry/<name>
-}
 
 interface Recording {
     readonly type: "recording";
@@ -141,9 +103,11 @@ function getRunner(): (value?: any) => void {
     return (value?: any) => currentFiber.run(value);
 }
 
+const yieldValue = Fiber.yield;
+
 function waitFor<R>(asyncFunction: (consumer: (result: R) => void) => void): R {
     asyncFunction(getRunner());
-    return Fiber.yield();
+    return yieldValue();
 }
 
 interface Pair<F, S> {
@@ -476,12 +440,12 @@ function prepareStream(stream: any): void {
 
 function streamOpt<T>(stream: any, onEmpty: () => T, onData: (data: any) => T): T {
     prepareStream(stream);
-    const data = Fiber.yield();
+    const data = yieldValue();
     if (isUndefined(data)) {
         return onEmpty();
     }
     else {
-        assertUndefined(Fiber.yield());
+        assertUndefined(yieldValue());
         return onData(data);
     }
 }
@@ -531,7 +495,7 @@ function navigate<T>(source: string, predicate: string, isOutDirection: boolean,
             assertEquals(statement[key], expected);
         }
 
-        verify('subject', source);
+        verify(sourceKey, source);
         verify('predicate', predicate);
 
         return found(statement[isOutDirection ? 'object' : 'subject']);
@@ -560,16 +524,13 @@ function getProperty(subject: string, name: string): string {
     return getObject(subject, name, fail, obj => obj);
 }
 
-
-function persist(type: Operation, statements: Statement<string>[]): void {
-    assertUndefined(waitFor(callback => db[type](statements, callback)));
+function isEmpty(array: any[]): boolean {
+    return array.length === 0;
 }
 
-function withStream(type: Operation, consumer: (stream: (subject: string, predicate: string, object: string) => void) => void): void {
-    const statements: Statement<string>[] = [];
-    consumer((subject: string, predicate: string, object: string) => statements.push(statement(subject, predicate, object)));
-    if (statements.length !== 0) {
-        persist(type, statements);
+function persist(type: Operation, statements: Statement<string>[]): void {
+    if (!isEmpty(statements)) {
+        assertUndefined(waitFor(callback => db[type](statements, callback)));
     }
 }
 
@@ -584,18 +545,21 @@ function expectEquals(expected: any): (actual: any) => void {
     return actual => assertEquals(actual, expected);
 }
 
+
 function update(changeSet: UpdateStatement[]): void {
-    withStream('put', putStream => {
-        withStream('del', delStream => {
-            const streams = {
-                put: putStream,
-                del: delStream
-            }
-            for (const s of changeSet) {
-                streams[s.operation](s.subject, s.predicate, s.object);
-            }
-        })
-    })
+    const transaction: Record<Operation, Statement<string>[]> = {
+        put: [],
+        del: []
+    };
+    changeSet.forEach(s => transaction[s.operation].push(statement(s.subject, s.predicate, s.object)));
+
+    function store(operation: Operation): void {
+        persist(operation, transaction[operation]);
+    }
+
+    store('del');
+    store('put');
+
 }
 
 function expectObject(checkers: Dictionary<(value: any) => void>) {
@@ -607,6 +571,29 @@ const expectJpgImage = expectObject({
     data: () => { }
 });
 
+let mbAccessed = false;
+
+interface OpenTagEvent {
+    readonly type: 'openTag';
+    readonly tag: sax.Tag;
+}
+
+interface TextEvent {
+    readonly type: 'text';
+    readonly text: string;
+}
+
+interface CloseTagEvent {
+    readonly type: 'closeTag';
+    readonly name: string;
+}
+
+type SaxEvent = OpenTagEvent | TextEvent | CloseTagEvent;
+
+interface Attributes {
+    readonly [key: string]: string;
+}
+
 function processCurrent(): boolean {
     return getObject('root', 'current', () => {
         console.log('initializing database');
@@ -617,13 +604,6 @@ function processCurrent(): boolean {
 
         persist('put', [link('current'), link('type'), link('next')]);
 
-        /*
-        update([
-            put('root', 'current', 'root'),
-            put('root', 'type', 'root'),
-            put('root', 'next', 'root')
-        ]);
-        */
         return true;
     }, currentTask => {
 
@@ -640,20 +620,6 @@ function processCurrent(): boolean {
 
         function appendToPrev(taskId: string): UpdateStatement[] {
             return navigate(currentTask, 'next', false, fail, subject => updateObjectFromCurrent(subject, 'next', taskId));
-            /*
-            {
-
-                function verify(key: keyof Statement<string>, expected: string) {
-                    assertEquals(prevStatement[key], expected);
-                }
-
-                verify('predicate', 'next');
-                verify('object', currentTask);
-
-                return updateObjectFromCurrent(prevStatement.subject, 'next', taskId);
-            });
-            */
-            //...similarity
         }
 
         function setCurrent(newCurrent: string): UpdateStatement[] {
@@ -669,15 +635,13 @@ function processCurrent(): boolean {
         }
 
 
-        function remove(message: string, removeMethod: 'unlink' | 'rmdir', path: string): boolean {
-            console.log(message);
+        function remove(message: string, removeMethod: 'unlink' | 'rmdir', path: string): void {
+            console.log(`  ${message}`);
             assertSame(waitFor(cb => fs[removeMethod](path, cb)), null);
             moveToNext();
-            return true;
         }
 
         function enqueueTask<T>(nameObject: string, name: string, type: string, namePredicate: string, additionalAttributes: (add: BiConsumer<string, string>) => void, enqueued: T, alreadyAdded: () => T): T {
-            //const nameLiteral = id;
 
             function mapAttributeValues<S, T>(mapper: (subject: S, predicate: string, object: string) => T, subject: S): T[] {
                 const result: T[] = [];
@@ -689,11 +653,6 @@ function processCurrent(): boolean {
                 add('type', type);
                 add(namePredicate, nameObject);
                 additionalAttributes(add);
-                /*
-                if (additionalAttribute !== undefined) {
-                    add(additionalAttribute.predicate, additionalAttribute.object);
-                }
-                */
                 return result;
             }
 
@@ -712,12 +671,11 @@ function processCurrent(): boolean {
             }, alreadyAdded);
         }
 
-        function enqueueTasks(items: string[], type: string, predicate: string, additionalAttribute: (add: BiConsumer<string, string>) => void): boolean {
+        function enqueueTasks(items: string[], type: string, predicate: string, additionalAttribute: (add: BiConsumer<string, string>) => void): void {
             if (isUndefined(items.find(name => enqueueTask(`s/${encodeURIComponent(name)}`, name, type, predicate, additionalAttribute, true, () => false)))) {
                 console.log('  completed');
                 moveToNext();
             }
-            return true;
         }
 
 
@@ -727,10 +685,11 @@ function processCurrent(): boolean {
         }
         */
 
+        /*
         function delCurrent(predicate: string, object: string): UpdateStatement {
             return del(currentTask, predicate, object);
         }
-
+        */
 
         function stat<T>(path: string, success: (stats: fs.Stats) => T, missing: () => T): T {
             const result: Pair<NodeJS.ErrnoException, fs.Stats> = waitFor2((consumer: (first: NodeJS.ErrnoException, second: fs.Stats) => void) => fs.stat(path, consumer));
@@ -752,9 +711,14 @@ function processCurrent(): boolean {
             const result: Pair<object, any> = waitFor2(consumer => fs.readdir(path, consumer));
             assertEquals(result.first, null);
             const files = result.second;
-
             //const files = wait2Success((consumer: (first: NodeJS.ErrnoException, second: string[]) => void) => fs.readdir(path, consumer));
-            return files.length === 0 ? remove('  remove empty directory', 'rmdir', path) : enqueueTasks(files, 'fileSystemEntry', 'name', add => add('directory', currentTask));
+            if (isEmpty(files)) {
+                remove('delete empty directory', 'rmdir', path);
+            }
+            else {
+                enqueueTasks(files, 'fileSystemEntry', 'name', add => add('directory', currentTask));
+            }
+            return true;
         }
 
         function updateEntryType(bValue: string, alreadyUpdated: () => boolean): boolean {
@@ -779,10 +743,15 @@ function processCurrent(): boolean {
             return stat(path, stat => (stat.isDirectory() ? directory : file)(), missing);
         }
 
+        function enqueueMBTask(resource: string, mbid: string) {
+            enqueueTask(`mb:${resource}/${mbid}`, mbid, `mb:${resource}`, 'mb:mbid', () => { }, undefined, fail);
+        }
+
         switch (type) {
             case 'root':
                 console.log('processing root');
-                return enqueueTasks(['/Volumes/Musik', '/Volumes/music', '/Volumes/Qmultimedia', '/Users/ralph.sigrist/Music/iTunes/ITunes Media/Music'], 'volume', 'path', () => { });
+                enqueueTasks(['/Volumes/Musik', '/Volumes/music', '/Volumes/Qmultimedia', '/Users/ralph.sigrist/Music/iTunes/ITunes Media/Music'], 'volume', 'path', () => { });
+                return true;
             case 'volume':
                 const volumePath = decodeStringLiteral(getPropertyFromCurrent('path')); // getStringProperty('path');
                 return processFileSystemPath(volumePath, () => processDirectory(volumePath), fail, () => {
@@ -823,7 +792,8 @@ function processCurrent(): boolean {
                     () => updateEntryType('true', () => processDirectory(entryPath)),
                     () => updateEntryType('false', () => {
                         if (entryName === '.DS_Store') {
-                            return remove('  deleting', 'unlink', entryPath);
+                            remove('deleting file', 'unlink', entryPath);
+                            return true;
                         }
                         else {
                             const extension = path.extname(entryName);
@@ -831,7 +801,7 @@ function processCurrent(): boolean {
                                 const promise: Promise<mm.IAudioMetadata> = mm.parseFile(entryPath);
                                 const fiber = Fiber.current;
                                 promise.then((value: mm.IAudioMetadata) => fiber.run({ type: "metadata", metaData: value }), (err: any) => fiber.run({ type: "error", error: err }));
-                                const r = Fiber.yield();
+                                const r = yieldValue();
 
                                 assertEquals(r.type, 'metadata');
                                 let metaData: mm.IAudioMetadata = r.metaData;
@@ -859,7 +829,7 @@ function processCurrent(): boolean {
                                         title: expectEquals("Room 112 (intro)"),
                                         releasecountry: expectEquals("DE"),
                                         label: expectEquals("BMG"),
-                                        musicbrainz_albumartistid: expectEquals(["9132d515-dc0e-4494-85ae-20f06eed14f9"]),
+                                        musicbrainz_albumartistid: expectEquals(["  "]),
                                         year: expectEquals(1998),
                                         date: expectEquals("1998-11-16"),
                                         musicbrainz_trackid: expectEquals("562abb04-da87-3ab1-9866-ce8f24853701"),
@@ -913,7 +883,7 @@ function processCurrent(): boolean {
                                     }),
                                     native: expectEquals(undefined)
                                 });
-                                enqueueTask("mb:artist/9132d515-dc0e-4494-85ae-20f06eed14f9", "9132d515-dc0e-4494-85ae-20f06eed14f9", 'mb:artist', 'mb:mbid', () => { }, undefined, fail);
+                                enqueueMBTask("artist", "9132d515-dc0e-4494-85ae-20f06eed14f9");
                                 //fail();
                                 return true;
                             }
@@ -929,12 +899,12 @@ function processCurrent(): boolean {
                         prepareStream(db.getStream({ subject: currentTask }));
                         const updateStatements: UpdateStatement[] = [];
                         for (; ;) {
-                            const statement = Fiber.yield();
+                            const statement = yieldValue();
                             if (isUndefined(statement)) {
                                 break;
                             }
                             assertEquals(statement.subject, currentTask);
-                            updateStatements.push(delCurrent(statement.predicate, statement.object));
+                            updateStatements.push(del(currentTask, statement.predicate, statement.object));
                         }
                         assertMissing({ predicate: currentTask });
                         console.log('  missing -> remove entry');
@@ -950,8 +920,108 @@ function processCurrent(): boolean {
                         volumeNotMounted();
                         return false;
                     }));
-            // .DS_Store
-            //return false;
+            case 'mb:artist':
+                failIf(mbAccessed);
+                mbAccessed = true;
+                const mbidIri = getPropertyFromCurrent('mb:mbid').split('/');
+                assertSame(mbidIri[0], 'mb:artist');
+                const resourcePath = `/ws/2/artist/${mbidIri[1]}`
+                console.log(`https://musicbrainz.org${resourcePath}`)
+                const run = getRunner();
+                https.get({
+                    hostname: 'musicbrainz.org',
+                    path: resourcePath,
+                    port: 443,
+                    headers: { 'user-agent': 'rasuni-musicscanner/0.0.1 ( https://musicbrainz.org/user/rasuni )' }
+                }, run).on("error", fail);
+                const resp = yieldValue();
+                assertEquals(resp.statusCode, 200);
+                const parser = sax.parser(true, {});
+                resp.on('data', (chunk: any) => parser.write(chunk));
+                resp.on('end', () => parser.close());
+                const buffer: SaxEvent[] = [];
+                let waiting: boolean = false;
+                function push(event: SaxEvent): void {
+                    if (waiting) {
+                        assertEquals(buffer.length, 0);
+                        run(event);
+                    }
+                    else {
+                        buffer.push(event);
+                    }
+                }
+                parser.onopentag = tag => push({ type: "openTag", tag: tag as sax.Tag });
+                parser.onerror = fail;
+                parser.onclosetag = name => push({ type: 'closeTag', name: name });
+                parser.ontext = text => push({ type: "text", text: text });
+
+                function nextEvent(): SaxEvent {
+                    const event = buffer.shift();
+                    if (isUndefined(event)) {
+                        failIf(waiting);
+                        waiting = true;
+                        const next = yieldValue();
+                        waiting = false;
+                        return next;
+                    }
+                    else {
+                        return event;
+                    }
+                }
+
+                function expectEvent(expected: SaxEvent) {
+                    assertEquals(nextEvent(), expected);
+                }
+
+                function expectTag(name: string, attributes: Attributes, inner: () => void) {
+                    expectEvent({
+                        type: 'openTag',
+                        tag: {
+                            name: name,
+                            attributes: attributes,
+                            isSelfClosing: false
+                        }
+                    })
+                    inner()
+                    expectEvent({
+                        type: 'closeTag',
+                        name: name
+                    })
+                }
+
+                function expectTextTag(name: string, value: string): void {
+                    expectTag(name, {}, () => expectEvent({
+                        type: 'text',
+                        text: value
+                    }));
+                }
+
+                function expectArea(tagName: string, mbid: string, areaName: string, additionalTags: () => void) {
+                    expectTag(tagName, {
+                        id: mbid
+                    }, () => {
+                        expectTextTag('name', areaName);
+                        expectTextTag('sort-name', areaName);
+                        additionalTags();
+                    });
+                }
+                expectTag('metadata', {
+                    xmlns: "http://musicbrainz.org/ns/mmd-2.0#"
+                }, () => expectTag('artist', {
+                    type: "Group",
+                    id: "9132d515-dc0e-4494-85ae-20f06eed14f9",
+                    'type-id': "e431f5f6-b5d2-343d-8b36-72607fffb74b"
+                }, () => {
+                    expectTextTag('name', '112');
+                    expectTextTag('sort-name', '112');
+                    expectTextTag('country', 'US');
+                    expectArea('area', "489ce91b-6658-3307-9877-795b68554c98", 'United States', () =>
+                        expectTag('iso-3166-1-code-list', {}, () => expectTextTag('iso-3166-1-code', 'US')));
+                    expectArea('begin-area', "26e0e534-19ea-4645-bfb3-1aa4e83a4046", 'Atlanta', () => { });
+                    expectTag('life-span', {}, () => expectTextTag('begin', "1996"));
+                }));
+                enqueueMBTask("area", "489ce91b-6658-3307-9877-795b68554c98");
+                return true;
             default:
                 fail();
                 return false;
