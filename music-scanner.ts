@@ -160,11 +160,21 @@ interface Dictionary<T> {
     readonly [name: string]: T;
 }
 
-function compareObjects<T>(actual: Dictionary<any>, expected: Dictionary<T>, compare: BiConsumer<any, T>) {
-    new Set([
+interface CompareValues<T> {
+    actual: any,
+    expected: T
+}
+
+function* compareObjects<T>(actual: Dictionary<any>, expected: Dictionary<T>): IterableIterator<CompareValues<T>> {
+    for (const key of new Set([
         ...Object.keys(actual),
         ...Object.keys(expected)
-    ]).forEach((key) => compare(actual[key], expected[key]));
+    ]).values()) {
+        yield {
+            actual: actual[key],
+            expected: expected[key]
+        }
+    }
 }
 
 function assertEquals(actual: any, expected: any): void {
@@ -177,7 +187,9 @@ function assertEquals(actual: any, expected: any): void {
         }
         else {
             failIf(expectedIsNull);
-            compareObjects(actual, expected, assertEquals);
+            for (const compareValue of compareObjects(actual, expected)) {
+                assertEquals(compareValue.actual, compareValue.expected);
+            }
         }
     }
 }
@@ -506,14 +518,14 @@ function getObject<T>(subject: string, predicate: string, notFound: () => T, fou
     return navigate(subject, predicate, true, notFound, found);
     /*
     return get({ subject: subject, predicate: predicate }, notFound, statement => {
-
+ 
         function verify(key: keyof Statement<string>, expected: string) {
             assertEquals(statement[key], expected);
         }
-
+ 
         verify('subject', subject);
         verify('predicate', predicate);
-
+ 
         return found(statement.object);
     });
     */
@@ -534,15 +546,22 @@ function persist(type: Operation, statements: Statement<string>[]): void {
     }
 }
 
-function verifyObject(object: Dictionary<any>, checkers: Dictionary<(value: any) => void>) {
-    compareObjects(object, checkers, (actual, checker) => {
+function verifyObject(object: Dictionary<any>, checkers: Dictionary<(value: any) => boolean>): boolean {
+    for (const compareValue of compareObjects(object, checkers)) {
+        const checker = compareValue.expected;
         assertType(checker, 'function');
-        checker(actual);
-    })
+        if (checker(compareValue.actual)) {
+            return true;
+        }
+    }
+    return false;
 }
 
-function expectEquals(expected: any): (actual: any) => void {
-    return actual => assertEquals(actual, expected);
+function expectEquals(expected: any): (actual: any) => boolean {
+    return actual => {
+        assertEquals(actual, expected);
+        return false;
+    }
 }
 
 
@@ -562,13 +581,16 @@ function update(changeSet: UpdateStatement[]): void {
 
 }
 
-function expectObject(checkers: Dictionary<(value: any) => void>) {
-    return (object: Dictionary<any>) => verifyObject(object, checkers)
+function expectObject(checkers: Dictionary<(value: any) => boolean>) {
+    return (object: Dictionary<any>) => {
+        verifyObject(object, checkers)
+        return false;
+    }
 }
 
 const expectJpgImage = expectObject({
     format: expectEquals("jpg"),
-    data: () => { }
+    data: () => false
 });
 
 let mbAccessed = false;
@@ -641,7 +663,9 @@ function processCurrent(): boolean {
             moveToNext();
         }
 
-        function enqueueTask<T>(nameObject: string, name: string, type: string, namePredicate: string, additionalAttributes: (add: BiConsumer<string, string>) => void, enqueued: T, alreadyAdded: () => T): T {
+        function enqueueTask<T>(name: string, type: string, namePredicate: string, additionalAttributes: (add: BiConsumer<string, string>) => void, enqueued: T, alreadyAdded: () => T): T {
+
+            const nameObject = `s/${encodeURIComponent(name)}`;
 
             function mapAttributeValues<S, T>(mapper: (subject: S, predicate: string, object: string) => T, subject: S): T[] {
                 const result: T[] = [];
@@ -672,7 +696,7 @@ function processCurrent(): boolean {
         }
 
         function enqueueTasks(items: string[], type: string, predicate: string, additionalAttribute: (add: BiConsumer<string, string>) => void): void {
-            if (isUndefined(items.find(name => enqueueTask(`s/${encodeURIComponent(name)}`, name, type, predicate, additionalAttribute, true, () => false)))) {
+            if (isUndefined(items.find(name => enqueueTask(name, type, predicate, additionalAttribute, true, () => false)))) {
                 console.log('  completed');
                 moveToNext();
             }
@@ -721,7 +745,27 @@ function processCurrent(): boolean {
             return true;
         }
 
+
+        function updateLiteralProperty(predicate: string, value: string, literalTag: string, alreadyUpdated: () => boolean) {
+            function literal(): string {
+                return `${literalTag}/${encodeURIComponent(value)}`
+            }
+            return getObject(currentTask, 'predicate', () => {
+                console.log(`  ${predicate}: undefined --> ${value}`);
+                update([
+                    put(currentTask, predicate, literal()),
+                    ...moveToNextStatements(),
+                ]);
+                return true;
+            }, (object: string) => {
+                assertEquals(object, literal());
+                return alreadyUpdated();
+            })
+        }
+
         function updateEntryType(bValue: string, alreadyUpdated: () => boolean): boolean {
+            return updateLiteralProperty('isDirectory', bValue, 'b', alreadyUpdated);
+            /*
             return getObject(currentTask, 'isDirectory', () => {
                 console.log(`  isDirectory: undefined --> ${bValue}`);
                 update([
@@ -733,6 +777,7 @@ function processCurrent(): boolean {
                 assertEquals(object, `b/${bValue}`);
                 return alreadyUpdated();
             })
+            */
         }
 
 
@@ -743,8 +788,12 @@ function processCurrent(): boolean {
             return stat(path, stat => (stat.isDirectory() ? directory : file)(), missing);
         }
 
-        function enqueueMBTask(resource: string, mbid: string) {
-            enqueueTask(`mb:${resource}/${mbid}`, mbid, `mb:${resource}`, 'mb:mbid', () => { }, undefined, fail);
+        function enqueueMBTask(resource: string, mbid: string, found: () => void) {
+            enqueueTask(mbid, `mb:${resource}`, 'mb:mbid', () => { }, undefined, found);
+        }
+
+        function getStringProperty(name: string) {
+            return decodeStringLiteral(getPropertyFromCurrent(name));
         }
 
         switch (type) {
@@ -753,7 +802,7 @@ function processCurrent(): boolean {
                 enqueueTasks(['/Volumes/Musik', '/Volumes/music', '/Volumes/Qmultimedia', '/Users/ralph.sigrist/Music/iTunes/ITunes Media/Music'], 'volume', 'path', () => { });
                 return true;
             case 'volume':
-                const volumePath = decodeStringLiteral(getPropertyFromCurrent('path')); // getStringProperty('path');
+                const volumePath = getStringProperty('path'); // getStringProperty('path');
                 return processFileSystemPath(volumePath, () => processDirectory(volumePath), fail, () => {
                     volumeNotMounted();
                     return false;
@@ -805,15 +854,17 @@ function processCurrent(): boolean {
 
                                 assertEquals(r.type, 'metadata');
                                 let metaData: mm.IAudioMetadata = r.metaData;
-                                verifyObject(metaData, {
-                                    format: expectEquals({
-                                        dataformat: "flac",
-                                        lossless: true,
-                                        numberOfChannels: 2,
-                                        bitsPerSample: 16,
-                                        sampleRate: 44100,
-                                        duration: 60.29333333333334,
-                                        tagTypes: ["vorbis"],
+                                assert(verifyObject(metaData, {
+                                    format: expectObject({
+                                        dataformat: expectEquals("flac"),
+                                        lossless: expectEquals(true),
+                                        numberOfChannels: expectEquals(2),
+                                        bitsPerSample: expectEquals(16),
+                                        sampleRate: expectEquals(44100),
+                                        duration: actualValue => updateLiteralProperty('mm:format/duration', `${actualValue}`, 'n', fail),
+                                        //expectEquals(60.29333333333334),
+
+                                        tagTypes: expectEquals(["vorbis"]),
                                     }),
                                     common: expectObject({
                                         track: expectEquals({
@@ -829,7 +880,7 @@ function processCurrent(): boolean {
                                         title: expectEquals("Room 112 (intro)"),
                                         releasecountry: expectEquals("DE"),
                                         label: expectEquals("BMG"),
-                                        musicbrainz_albumartistid: expectEquals(["  "]),
+                                        musicbrainz_albumartistid: expectEquals(["9132d515-dc0e-4494-85ae-20f06eed14f9"]),
                                         year: expectEquals(1998),
                                         date: expectEquals("1998-11-16"),
                                         musicbrainz_trackid: expectEquals("562abb04-da87-3ab1-9866-ce8f24853701"),
@@ -882,8 +933,8 @@ function processCurrent(): boolean {
                                         }),
                                     }),
                                     native: expectEquals(undefined)
-                                });
-                                enqueueMBTask("artist", "9132d515-dc0e-4494-85ae-20f06eed14f9");
+                                }));
+                                enqueueMBTask("artist", "9132d515-dc0e-4494-85ae-20f06eed14f9", () => enqueueMBTask("release", "9ce47bcf-97d1-4534-b77e-b19ba6c98511", fail));
                                 //fail();
                                 return true;
                             }
@@ -923,9 +974,8 @@ function processCurrent(): boolean {
             case 'mb:artist':
                 failIf(mbAccessed);
                 mbAccessed = true;
-                const mbidIri = getPropertyFromCurrent('mb:mbid').split('/');
-                assertSame(mbidIri[0], 'mb:artist');
-                const resourcePath = `/ws/2/artist/${mbidIri[1]}`
+                const mbid = getStringProperty('mb:mbid');
+                const resourcePath = `/ws/2/artist/${mbid}`;
                 console.log(`https://musicbrainz.org${resourcePath}`)
                 const run = getRunner();
                 https.get({
@@ -1020,7 +1070,7 @@ function processCurrent(): boolean {
                     expectArea('begin-area', "26e0e534-19ea-4645-bfb3-1aa4e83a4046", 'Atlanta', () => { });
                     expectTag('life-span', {}, () => expectTextTag('begin', "1996"));
                 }));
-                enqueueMBTask("area", "489ce91b-6658-3307-9877-795b68554c98");
+                enqueueMBTask("area", "489ce91b-6658-3307-9877-795b68554c98", fail);
                 return true;
             default:
                 fail();
