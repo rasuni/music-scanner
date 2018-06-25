@@ -581,10 +581,10 @@ function update(changeSet: UpdateStatement[]): void {
 
 }
 
-function expectObject(checkers: Dictionary<(value: any) => boolean>) {
+function expectObject(checkers: Dictionary<(value: any) => boolean>): (object: Dictionary<any>) => boolean {
     return (object: Dictionary<any>) => {
-        verifyObject(object, checkers)
-        return false;
+        return verifyObject(object, checkers);
+        //return false;
     }
 }
 
@@ -593,7 +593,7 @@ const expectJpgImage = expectObject({
     data: () => false
 });
 
-let mbAccessed = false;
+let lastAccessed: number | undefined = undefined;
 
 interface OpenTagEvent {
     readonly type: 'openTag';
@@ -615,6 +615,81 @@ type SaxEvent = OpenTagEvent | TextEvent | CloseTagEvent;
 interface Attributes {
     readonly [key: string]: string;
 }
+
+function expectEvent(nextEvent: () => SaxEvent, expected: SaxEvent) {
+    assertEquals(nextEvent(), expected);
+}
+
+function expectTag(nextEvent: () => SaxEvent, name: string, attributes: Attributes, inner: () => void) {
+    expectEvent(nextEvent, {
+        type: 'openTag',
+        tag: {
+            name: name,
+            attributes: attributes,
+            isSelfClosing: false
+        }
+    });
+    inner();
+    expectEvent(nextEvent, {
+        type: 'closeTag',
+        name: name
+    })
+}
+
+function expectTextTag(nextEvent: () => SaxEvent, name: string, attributes: Attributes, value: string): void {
+    expectTag(nextEvent, name, attributes, () => expectEvent(nextEvent, {
+        type: 'text',
+        text: value
+    }));
+}
+
+function expectPlainTextTag(nextEvent: () => SaxEvent, name: string, value: string): void {
+    expectTextTag(nextEvent, name, {}, value);
+}
+
+function expectNamed(nextEvent: () => SaxEvent, tagName: string, mbid: string, additionalAttributes: Attributes, name: string, additionalTags: () => void) {
+    expectTag(nextEvent, tagName, {
+        id: mbid,
+        ...additionalAttributes
+    }, () => {
+        expectPlainTextTag(nextEvent, 'name', name);
+        expectPlainTextTag(nextEvent, 'sort-name', name);
+        additionalTags();
+    });
+}
+
+function expectSimpleTag(nextEvent: () => SaxEvent, name: string, inner: () => void) {
+    expectTag(nextEvent, name, {}, inner);
+}
+
+function expectIsoList(nextEvent: () => SaxEvent, id: string, code: string) {
+    expectSimpleTag(nextEvent, `iso-3166-${id}-code-list`, () => expectPlainTextTag(nextEvent, `iso-3166-${id}-code`, code));
+}
+
+function expectIsoList1(nextEvent: () => SaxEvent, code: string) {
+    expectIsoList(nextEvent, '1', code);
+}
+
+
+function expectUSIsoList(nextEvent: () => SaxEvent) {
+    expectIsoList1(nextEvent, 'US');
+}
+
+function expectAreaRaw(nextEvent: () => SaxEvent, tagName: string, mbid: string, name: string, additionalTags: () => void) {
+    expectNamed(nextEvent, tagName, mbid, {}, name, additionalTags);
+}
+
+function expectArea(nextEvent: () => SaxEvent, mbid: string, name: string, additionalTags: () => void) {
+    expectNamed(nextEvent, 'area', mbid, {}, name, additionalTags);
+}
+
+
+function id(mbid: string): Attributes {
+    return {
+        id: mbid
+    }
+}
+
 
 function processCurrent(): boolean {
     return getObject('root', 'current', () => {
@@ -746,11 +821,11 @@ function processCurrent(): boolean {
         }
 
 
-        function updateLiteralProperty(predicate: string, value: string, literalTag: string, alreadyUpdated: () => boolean) {
+        function updateLiteralProperty(predicate: string, value: string, literalTag: string, alreadyUpdated: () => boolean): boolean {
             function literal(): string {
                 return `${literalTag}/${encodeURIComponent(value)}`
             }
-            return getObject(currentTask, 'predicate', () => {
+            return getObject(currentTask, predicate, () => {
                 console.log(`  ${predicate}: undefined --> ${value}`);
                 update([
                     put(currentTask, predicate, literal()),
@@ -765,19 +840,6 @@ function processCurrent(): boolean {
 
         function updateEntryType(bValue: string, alreadyUpdated: () => boolean): boolean {
             return updateLiteralProperty('isDirectory', bValue, 'b', alreadyUpdated);
-            /*
-            return getObject(currentTask, 'isDirectory', () => {
-                console.log(`  isDirectory: undefined --> ${bValue}`);
-                update([
-                    put(currentTask, 'isDirectory', `b/${bValue}`),
-                    ...moveToNextStatements(),
-                ]);
-                return true;
-            }, (object: string) => {
-                assertEquals(object, `b/${bValue}`);
-                return alreadyUpdated();
-            })
-            */
         }
 
 
@@ -794,6 +856,79 @@ function processCurrent(): boolean {
 
         function getStringProperty(name: string) {
             return decodeStringLiteral(getPropertyFromCurrent(name));
+        }
+
+        function processMBResource(type: string, inner: (nextEvent: () => SaxEvent, mbid: string) => void /*subType: string, typeId: string, name: string, additionalTags: (nextEvent: () => SaxEvent) => void*/, inc: string): void {
+            assertUndefined(lastAccessed);
+            lastAccessed = Date.now();
+            const mbid = getStringProperty('mb:mbid');
+            const resourcePath = `/ws/2/${type}/${mbid}${inc}`;
+            console.log(`https://musicbrainz.org${resourcePath}`)
+            const run = getRunner();
+            https.get({
+                hostname: 'musicbrainz.org',
+                path: resourcePath,
+                port: 443,
+                headers: { 'user-agent': 'rasuni-musicscanner/0.0.1 ( https://musicbrainz.org/user/rasuni )' }
+            }, run).on("error", fail);
+            const resp = yieldValue();
+            assertEquals(resp.statusCode, 200);
+            const parser = sax.parser(true, {});
+            resp.on('data', (chunk: any) => parser.write(chunk));
+            resp.on('end', () => parser.close());
+            const buffer: SaxEvent[] = [];
+            let waiting: boolean = false;
+            function push(event: SaxEvent): void {
+                if (waiting) {
+                    assertEquals(buffer.length, 0);
+                    run(event);
+                }
+                else {
+                    buffer.push(event);
+                }
+            }
+            parser.onopentag = tag => push({ type: "openTag", tag: tag as sax.Tag });
+            parser.onerror = fail;
+            parser.onclosetag = name => push({ type: 'closeTag', name: name });
+            parser.ontext = text => push({ type: "text", text: text });
+
+            function nextEvent(): SaxEvent {
+                const event = buffer.shift();
+                if (isUndefined(event)) {
+                    failIf(waiting);
+                    waiting = true;
+                    const next = yieldValue();
+                    waiting = false;
+                    return next;
+                }
+                else {
+                    return event;
+                }
+            }
+
+
+
+            expectTag(nextEvent, 'metadata', {
+                xmlns: "http://musicbrainz.org/ns/mmd-2.0#"
+            }, () => inner(nextEvent, mbid));
+        }
+
+        function processMBNamedResource(type: string, subType: string, typeId: string, name: string, additionalTags: (nextEvent: () => SaxEvent) => void, inc: string): void {
+            processMBResource(type, (nextEvent, mbid) => expectNamed(nextEvent, type, mbid, {
+                type: subType,
+                //id: mbid, // "9132d515-dc0e-4494-85ae-20f06eed14f9",
+                'type-id': typeId
+            }, name, () => additionalTags(nextEvent)), inc);
+        }
+
+
+
+        function enqueueArea(mbid: string, found: () => void) {
+            enqueueMBTask('area', mbid, found);
+        }
+
+        function checkUpdateFormatProperty(name: string): (actualValue: number) => boolean {
+            return actualValue => updateLiteralProperty(`mm:format/${name}`, `${actualValue}`, 'n', fail);
         }
 
         switch (type) {
@@ -845,102 +980,105 @@ function processCurrent(): boolean {
                             return true;
                         }
                         else {
-                            const extension = path.extname(entryName);
-                            if (extension === '.flac') {
-                                const promise: Promise<mm.IAudioMetadata> = mm.parseFile(entryPath);
-                                const fiber = Fiber.current;
-                                promise.then((value: mm.IAudioMetadata) => fiber.run({ type: "metadata", metaData: value }), (err: any) => fiber.run({ type: "error", error: err }));
-                                const r = yieldValue();
+                            switch (path.extname(entryName)) {
+                                case '.flac':
+                                case '.m4a':
+                                case '.mp4':
+                                    const promise: Promise<mm.IAudioMetadata> = mm.parseFile(entryPath);
+                                    const fiber = Fiber.current;
+                                    promise.then((value: mm.IAudioMetadata) => fiber.run({ type: "metadata", metaData: value }), (err: any) => fiber.run({ type: "error", error: err }));
+                                    const r = yieldValue();
 
-                                assertEquals(r.type, 'metadata');
-                                let metaData: mm.IAudioMetadata = r.metaData;
-                                assert(verifyObject(metaData, {
-                                    format: expectObject({
-                                        dataformat: expectEquals("flac"),
-                                        lossless: expectEquals(true),
-                                        numberOfChannels: expectEquals(2),
-                                        bitsPerSample: expectEquals(16),
-                                        sampleRate: expectEquals(44100),
-                                        duration: actualValue => updateLiteralProperty('mm:format/duration', `${actualValue}`, 'n', fail),
-                                        //expectEquals(60.29333333333334),
+                                    assertEquals(r.type, 'metadata');
+                                    let metaData: mm.IAudioMetadata = r.metaData;
+                                    if (!verifyObject(metaData, {
+                                        format: expectObject({
+                                            dataformat: expectEquals("flac"),
+                                            lossless: expectEquals(true),
+                                            numberOfChannels: expectEquals(2),
+                                            bitsPerSample: expectEquals(16),
+                                            sampleRate: checkUpdateFormatProperty('sampleRate'), // actualValue => updateLiteralProperty('mm:format/sampleRate', `${actualValue}`, 'n', fail),
+                                            //sampleRate: expectEquals(44100),
+                                            duration: checkUpdateFormatProperty('duration'), //actualValue => updateLiteralProperty('mm:format/duration', `${actualValue}`, 'n', fail),
+                                            //expectEquals(60.29333333333334),
+                                            tagTypes: expectEquals(["vorbis"]),
+                                        }),
+                                        common: expectObject({
+                                            track: expectEquals({
+                                                no: 1,
+                                                of: 19
+                                            }),
+                                            disk: expectEquals({
+                                                no: 1,
+                                                of: 1
+                                            }),
+                                            barcode: expectEquals(786127302127),
+                                            producer: expectEquals(["Kevin Wales", "Harve Pierre", "Diddy", "J-Dub"]),
+                                            title: expectEquals("Room 112 (intro)"),
+                                            releasecountry: expectEquals("DE"),
+                                            label: expectEquals("BMG"),
+                                            musicbrainz_albumartistid: expectEquals(["9132d515-dc0e-4494-85ae-20f06eed14f9"]),
+                                            year: expectEquals(1998),
+                                            date: expectEquals("1998-11-16"),
+                                            musicbrainz_trackid: expectEquals("562abb04-da87-3ab1-9866-ce8f24853701"),
+                                            asin: expectEquals("B00000D9VN"),
+                                            albumartistsort: expectEquals("112"),
+                                            originaldate: expectEquals("1998-11-10"),
+                                            language: expectEquals("eng"),
+                                            script: expectEquals("Latn"),
+                                            work: expectEquals("Room 112 (intro)"),
+                                            musicbrainz_albumid: expectEquals("9ce47bcf-97d1-4534-b77e-b19ba6c98511"),
+                                            releasestatus: expectEquals("official"),
+                                            albumartist: expectEquals("112"),
+                                            acoustid_id: expectEquals("91b4acf0-f50a-4087-9a65-48ae0034854b"),
+                                            catalognumber: expectEquals("78612-73021-2"),
+                                            album: expectEquals("Room 112"),
+                                            musicbrainz_artistid: expectEquals(["9132d515-dc0e-4494-85ae-20f06eed14f9"]),
+                                            media: expectEquals("CD"),
+                                            releasetype: expectEquals(["album"]),
+                                            mixer: expectEquals(["Michael Patterson"]),
+                                            originalyear: expectEquals(1998),
+                                            isrc: expectEquals("USAR19800507"),
+                                            musicbrainz_releasegroupid: expectEquals("a15cf6a3-c02a-316f-8e3d-15cd8ddf95f0"),
+                                            artist: expectEquals("112"),
+                                            writer: expectEquals(["Michael Keith", "Quinnes Parker", "J-Dub", "Lamont Maxwell", "Slim", "Daron Jones"]),
+                                            musicbrainz_workid: expectEquals("af499b43-2556-45c6-87e9-4879f5cf7abe"),
+                                            musicbrainz_recordingid: expectEquals("9b871449-7109-42fe-835b-6957a006e25d"),
+                                            artistsort: expectEquals("112"),
+                                            artists: expectEquals(["112"]),
+                                            genre: expectEquals(["R B"]),
+                                            picture: expectObject({
+                                                0: expectJpgImage,
+                                                1: expectJpgImage,
+                                                2: expectJpgImage,
+                                                3: expectJpgImage,
+                                                4: expectJpgImage,
+                                                5: expectJpgImage,
+                                                6: expectJpgImage,
+                                                7: expectJpgImage,
+                                                8: expectJpgImage,
+                                                9: expectJpgImage,
+                                                10: expectJpgImage,
+                                                11: expectJpgImage,
+                                                12: expectJpgImage,
+                                                13: expectJpgImage,
+                                                14: expectJpgImage,
+                                                15: expectJpgImage,
+                                                16: expectJpgImage,
+                                                17: expectJpgImage,
+                                                18: expectJpgImage,
+                                            }),
+                                        }),
+                                        native: expectEquals(undefined)
+                                    })) {
+                                        enqueueMBTask("artist", "9132d515-dc0e-4494-85ae-20f06eed14f9", () => enqueueMBTask("release", "9ce47bcf-97d1-4534-b77e-b19ba6c98511", fail));
+                                    }
+                                    return true;
 
-                                        tagTypes: expectEquals(["vorbis"]),
-                                    }),
-                                    common: expectObject({
-                                        track: expectEquals({
-                                            no: 1,
-                                            of: 19
-                                        }),
-                                        disk: expectEquals({
-                                            no: 1,
-                                            of: 1
-                                        }),
-                                        barcode: expectEquals(786127302127),
-                                        producer: expectEquals(["Kevin Wales", "Harve Pierre", "Diddy", "J-Dub"]),
-                                        title: expectEquals("Room 112 (intro)"),
-                                        releasecountry: expectEquals("DE"),
-                                        label: expectEquals("BMG"),
-                                        musicbrainz_albumartistid: expectEquals(["9132d515-dc0e-4494-85ae-20f06eed14f9"]),
-                                        year: expectEquals(1998),
-                                        date: expectEquals("1998-11-16"),
-                                        musicbrainz_trackid: expectEquals("562abb04-da87-3ab1-9866-ce8f24853701"),
-                                        asin: expectEquals("B00000D9VN"),
-                                        albumartistsort: expectEquals("112"),
-                                        originaldate: expectEquals("1998-11-10"),
-                                        language: expectEquals("eng"),
-                                        script: expectEquals("Latn"),
-                                        work: expectEquals("Room 112 (intro)"),
-                                        musicbrainz_albumid: expectEquals("9ce47bcf-97d1-4534-b77e-b19ba6c98511"),
-                                        releasestatus: expectEquals("official"),
-                                        albumartist: expectEquals("112"),
-                                        acoustid_id: expectEquals("91b4acf0-f50a-4087-9a65-48ae0034854b"),
-                                        catalognumber: expectEquals("78612-73021-2"),
-                                        album: expectEquals("Room 112"),
-                                        musicbrainz_artistid: expectEquals(["9132d515-dc0e-4494-85ae-20f06eed14f9"]),
-                                        media: expectEquals("CD"),
-                                        releasetype: expectEquals(["album"]),
-                                        mixer: expectEquals(["Michael Patterson"]),
-                                        originalyear: expectEquals(1998),
-                                        isrc: expectEquals("USAR19800507"),
-                                        musicbrainz_releasegroupid: expectEquals("a15cf6a3-c02a-316f-8e3d-15cd8ddf95f0"),
-                                        artist: expectEquals("112"),
-                                        writer: expectEquals(["Michael Keith", "Quinnes Parker", "J-Dub", "Lamont Maxwell", "Slim", "Daron Jones"]),
-                                        musicbrainz_workid: expectEquals("af499b43-2556-45c6-87e9-4879f5cf7abe"),
-                                        musicbrainz_recordingid: expectEquals("9b871449-7109-42fe-835b-6957a006e25d"),
-                                        artistsort: expectEquals("112"),
-                                        artists: expectEquals(["112"]),
-                                        genre: expectEquals(["R B"]),
-                                        picture: expectObject({
-                                            0: expectJpgImage,
-                                            1: expectJpgImage,
-                                            2: expectJpgImage,
-                                            3: expectJpgImage,
-                                            4: expectJpgImage,
-                                            5: expectJpgImage,
-                                            6: expectJpgImage,
-                                            7: expectJpgImage,
-                                            8: expectJpgImage,
-                                            9: expectJpgImage,
-                                            10: expectJpgImage,
-                                            11: expectJpgImage,
-                                            12: expectJpgImage,
-                                            13: expectJpgImage,
-                                            14: expectJpgImage,
-                                            15: expectJpgImage,
-                                            16: expectJpgImage,
-                                            17: expectJpgImage,
-                                            18: expectJpgImage,
-                                        }),
-                                    }),
-                                    native: expectEquals(undefined)
-                                }));
-                                enqueueMBTask("artist", "9132d515-dc0e-4494-85ae-20f06eed14f9", () => enqueueMBTask("release", "9ce47bcf-97d1-4534-b77e-b19ba6c98511", fail));
-                                //fail();
-                                return true;
-                            }
-                            else {
-                                logError('unknown file type!');
-                                return false;
+                                default:
+                                    logError('unknown file type!');
+                                    return false;
+
                             }
 
                         }
@@ -972,105 +1110,203 @@ function processCurrent(): boolean {
                         return false;
                     }));
             case 'mb:artist':
-                failIf(mbAccessed);
-                mbAccessed = true;
-                const mbid = getStringProperty('mb:mbid');
-                const resourcePath = `/ws/2/artist/${mbid}`;
-                console.log(`https://musicbrainz.org${resourcePath}`)
-                const run = getRunner();
-                https.get({
-                    hostname: 'musicbrainz.org',
-                    path: resourcePath,
-                    port: 443,
-                    headers: { 'user-agent': 'rasuni-musicscanner/0.0.1 ( https://musicbrainz.org/user/rasuni )' }
-                }, run).on("error", fail);
-                const resp = yieldValue();
-                assertEquals(resp.statusCode, 200);
-                const parser = sax.parser(true, {});
-                resp.on('data', (chunk: any) => parser.write(chunk));
-                resp.on('end', () => parser.close());
-                const buffer: SaxEvent[] = [];
-                let waiting: boolean = false;
-                function push(event: SaxEvent): void {
-                    if (waiting) {
-                        assertEquals(buffer.length, 0);
-                        run(event);
+                processMBNamedResource('artist', 'Group', "e431f5f6-b5d2-343d-8b36-72607fffb74b", '112', (nextEvent: () => SaxEvent) => {
+
+                    function localExpectArea(tagName: string, mbid: string, areaName: string, additionalTags: () => void) {
+                        expectAreaRaw(nextEvent, tagName, mbid, areaName, additionalTags);
                     }
-                    else {
-                        buffer.push(event);
+
+                    function localExpectTextTag(name: string, value: string) {
+                        expectPlainTextTag(nextEvent, name, value);
                     }
-                }
-                parser.onopentag = tag => push({ type: "openTag", tag: tag as sax.Tag });
-                parser.onerror = fail;
-                parser.onclosetag = name => push({ type: 'closeTag', name: name });
-                parser.ontext = text => push({ type: "text", text: text });
 
-                function nextEvent(): SaxEvent {
-                    const event = buffer.shift();
-                    if (isUndefined(event)) {
-                        failIf(waiting);
-                        waiting = true;
-                        const next = yieldValue();
-                        waiting = false;
-                        return next;
+                    localExpectTextTag('country', 'US');
+                    localExpectArea('area', "489ce91b-6658-3307-9877-795b68554c98", 'United States', () => expectUSIsoList(nextEvent));
+                    localExpectArea('begin-area', "26e0e534-19ea-4645-bfb3-1aa4e83a4046", 'Atlanta', () => { });
+                    expectSimpleTag(nextEvent, 'life-span', () => localExpectTextTag('begin', "1996"));
+
+                }, '');
+                enqueueArea("489ce91b-6658-3307-9877-795b68554c98", () => enqueueArea("26e0e534-19ea-4645-bfb3-1aa4e83a4046", fail));
+                return true;
+            case 'mb:area':
+                processMBNamedResource('area', 'Country', "06dd0ae4-8c74-30bb-b43d-95dcedf961de", 'United States', (nextEvent: () => SaxEvent) => {
+                    expectUSIsoList(nextEvent);
+
+                    function localExpectTag(name: string, attributes: Attributes, inner: () => void) {
+                        expectTag(nextEvent, name, attributes, inner);
                     }
-                    else {
-                        return event;
+
+                    function localExpectPlainTextTag(name: string, value: string): void {
+                        expectPlainTextTag(nextEvent, name, value);
                     }
-                }
 
-                function expectEvent(expected: SaxEvent) {
-                    assertEquals(nextEvent(), expected);
-                }
+                    function expectTagTagWithCount(count: string, name: string) {
+                        localExpectTag('tag', { count: count }, () => localExpectPlainTextTag('name', name));
+                    }
 
-                function expectTag(name: string, attributes: Attributes, inner: () => void) {
-                    expectEvent({
-                        type: 'openTag',
-                        tag: {
-                            name: name,
-                            attributes: attributes,
-                            isSelfClosing: false
-                        }
-                    })
-                    inner()
-                    expectEvent({
-                        type: 'closeTag',
-                        name: name
-                    })
-                }
+                    function expectTagTag(name: string) {
+                        expectTagTagWithCount('0', name);
+                    }
 
-                function expectTextTag(name: string, value: string): void {
-                    expectTag(name, {}, () => expectEvent({
-                        type: 'text',
-                        text: value
-                    }));
-                }
+                    function localExpectIsoList(id: string, code: string) {
+                        expectIsoList(nextEvent, id, code);
+                    }
 
-                function expectArea(tagName: string, mbid: string, areaName: string, additionalTags: () => void) {
-                    expectTag(tagName, {
-                        id: mbid
+                    function expectPartOfRaw(mbid: string, name: string, iso1List: () => void, code: string) {
+                        localExpectTag('relation', {
+                            'type-id': "de7cc874-8b1b-3a05-8272-f3834c968fb7",
+                            type: "part of"
+                        }, () => {
+                            localExpectPlainTextTag('target', mbid);
+                            expectArea(nextEvent, mbid, name, () => {
+                                iso1List();
+                                localExpectIsoList('2', code);
+                            })
+
+                        })
+                    }
+
+                    function expectPartOf(mbid: string, name: string, code: string) {
+                        expectPartOfRaw(mbid, name, () => { }, code)
+                    }
+
+                    function expectPartOf2(mbid: string, name: string, code1: string, code2: string) {
+                        expectPartOfRaw(mbid, name, () => localExpectIsoList('1', code1), code2);
+                    }
+
+                    localExpectTag('alias-list', {
+                        count: "1"
+                    }, () => expectTextTag(nextEvent, 'alias', {
+                        'sort-name': "USA",
+                        type: "Search hint",
+                        'type-id': "7090dd35-e32e-3422-8a48-224821c2468b"
+                    }, 'USA'));
+                    localExpectTag('relation-list', {
+                        'target-type': 'area'
                     }, () => {
-                        expectTextTag('name', areaName);
-                        expectTextTag('sort-name', areaName);
-                        additionalTags();
+                        expectPartOf('02e01cf9-b0ed-4286-ac6d-16989f92ced6', 'Virginia', 'US-VA');
+                        expectPartOf('0573177b-9ff9-4643-80bc-ed2513419267', 'Ohio', 'US-OH');
+                        expectPartOf('05f68b4c-10f3-49b5-b28c-260a1b707043', 'Massachusetts', 'US-MA');
+                        expectPartOf('0c693f90-d889-4abe-a0e6-6aac212388e3', 'New Mexico', 'US-NM');
+                        expectPartOf('10cb2ebd-1bc7-4c11-b10d-54f60c421d20', 'Wisconsin', 'US-WI');
+                        expectPartOf('1462269e-911b-4db3-be41-434393484e34', 'Missouri', 'US-MO');
+                        expectPartOf('1b420c08-51a5-4bdd-9b0e-cd601703d20b', 'Hawaii', 'US-HI');
+                        expectPartOf('1ed51cbe-4272-4df9-9b18-44b0d4714086', 'Maryland', 'US-MD');
+                        expectPartOf('2066f663-1055-4383-aaa6-08d09ec81e57', 'South Dakota', 'US-SD');
+                        expectPartOf('29fa065f-a568-418c-98b9-5023f64d9312', 'Michigan', 'US-MI');
+                        expectPartOf('373183af-56db-44d7-b06a-5877c02c5f01', 'Colorado', 'US-CO');
+                        expectPartOf('376ea713-8f27-4ab1-818b-9cca72023382', 'Oregon', 'US-OR');
+                        expectPartOf2('3906cf32-00a7-32df-93cc-4710c5f5a542', 'Puerto Rico', 'PR', 'US-PR');
+                        expectPartOf('39383cce-6f78-4afe-b19a-8377995ce702', 'Washington', 'US-WA');
+                        expectPartOf2('43dd540a-78cd-319f-bab9-214b5430f3f2', 'Guam', 'GU', 'US-GU');
+                        expectPartOf('4ca644d9-18a6-4605-9d71-3eae8b3ab2ee', 'New Hampshire', 'US-NH');
+                        expectPartOf2('4e8596fe-cbee-34ce-8b35-1f3c9bc094d6', 'United States Minor Outlying Islands', 'UM', 'US-UM');
+                        expectPartOf('6fddb177-f3fc-4c30-9d49-9c7e949fe0bc', 'Mississippi', 'US-MS');
+                        expectPartOf('75d8fdcf-03e9-43d9-9399-131b8e118b0b', 'Pennsylvania', 'US-PA');
+                        expectPartOf('75e398a3-5f3f-4224-9cd8-0fe44715bc95', 'New York', 'US-NY');
+                        expectPartOf('7a0e4090-2ab5-4a28-acef-6173e3885fa7', 'Delaware', 'US-DE');
+                        expectPartOf('7deb769c-1eaa-4b7a-aecf-c395d82a1e73', 'Utah', 'US-UT');
+                        expectPartOf('821b0738-e1a2-4636-82e0-b5ca8b331679', 'Alaska', 'US-AK');
+                        expectPartOf('85255cb8-edb9-4a66-b23a-a5261d42c116', 'Kentucky', 'US-KY');
+                        expectPartOf('8788d6c2-c779-4be5-ad47-cf0a95e0f2a0', 'Arkansas', 'US-AR');
+                        expectPartOf('88772016-5866-496a-8de7-4340e922d663', 'Connecticut', 'US-CT');
+                        expectPartOf('8c2196d9-b7be-4051-90d1-ac81895355f1', 'Illinois', 'US-IL');
+                        expectPartOf('8c3615bc-bd11-4bf0-b237-405161aac8b7', 'Iowa', 'US-IA');
+                        expectPartOf2('9a84fea2-1c1f-3908-a44a-6fa2b6fa7b26', 'Northern Mariana Islands', 'MP', 'US-MP');
+                        expectPartOf('a3435b4a-f42c-404e-beee-f290f62a5e1c', 'Vermont', 'US-VT');
+                        expectPartOf('a36544c1-cb40-4f44-9e0e-7a5a69e403a8', 'New Jersey', 'US-NJ');
+                        expectPartOf('a5ff428a-ad62-4752-8f8d-14107c574117', 'Nebraska', 'US-NE');
+                        expectPartOf('ab47b3b2-838d-463c-9907-30dcd3438d65', 'Nevada', 'US-NV');
+                        expectPartOf('ae0110b6-13d4-4998-9116-5b926287aa23', 'California', 'US-CA');
+                        expectPartOf('aec173a2-0f12-489e-812b-7d2c252e4b62', 'South Carolina', 'US-SC');
+                        expectPartOf('af4758fa-92d7-4f49-ac74-f58d3113c7c5', 'North Dakota', 'US-ND');
+                        expectPartOf('af59135f-38b5-4ea4-b4e2-dd28c5f0bad7', 'Washington, D.C.', 'US-DC');
+                        expectPartOf('b8c5f945-678b-43eb-a77a-f237d7f01493', 'Rhode Island', 'US-RI');
+                        expectPartOf('bb32d812-8161-44e1-8a73-7a0d4a6d3f96', 'West Virginia', 'US-WV');
+                        expectPartOf('bf9353d8-da52-4fd9-8645-52b2349b4914', 'Arizona', 'US-AZ');
+                        expectPartOf('c2dca60c-5a5f-43b9-8591-3d4e454cac4e', 'Wyoming', 'US-WY');
+                        expectPartOf('c45232cf-5848-45d7-84ae-94755f8fe37e', 'Maine', 'US-ME');
+                        expectPartOf('c747e5a9-3ac7-4dfb-888f-193ff598c62f', 'Kansas', 'US-KS');
+                        expectPartOf('cc55c78b-15c9-45dd-8ff4-4a212c54eff3', 'Indiana', 'US-IN');
+                        expectPartOf('cffc0190-1aa2-489f-b6f9-43b9a9e01a91', 'Alabama', 'US-AL');
+                        expectPartOf('d10ba752-c9ce-4804-afc0-7ff94aa5d8d6', 'Georgia', 'US-GA');
+                        expectPartOf('d2083d84-09e2-4d45-8fc0-45eed33748b5', 'Oklahoma', 'US-OK');
+                        expectPartOf('d2918f1a-c51e-4a4a-ad7f-cdd88877b25f', 'Florida', 'US-FL');
+                        expectPartOf('d4ab49e7-1d25-45e2-8659-b147e0ea3684', 'North Carolina', 'US-NC');
+                        expectPartOf2('e228a3c1-53c0-3ec9-842b-ec1b2138e387', 'American Samoa', 'AS', 'US-AS');
+                        expectPartOf('f2532a8e-276c-457a-b3d9-0a7706535178', 'Idaho', 'US-ID');
+                        expectPartOf('f5ffcc03-ebf2-466a-bb11-b38c6c0c84f5', 'Minnesota', 'US-MN');
+                        expectPartOf('f934c8da-e40e-4056-8f8c-212e68fdcaec', 'Texas', 'US-TX');
+                        expectPartOf('f9caf2d8-9638-4b96-bc49-8462339d4b2e', 'Tennessee', 'US-TN');
+                        expectPartOf('fb8840b9-ff2f-4484-8540-7112ee426ea7', 'Montana', 'US-MT');
+                        expectPartOf('fc68ecf5-507e-4012-b60b-d93747a3cfa7', 'Louisiana', 'US-LA');
+                    })
+                    localExpectTag('tag-list', {}, () => {
+                        expectTagTag('fail');
+                        expectTagTag('place');
+                        expectTagTagWithCount('-1', 'the tag voters have no sense of humour. vote either fail or whatever as an answer!');
+                        expectTagTag('un member state');
+                        expectTagTag('united states of what?');
+                        expectTagTag('vote either fail or whatever as an answer! united states of what??');
+                        expectTagTag('whatever');
+                    })
+
+                }, '?inc=aliases+annotation+tags+ratings+area-rels');
+                enqueueArea('02e01cf9-b0ed-4286-ac6d-16989f92ced6', fail);
+                return true;
+            case 'mb:release':
+
+                processMBResource('release', (nextEvent, mbid) => expectTag(nextEvent, 'release', id(mbid), () => {
+
+                    function localExpectPlainTextTag(name: string, value: string): void {
+                        expectPlainTextTag(nextEvent, name, value);
+                    }
+
+                    function localExpectTextAndEnum(name: string, value: string, enumName: string, mbid: string, enumValue: string): void {
+                        localExpectPlainTextTag(name, value);
+                        expectTextTag(nextEvent, enumName, id(mbid), enumValue);
+
+                    }
+                    localExpectTextAndEnum('title', 'Room 112', 'status', "4e304316-386d-3409-af2e-78857eec5cfe", 'Official');
+                    localExpectTextAndEnum('quality', 'normal', 'packaging', "ec27701a-4a22-37f4-bfac-6616e0f9750a", 'Jewel Case');
+                    function localExpectSimpleTag(name: string, inner: () => void): void {
+                        expectSimpleTag(nextEvent, name, inner);
+                    }
+                    localExpectSimpleTag('text-representation', () => {
+                        localExpectPlainTextTag('language', 'eng');
+                        localExpectPlainTextTag('script', 'Latn');
                     });
-                }
-                expectTag('metadata', {
-                    xmlns: "http://musicbrainz.org/ns/mmd-2.0#"
-                }, () => expectTag('artist', {
-                    type: "Group",
-                    id: "9132d515-dc0e-4494-85ae-20f06eed14f9",
-                    'type-id': "e431f5f6-b5d2-343d-8b36-72607fffb74b"
-                }, () => {
-                    expectTextTag('name', '112');
-                    expectTextTag('sort-name', '112');
-                    expectTextTag('country', 'US');
-                    expectArea('area', "489ce91b-6658-3307-9877-795b68554c98", 'United States', () =>
-                        expectTag('iso-3166-1-code-list', {}, () => expectTextTag('iso-3166-1-code', 'US')));
-                    expectArea('begin-area', "26e0e534-19ea-4645-bfb3-1aa4e83a4046", 'Atlanta', () => { });
-                    expectTag('life-span', {}, () => expectTextTag('begin', "1996"));
-                }));
-                enqueueMBTask("area", "489ce91b-6658-3307-9877-795b68554c98", fail);
+
+                    function expectDate() {
+                        localExpectPlainTextTag('date', '1998-11-16');
+                    }
+
+                    expectDate(); //localExpectPlainTextTag('date', '1998-11-16');
+                    localExpectPlainTextTag('country', 'DE');
+                    expectTag(nextEvent, 'release-event-list', { count: '1' }, () => localExpectSimpleTag('release-event', () => {
+                        expectDate();
+                        expectArea(nextEvent, '85752fda-13c4-31a3-bee5-0e5cb1f51dad', 'Germany', () => expectIsoList1(nextEvent, 'DE'))
+                    }));
+
+                    function expectTrue(name: string): void {
+                        localExpectPlainTextTag(name, 'true');
+                    }
+
+                    localExpectPlainTextTag('barcode', '786127302127');
+                    localExpectPlainTextTag('asin', 'B00000D9VN');
+                    localExpectSimpleTag('cover-art-archive', () => {
+                        expectTrue('artwork');
+                        localExpectPlainTextTag('count', '19');
+                        expectTrue('front');
+                        expectTrue('back');
+                    })
+                    //fail();
+                    /*
+                    expectPlainTextTag(nextEvent, 'sort-name', name);
+                    additionalTags();
+                    */
+                }), '');
+                enqueueArea('85752fda-13c4-31a3-bee5-0e5cb1f51dad', fail);
                 return true;
             default:
                 fail();
