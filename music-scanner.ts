@@ -670,7 +670,6 @@ function expectIsoList1(nextEvent: () => SaxEvent, code: string) {
     expectIsoList(nextEvent, '1', code);
 }
 
-
 function expectUSIsoList(nextEvent: () => SaxEvent) {
     expectIsoList1(nextEvent, 'US');
 }
@@ -680,16 +679,14 @@ function expectAreaRaw(nextEvent: () => SaxEvent, tagName: string, mbid: string,
 }
 
 function expectArea(nextEvent: () => SaxEvent, mbid: string, name: string, additionalTags: () => void) {
-    expectNamed(nextEvent, 'area', mbid, {}, name, additionalTags);
+    expectAreaRaw(nextEvent, 'area', mbid, name, additionalTags);
 }
-
 
 function id(mbid: string): Attributes {
     return {
         id: mbid
     }
 }
-
 
 function processCurrent(): boolean {
     return getObject('root', 'current', () => {
