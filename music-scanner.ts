@@ -546,18 +546,24 @@ function persist(type: Operation, statements: Statement<string>[]): void {
     }
 }
 
-function verifyObject(object: Dictionary<any>, checkers: Dictionary<(value: any) => boolean>): boolean {
+type Predicate<T> = (value: T) => boolean;
+
+type Matcher<T> = {
+    readonly [P in keyof T]: Predicate<T[P]>;
+};
+
+function searchMatch<T, R>(object: T, checkers: Matcher<T>, found: () => R, notFound: () => R): R {
     for (const compareValue of compareObjects(object, checkers)) {
-        const checker = compareValue.expected;
+        const checker = compareValue.expected as Predicate<any>;
         assertType(checker, 'function');
         if (checker(compareValue.actual)) {
-            return true;
+            return found();
         }
     }
-    return false;
+    return notFound();
 }
 
-function expectEquals(expected: any): (actual: any) => boolean {
+function expectEquals(expected: any): Predicate<any> {
     return actual => {
         assertEquals(actual, expected);
         return false;
@@ -581,14 +587,14 @@ function update(changeSet: UpdateStatement[]): void {
 
 }
 
-function expectObject(checkers: Dictionary<(value: any) => boolean>): (object: Dictionary<any>) => boolean {
-    return (object: Dictionary<any>) => {
-        return verifyObject(object, checkers);
+function matchObject<T>(checkers: Matcher<T>): Predicate<T> {
+    return (object: T) => {
+        return searchMatch(object, checkers, () => true, () => false);
         //return false;
     }
 }
 
-const expectJpgImage = expectObject({
+const expectJpgImage = matchObject({
     format: expectEquals("jpg"),
     data: () => false
 });
@@ -616,11 +622,43 @@ interface Attributes {
     readonly [key: string]: string;
 }
 
+
 function expectEvent(nextEvent: () => SaxEvent, expected: SaxEvent) {
     assertEquals(nextEvent(), expected);
 }
 
-function expectTag(nextEvent: () => SaxEvent, name: string, attributes: Attributes, inner: () => void) {
+function processInner(inner: () => void, nextEvent: () => SaxEvent, name: string): void {
+    inner();
+    expectEvent(nextEvent, {
+        type: 'closeTag',
+        name: name
+    })
+}
+
+function onNoMatch<T>(value: T, matchers: Matcher<T>, notFound: () => void): void {
+    searchMatch(value, matchers, () => { }, notFound);
+}
+
+
+function* enumOptional<T>(value: string | undefined, provideMapped: () => T) {
+    if (value !== undefined) {
+        yield provideMapped();
+    }
+}
+
+function matchTag(nextEvent: () => SaxEvent, name: string, attributes: Predicate<any>, inner: () => void) {
+    onNoMatch(nextEvent(), {
+        type: expectEquals('openTag'),
+        tag: matchObject({
+            name: expectEquals(name),
+            attributes: attributes,
+            isSelfClosing: expectEquals(false)
+        })
+    }, () => processInner(inner, nextEvent, name))
+}
+
+
+function expectTag(nextEvent: () => SaxEvent, name: string, attributes: Attributes, inner: () => void): void {
     expectEvent(nextEvent, {
         type: 'openTag',
         tag: {
@@ -629,12 +667,9 @@ function expectTag(nextEvent: () => SaxEvent, name: string, attributes: Attribut
             isSelfClosing: false
         }
     });
-    inner();
-    expectEvent(nextEvent, {
-        type: 'closeTag',
-        name: name
-    })
+    processInner(inner, nextEvent, name);
 }
+
 
 function expectTextTag(nextEvent: () => SaxEvent, name: string, attributes: Attributes, value: string): void {
     expectTag(nextEvent, name, attributes, () => expectEvent(nextEvent, {
@@ -647,13 +682,26 @@ function expectPlainTextTag(nextEvent: () => SaxEvent, name: string, value: stri
     expectTextTag(nextEvent, name, {}, value);
 }
 
+function nameTags(nextEvent: () => SaxEvent, name: string) {
+    /*
+    onNoMatch<TextEvent>(nextEvent() as TextEvent, {
+        type: expectEquals('text'),
+        text: name,
+    }, () => {
+        expectPlainTextTag(nextEvent, 'sort-name', sortName);
+        others();
+    })
+    */
+    expectPlainTextTag(nextEvent, 'name', name);
+    expectPlainTextTag(nextEvent, 'sort-name', name);
+}
+
 function expectNamed(nextEvent: () => SaxEvent, tagName: string, mbid: string, additionalAttributes: Attributes, name: string, additionalTags: () => void) {
     expectTag(nextEvent, tagName, {
         id: mbid,
         ...additionalAttributes
     }, () => {
-        expectPlainTextTag(nextEvent, 'name', name);
-        expectPlainTextTag(nextEvent, 'sort-name', name);
+        nameTags(nextEvent, name);
         additionalTags();
     });
 }
@@ -738,21 +786,22 @@ function processCurrent(): boolean {
             moveToNext();
         }
 
-        function enqueueTask<T>(name: string, type: string, namePredicate: string, additionalAttributes: (add: BiConsumer<string, string>) => void, enqueued: T, alreadyAdded: () => T): T {
+        function enqueueTask<T>(name: string, type: string, namePredicate: string, parentPredicate: string | undefined, linkPredicate: string | undefined,/*additionalAttributes: (add: BiConsumer<string, string>) => void,*/ enqueued: T, alreadyAdded: () => T): T {
 
             const nameObject = `s/${encodeURIComponent(name)}`;
 
-            function mapAttributeValues<S, T>(mapper: (subject: S, predicate: string, object: string) => T, subject: S): T[] {
-                const result: T[] = [];
 
-                function add(predicate: string, object: string): void {
-                    result.push(mapper(subject, predicate, object))
+            function mapAttributeValues<S, T>(mapper: (subject: S, predicate: string, object: string) => T, subject: S): T[] {
+
+                function map(predicate: string, object: string): T {
+                    return mapper(subject, predicate, object);
                 }
 
-                add('type', type);
-                add(namePredicate, nameObject);
-                additionalAttributes(add);
-                return result;
+                return [
+                    map('type', type),
+                    map(namePredicate, nameObject),
+                    ...enumOptional(parentPredicate, () => map(parentPredicate as string, currentTask))
+                ]
             }
 
             return streamOpt(db.searchStream(mapAttributeValues(statement, db.v('s'))), () => {
@@ -761,8 +810,9 @@ function processCurrent(): boolean {
                 update([
                     ...mapAttributeValues(put, taskId),
                     put(taskId, 'next', currentTask),
-                    ...appendToPrev(taskId)
-                ])
+                    ...appendToPrev(taskId),
+                    ...enumOptional(linkPredicate, () => put(currentTask, linkPredicate as string, taskId))
+                ]);
                 // needs a second update, because the attribute 'next' might have been set just before
                 // when appending a task to prev.
                 moveToNext();
@@ -770,8 +820,8 @@ function processCurrent(): boolean {
             }, alreadyAdded);
         }
 
-        function enqueueTasks(items: string[], type: string, predicate: string, additionalAttribute: (add: BiConsumer<string, string>) => void): void {
-            if (isUndefined(items.find(name => enqueueTask(name, type, predicate, additionalAttribute, true, () => false)))) {
+        function enqueueTasks(items: string[], type: string, predicate: string, parentPredicate: string | undefined /*additionalAttribute: (add: BiConsumer<string, string>) => void*/): void {
+            if (isUndefined(items.find(name => enqueueTask(name, type, predicate, parentPredicate, undefined, true, () => false)))) {
                 console.log('  completed');
                 moveToNext();
             }
@@ -806,6 +856,7 @@ function processCurrent(): boolean {
             get(pattern, () => { }, fail);
         }
 
+
         function processDirectory(path: string): boolean {
             const result: Pair<object, any> = waitFor2(consumer => fs.readdir(path, consumer));
             assertEquals(result.first, null);
@@ -815,7 +866,7 @@ function processCurrent(): boolean {
                 remove('delete empty directory', 'rmdir', path);
             }
             else {
-                enqueueTasks(files, 'fileSystemEntry', 'name', add => add('directory', currentTask));
+                enqueueTasks(files, 'fileSystemEntry', 'name', 'directory' /*add => add('directory', currentTask)*/);
             }
             return true;
         }
@@ -850,19 +901,34 @@ function processCurrent(): boolean {
             return stat(path, stat => (stat.isDirectory() ? directory : file)(), missing);
         }
 
-        function enqueueMBTask(resource: string, mbid: string, found: () => void) {
-            enqueueTask(mbid, `mb:${resource}`, 'mb:mbid', () => { }, undefined, found);
+        function enqueueMBTask<T>(mbid: string, resource: string, linkPredicate: string | undefined, enqueued: T, alreadyExists: () => T): T {
+            return enqueueTask(mbid, `mb:${resource}`, 'mb:mbid', undefined, linkPredicate, enqueued, alreadyExists);
+        }
+
+        function enqueueMBResourceTask(mbid: string, resource: string, found: () => void): void {
+            enqueueMBTask(mbid, resource, undefined, undefined, found);
         }
 
         function getStringProperty(name: string) {
             return decodeStringLiteral(getPropertyFromCurrent(name));
         }
 
-        function processMBResource(type: string, inner: (nextEvent: () => SaxEvent, mbid: string) => void /*subType: string, typeId: string, name: string, additionalTags: (nextEvent: () => SaxEvent) => void*/, inc: string): void {
-            assertUndefined(lastAccessed);
+
+
+        function processMBResource(type: string, inner: (nextEvent: () => SaxEvent) => void, inc: string[], extraAttributes: Matcher<Attributes>): void {
+            if (lastAccessed === undefined) {
+                lastAccessed = Date.now();
+            }
+            else {
+                const now = Date.now();
+                assert(now - lastAccessed <= 1000);
+                //setTimeout(resolve, ms);
+                lastAccessed = now;
+            }
             lastAccessed = Date.now();
             const mbid = getStringProperty('mb:mbid');
-            const resourcePath = `/ws/2/${type}/${mbid}${inc}`;
+            //const incString = inc.length === 0 ? '' : '?inc=' + inc.join('+');
+            const resourcePath = `/ws/2/${type}/${mbid}${inc.length === 0 ? '' : '?inc=' + inc.join('+')}`;
             console.log(`https://musicbrainz.org${resourcePath}`)
             const run = getRunner();
             https.get({
@@ -906,35 +972,37 @@ function processCurrent(): boolean {
                 }
             }
 
-
-
-            expectTag(nextEvent, 'metadata', {
+            matchTag(nextEvent, 'metadata', expectEquals({
                 xmlns: "http://musicbrainz.org/ns/mmd-2.0#"
-            }, () => inner(nextEvent, mbid));
+            }), () => matchTag(nextEvent, type, matchObject({
+                id: expectEquals(mbid),
+                ...extraAttributes,
+            }), () => inner(nextEvent)));
+
         }
 
-        function processMBNamedResource(type: string, subType: string, typeId: string, name: string, additionalTags: (nextEvent: () => SaxEvent) => void, inc: string): void {
-            processMBResource(type, (nextEvent, mbid) => expectNamed(nextEvent, type, mbid, {
-                type: subType,
-                //id: mbid, // "9132d515-dc0e-4494-85ae-20f06eed14f9",
-                'type-id': typeId
-            }, name, () => additionalTags(nextEvent)), inc);
+        function processMBNamedResource(type: string, subType: Predicate<string>, typeId: Predicate<string>, name: string, additionalTags: (nextEvent: () => SaxEvent) => void, inc: string[]): void {
+            processMBResource(type, nextEvent => {
+                nameTags(nextEvent, name);
+                additionalTags(nextEvent);
+            }, inc, {
+                    type: subType,
+                    'type-id': typeId
+                });
         }
 
-
-
-        function enqueueArea(mbid: string, found: () => void) {
-            enqueueMBTask('area', mbid, found);
+        function enqueueArea(mbid: string, found: () => void): void {
+            enqueueMBResourceTask(mbid, 'area', found);
         }
 
-        function checkUpdateFormatProperty(name: string): (actualValue: number) => boolean {
+        function checkUpdateFormatProperty(name: string): (actualValue: any) => boolean {
             return actualValue => updateLiteralProperty(`mm:format/${name}`, `${actualValue}`, 'n', fail);
         }
 
         switch (type) {
             case 'root':
                 console.log('processing root');
-                enqueueTasks(['/Volumes/Musik', '/Volumes/music', '/Volumes/Qmultimedia', '/Users/ralph.sigrist/Music/iTunes/ITunes Media/Music'], 'volume', 'path', () => { });
+                enqueueTasks(['/Volumes/Musik', '/Volumes/music', '/Volumes/Qmultimedia', '/Users/ralph.sigrist/Music/iTunes/ITunes Media/Music'], 'volume', 'path', undefined /*() => { }*/);
                 return true;
             case 'volume':
                 const volumePath = getStringProperty('path'); // getStringProperty('path');
@@ -991,8 +1059,9 @@ function processCurrent(): boolean {
 
                                     assertEquals(r.type, 'metadata');
                                     let metaData: mm.IAudioMetadata = r.metaData;
-                                    if (!verifyObject(metaData, {
-                                        format: expectObject({
+
+                                    onNoMatch<mm.IAudioMetadata>(metaData, {
+                                        format: matchObject<mm.IFormat>({
                                             dataformat: expectEquals("flac"),
                                             lossless: expectEquals(true),
                                             numberOfChannels: expectEquals(2),
@@ -1003,7 +1072,7 @@ function processCurrent(): boolean {
                                             //expectEquals(60.29333333333334),
                                             tagTypes: expectEquals(["vorbis"]),
                                         }),
-                                        common: expectObject({
+                                        common: matchObject<mm.ICommonTagsResult>({
                                             track: expectEquals({
                                                 no: 1,
                                                 of: 19
@@ -1047,7 +1116,7 @@ function processCurrent(): boolean {
                                             artistsort: expectEquals("112"),
                                             artists: expectEquals(["112"]),
                                             genre: expectEquals(["R B"]),
-                                            picture: expectObject({
+                                            picture: matchObject<any>({
                                                 0: expectJpgImage,
                                                 1: expectJpgImage,
                                                 2: expectJpgImage,
@@ -1070,9 +1139,7 @@ function processCurrent(): boolean {
                                             }),
                                         }),
                                         native: expectEquals(undefined)
-                                    })) {
-                                        enqueueMBTask("artist", "9132d515-dc0e-4494-85ae-20f06eed14f9", () => enqueueMBTask("release", "9ce47bcf-97d1-4534-b77e-b19ba6c98511", fail));
-                                    }
+                                    }, () => enqueueMBResourceTask("9132d515-dc0e-4494-85ae-20f06eed14f9", "artist", () => enqueueMBResourceTask("9ce47bcf-97d1-4534-b77e-b19ba6c98511", "release", fail)));
                                     return true;
 
                                 default:
@@ -1110,7 +1177,7 @@ function processCurrent(): boolean {
                         return false;
                     }));
             case 'mb:artist':
-                processMBNamedResource('artist', 'Group', "e431f5f6-b5d2-343d-8b36-72607fffb74b", '112', (nextEvent: () => SaxEvent) => {
+                processMBNamedResource('artist', expectEquals('Group'), expectEquals("e431f5f6-b5d2-343d-8b36-72607fffb74b"), '112', (nextEvent: () => SaxEvent) => {
 
                     function localExpectArea(tagName: string, mbid: string, areaName: string, additionalTags: () => void) {
                         expectAreaRaw(nextEvent, tagName, mbid, areaName, additionalTags);
@@ -1125,11 +1192,70 @@ function processCurrent(): boolean {
                     localExpectArea('begin-area', "26e0e534-19ea-4645-bfb3-1aa4e83a4046", 'Atlanta', () => { });
                     expectSimpleTag(nextEvent, 'life-span', () => localExpectTextTag('begin', "1996"));
 
-                }, '');
-                enqueueArea("489ce91b-6658-3307-9877-795b68554c98", () => enqueueArea("26e0e534-19ea-4645-bfb3-1aa4e83a4046", fail));
+                    function localExpectTag(name: string, attributes: Attributes, inner: () => void) {
+                        expectTag(nextEvent, name, attributes, inner);
+                    }
+
+                    function expectRecordingCore(id: string, title: string, length: string, others: () => void): void {
+                        localExpectTag('recording', {
+                            id: id
+                        }, () => {
+                            localExpectTextTag("title", title);
+                            localExpectTextTag("length", length);
+                            others();
+                        });
+                    }
+
+                    function expectRecording(id: string, title: string, length: string): void {
+                        expectRecordingCore(id, title, length, () => { });
+                    }
+
+                    function expectRecordingExtended(id: string, title: string, length: string, tag: string, tagValue: string): void {
+                        expectRecordingCore(id, title, length, () => localExpectTextTag(tag, tagValue));
+                    }
+
+                    function expectRecordingDisambiguation(id: string, title: string, length: string, tagValue: string): void {
+                        expectRecordingExtended(id, title, length, "disambiguation", tagValue);
+                    }
+
+
+                    localExpectTag('recording-list', {
+                        count: "268"
+                    }, () => {
+                        expectRecording("00cc81c5-0dd9-45bb-a27b-ef1d5454bf85", "All Cried Out", "277000");
+                        expectRecording("1cb4f0df-21ce-4454-9346-011a5c220fec", "1's for Ya", "187000");
+                        expectRecordingExtended("3d5a22ab-2a14-4206-a15b-e1f123076927", "Anywhere", "248000", "video", "true");
+                        expectRecording("4094e83b-40a8-4494-b686-a9673be0a563", "Anything", "229093");
+                        expectRecording("454c0f69-70a4-45e9-94ce-f207848fb118", "Anywhere", "197000");
+                        expectRecording("58d482f4-7070-451b-bf0f-c5d0cd1491fa", "Anywhere (remix)", "235000")
+                        expectRecording("7001506d-45cf-491a-bf76-a4da729eff1d", "Anywhere (interlude)", "70573");
+                        expectRecording("8101a28e-36f5-482a-b947-773d605e96de", "Anywhere", "247213");
+                        expectRecording("8540c247-8043-4001-bd2a-363f750fc98f", "Anywhere", "247493");
+                        expectRecording("8e6f61af-8a46-4d5f-9b59-d31ed6b66266", "Anywhere", "182826");
+                        expectRecording("91847fac-a4ff-443b-a4cb-92cc42f2ba24", "Be With You", "244973");
+                        expectRecording("9c954ae6-c25e-4fd6-856b-7b39a8461e16", "Can I Touch You", "304573");
+                        expectRecording("a36be457-c34e-4078-84da-24894d0e34d4", "Both of Us", "219000");
+                        expectRecording("b5d0a806-3bb2-474f-828d-55806de56531", "Anywhere (Slang club remix)", "236533");
+                        expectRecording("ba519c4e-6d74-4c17-9c3a-7bbb8d6e4680", "All My Love", "261866");
+                        expectRecording("c1ac5a1a-09f2-41f0-b6ca-8ead1730c18b", "Anywhere (remix)", "280533");
+                        expectRecording("d036d54a-639a-409d-81ac-f1293bb3c004", "All I Want Is You", "221706");
+                        expectRecording("d1f1b2b5-8496-4182-91a9-5e5aeea9b291", "Call My Name", "247640");
+                        expectRecordingDisambiguation("db8b99df-ed71-4ef9-ae3c-532c192226e7", "112 Intro", "76000", "Part III version");
+                        expectRecording("e0f71717-2e40-4546-b0b6-15805d62acb4", "All Cried Out (edit)", "223426");
+                        expectRecording("e87af726-1fa3-4804-821b-741e35cb2811", "All My Love", "283173");
+                        expectRecordingDisambiguation("f8aa3a67-5368-44c5-8d9e-4433dea9fab2", "112 Intro", "132960", "original version");
+                        expectRecording("fbf9e86b-3a11-4a08-b77d-1432e1e243c9", "Anywhere", "336880");
+                        expectRecording("fc479b8c-ebbe-46f0-84cf-f45615f165cf", "After the Love Has Gone", "243000");
+                        expectRecording("ff22df38-fe40-4487-9006-fdc6a4662fe0", "Anywhere", "244026")
+                    });
+
+
+
+                }, ['recordings']);
+                enqueueArea("489ce91b-6658-3307-9877-795b68554c98", () => enqueueArea("26e0e534-19ea-4645-bfb3-1aa4e83a4046", () => enqueueMBResourceTask("00cc81c5-0dd9-45bb-a27b-ef1d5454bf85", 'recording', fail)));
                 return true;
             case 'mb:area':
-                processMBNamedResource('area', 'Country', "06dd0ae4-8c74-30bb-b43d-95dcedf961de", 'United States', (nextEvent: () => SaxEvent) => {
+                processMBNamedResource('area', expectEquals('Country'), areaTypeId => enqueueMBTask(areaTypeId, `area-type`, 'mb:type', true, () => false), 'United States', (nextEvent: () => SaxEvent) => {
                     expectUSIsoList(nextEvent);
 
                     function localExpectTag(name: string, attributes: Attributes, inner: () => void) {
@@ -1251,12 +1377,12 @@ function processCurrent(): boolean {
                         expectTagTag('whatever');
                     })
 
-                }, '?inc=aliases+annotation+tags+ratings+area-rels');
+                }, ['aliases', 'annotation', 'tags', 'ratings', 'area-rels']);
                 enqueueArea('02e01cf9-b0ed-4286-ac6d-16989f92ced6', fail);
                 return true;
             case 'mb:release':
 
-                processMBResource('release', (nextEvent, mbid) => expectTag(nextEvent, 'release', id(mbid), () => {
+                processMBResource('release', nextEvent => {
 
                     function localExpectPlainTextTag(name: string, value: string): void {
                         expectPlainTextTag(nextEvent, name, value);
@@ -1305,7 +1431,7 @@ function processCurrent(): boolean {
                     expectPlainTextTag(nextEvent, 'sort-name', name);
                     additionalTags();
                     */
-                }), '');
+                }, [], {});
                 enqueueArea('85752fda-13c4-31a3-bee5-0e5cb1f51dad', fail);
                 return true;
             default:
