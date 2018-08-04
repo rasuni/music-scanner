@@ -719,12 +719,11 @@ function* nameTags(name: Predicate<string>, sortName: string): Iterable<Predicat
     yield* expectPlainTextTag('sort-name', sortName);
 }
 
-function* expectNamed(tagName: string, mbid: string, additionalAttributes: Attributes, name: Predicate<string>, sortName: string, additionalTags: Iterable<Predicate<SaxEvent>>): Iterable<Predicate<SaxEvent>> {
+function* expectNamed(tagName: string, mbid: string, name: string, additionalTags: Iterable<Predicate<SaxEvent>>): Iterable<Predicate<SaxEvent>> {
     yield* expectTag(tagName, {
-        id: mbid,
-        ...additionalAttributes
+        id: mbid
     }, function* () {
-        yield* nameTags(name, sortName);
+        yield* nameTags(expectEquals(name), name);
         yield* additionalTags;
     }());
 }
@@ -749,7 +748,7 @@ function* expectUSIsoList() : Iterable<Predicate<SaxEvent>> {
 */
 
 function* expectAreaRaw(tagName: string, mbid: string, name: string, additionalTags: Iterable<Predicate<SaxEvent>>): Iterable<Predicate<SaxEvent>> {
-    yield* expectNamed(tagName, mbid, {}, expectEquals(name), name, additionalTags);
+    yield* expectNamed(tagName, mbid, name, additionalTags);
 }
 
 function* expectArea(mbid: string, name: string, additionalTags: Iterable<Predicate<SaxEvent>>): Iterable<Predicate<SaxEvent>> {
@@ -1037,6 +1036,11 @@ function processCurrent(): boolean {
             enqueueMBResourceTask(mbid, 'area', found);
         }
 
+        function enqueueArtist(mbid: string, found: () => void): void {
+            enqueueMBResourceTask(mbid, 'artist', found);
+        }
+
+
         function adjustLiteralProperty(nameSpace: string, name: string, literalTag: string): (actualValue: any) => boolean {
             return actualValue => updateLiteralProperty(`${nameSpace}:${name}`, `${actualValue}`, literalTag, fail);
         }
@@ -1187,7 +1191,7 @@ function processCurrent(): boolean {
                                             }),
                                         }),
                                         native: expectEquals(undefined)
-                                    }, () => enqueueMBResourceTask("9132d515-dc0e-4494-85ae-20f06eed14f9", "artist", () => enqueueMBResourceTask("9ce47bcf-97d1-4534-b77e-b19ba6c98511", "release", fail)));
+                                    }, () => enqueueArtist("9132d515-dc0e-4494-85ae-20f06eed14f9", () => enqueueMBResourceTask("9ce47bcf-97d1-4534-b77e-b19ba6c98511", "release", fail)));
                                     return true;
 
                                 default:
@@ -1464,16 +1468,29 @@ function processCurrent(): boolean {
                         yield* expectPlainTextTag('script', 'Latn');
                     }());
 
+                    yield* expectSimpleTag('artist-credit', function* () {
+                        yield* expectSimpleTag('name-credit', function* () {
+                            yield* expectNamed('artist', '9132d515-dc0e-4494-85ae-20f06eed14f9', '112', []);
+                        }());
+                    }());
+
                     const expectDate = () => expectPlainTextTag('date', '1998-11-16');
 
                     yield* expectDate(); //localExpectPlainTextTag('date', '1998-11-16');
                     yield* expectPlainTextTag('country', 'DE');
-                    yield* expectTag('release-event-list', { count: '1' }, expectSimpleTag('release-event', function* () {
-                        console.log(`yield expectDate`);
+
+                    function* expectList(name: string, elements: Iterable<Predicate<SaxEvent>>[]): Iterable<Predicate<SaxEvent>> {
+                        yield* expectTag(`${name}-list`, { count: `${elements.length}` }, function* () {
+                            for (const element of elements) {
+                                yield* expectSimpleTag(name, element);
+                            }
+                        }());
+                    }
+
+                    yield* expectList('release-event', [function* () {
                         yield* expectDate();
-                        console.log(`yield expectArea`);
                         yield* expectArea('85752fda-13c4-31a3-bee5-0e5cb1f51dad', 'Germany', expectIsoList1('DE'));
-                    }()));
+                    }()]);
 
                     function expectTrue(name: string): Iterable<Predicate<SaxEvent>> {
                         return expectPlainTextTag(name, 'true');
@@ -1487,12 +1504,28 @@ function processCurrent(): boolean {
                         yield* expectTrue('front');
                         yield* expectTrue('back');
                     }());
+
+                    function* expectLabel(mbid: string, name: string, additionalTags: Iterable<Predicate<SaxEvent>>): Iterable<Predicate<SaxEvent>> {
+                        yield* expectPlainTextTag('catalog-number', '78612-73021-2');
+                        yield* expectNamed('label', mbid, name, additionalTags);
+                    }
+
+                    function* expectLabelAdd(mbid: string, name: string, tagName: string, tagValue: string): Iterable<Predicate<SaxEvent>> {
+                        yield* expectPlainTextTag('catalog-number', '78612-73021-2');
+                        yield* expectNamed('label', mbid, name, expectPlainTextTag(tagName, tagValue));
+                    }
+
+                    yield* expectList('label-info', [
+                        expectLabelAdd('c62e3985-6370-446a-bfb8-f1f6122e9c33', 'Arista', 'label-code', '3484'),
+                        expectLabel('29d43312-a8ed-4d7b-9f4e-f5650318aebb', 'Bad Boy Records', []),
+                        expectLabelAdd('29d7c88f-5200-4418-a683-5c94ea032e38', 'BMG', 'disambiguation', 'the former Bertelsmann Music Group, defunct since 2004-08-05; for releases dated 2008 and later, use "BMG Rights Management"')
+                    ]);
                     //fail();
                     /*
                     expectPlainTextTag(nextEvent, 'sort-name', name);
                     additionalTags();
                     */
-                }(), [], {}, () => enqueueArea('85752fda-13c4-31a3-bee5-0e5cb1f51dad', fail));
+                }(), ['artists', 'collections', 'labels'], {}, () => enqueueArtist('9132d515-dc0e-4494-85ae-20f06eed14f9', () => enqueueArea('85752fda-13c4-31a3-bee5-0e5cb1f51dad', () => enqueueMBResourceTask('c62e3985-6370-446a-bfb8-f1f6122e9c33', 'label', fail))));
                 return true;
             default:
                 fail();
