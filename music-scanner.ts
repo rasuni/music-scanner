@@ -165,7 +165,28 @@ interface CompareValues<T> {
     expected: T
 }
 
+
+
 function* compareObjects<T>(actual: Dictionary<any>, expected: Dictionary<T>): IterableIterator<CompareValues<T>> {
+
+    function compareValue(key: string): CompareValues<T> {
+        return {
+            actual: actual[key],
+            expected: expected[key]
+        }
+    }
+
+    const visited = new Set();
+    for (const key in actual) {
+        yield compareValue(key);
+        visited.add(key);
+    }
+    for (const key in expected) {
+        if (!visited.has(key)) {
+            yield compareValue(key)
+        }
+    }
+    /*
     for (const key of new Set([
         ...Object.keys(actual),
         ...Object.keys(expected)
@@ -175,9 +196,11 @@ function* compareObjects<T>(actual: Dictionary<any>, expected: Dictionary<T>): I
             expected: expected[key]
         }
     }
+    */
 }
 
 function assertEquals(actual: any, expected: any): void {
+    //console.log(`assertEquals (${actual}, ${expected})`)
     if (actual !== expected) {
         assertObject(actual);
         assertObject(expected);
@@ -437,7 +460,6 @@ function decodeStringLiteral(stringLiteral: string) {
     assertEquals(segments[0], 's');
     return decodeURIComponent(segments[1]);
 }
-
 function prepareStream(stream: any): void {
 
     function on(event: string, handler: any): void {
@@ -618,22 +640,28 @@ interface CloseTagEvent {
 
 type SaxEvent = OpenTagEvent | TextEvent | CloseTagEvent;
 
+//IterableIterator<Predicatee<SaxEvent>>
+
 interface Attributes {
     readonly [key: string]: string;
 }
 
-
-function expectEvent(nextEvent: () => SaxEvent, expected: SaxEvent) {
-    assertEquals(nextEvent(), expected);
+/*
+function expectEvent(expected: SaxEvent): Predicate<SaxEvent> {
+    return expectEquals(expected);
+    //assertEquals(nextEvent(), expected);
 }
+*/
 
-function processInner(inner: () => void, nextEvent: () => SaxEvent, name: string): void {
-    inner();
-    expectEvent(nextEvent, {
+/*
+function* processInner(inner: Iterable<Predicate<SaxEvent>>, name: string): Iterable<Predicate<SaxEvent>> {
+    yield* inner;
+    yield expectEquals({
         type: 'closeTag',
         name: name
     })
 }
+*/
 
 function onNoMatch<T>(value: T, matchers: Matcher<T>, notFound: () => void): void {
     searchMatch(value, matchers, () => { }, notFound);
@@ -646,88 +674,86 @@ function* enumOptional<T>(value: string | undefined, provideMapped: () => T) {
     }
 }
 
-function matchTag(nextEvent: () => SaxEvent, name: string, attributes: Predicate<any>, inner: () => void) {
-    onNoMatch(nextEvent(), {
+function* matchTag(name: string, attributes: Predicate<any>, inner: Iterable<Predicate<SaxEvent>>): Iterable<Predicate<SaxEvent>> {
+    yield matchObject<SaxEvent>({
         type: expectEquals('openTag'),
         tag: matchObject({
             name: expectEquals(name),
             attributes: attributes,
             isSelfClosing: expectEquals(false)
         })
-    }, () => processInner(inner, nextEvent, name))
-}
-
-
-function expectTag(nextEvent: () => SaxEvent, name: string, attributes: Attributes, inner: () => void): void {
-    expectEvent(nextEvent, {
-        type: 'openTag',
-        tag: {
-            name: name,
-            attributes: attributes,
-            isSelfClosing: false
-        }
     });
-    processInner(inner, nextEvent, name);
-}
-
-
-function expectTextTag(nextEvent: () => SaxEvent, name: string, attributes: Attributes, value: string): void {
-    expectTag(nextEvent, name, attributes, () => expectEvent(nextEvent, {
-        type: 'text',
-        text: value
-    }));
-}
-
-function expectPlainTextTag(nextEvent: () => SaxEvent, name: string, value: string): void {
-    expectTextTag(nextEvent, name, {}, value);
-}
-
-function nameTags(nextEvent: () => SaxEvent, name: string) {
-    /*
-    onNoMatch<TextEvent>(nextEvent() as TextEvent, {
-        type: expectEquals('text'),
-        text: name,
-    }, () => {
-        expectPlainTextTag(nextEvent, 'sort-name', sortName);
-        others();
+    yield* inner;
+    yield expectEquals({
+        type: 'closeTag',
+        name: name
     })
-    */
-    expectPlainTextTag(nextEvent, 'name', name);
-    expectPlainTextTag(nextEvent, 'sort-name', name);
+    //yield* processInner(inner, name);
 }
 
-function expectNamed(nextEvent: () => SaxEvent, tagName: string, mbid: string, additionalAttributes: Attributes, name: string, additionalTags: () => void) {
-    expectTag(nextEvent, tagName, {
+
+function expectTag(name: string, attributes: Attributes, inner: Iterable<Predicate<SaxEvent>>): Iterable<Predicate<SaxEvent>> {
+    return matchTag(name, expectEquals(attributes), inner);
+}
+
+
+function matchTextTag(name: string, attributes: Attributes, value: Predicate<string>): Iterable<Predicate<SaxEvent>> {
+    return expectTag(name, attributes, [matchObject<SaxEvent>({ type: expectEquals('text'), text: value })]);
+}
+
+function expectTextTag(name: string, attributes: Attributes, value: string): Iterable<Predicate<SaxEvent>> {
+    return matchTextTag(name, attributes, expectEquals(value));
+}
+
+
+function matchPlainTextTag(name: string, value: Predicate<string>): Iterable<Predicate<SaxEvent>> {
+    return matchTextTag(name, {}, value);
+}
+
+function expectPlainTextTag(name: string, value: string): Iterable<Predicate<SaxEvent>> {
+    return matchPlainTextTag(name, expectEquals(value));
+}
+
+function* nameTags(name: Predicate<string>, sortName: string): Iterable<Predicate<SaxEvent>> {
+    yield* matchPlainTextTag('name', name);
+    yield* expectPlainTextTag('sort-name', sortName);
+}
+
+function* expectNamed(tagName: string, mbid: string, additionalAttributes: Attributes, name: Predicate<string>, sortName: string, additionalTags: Iterable<Predicate<SaxEvent>>): Iterable<Predicate<SaxEvent>> {
+    yield* expectTag(tagName, {
         id: mbid,
         ...additionalAttributes
-    }, () => {
-        nameTags(nextEvent, name);
-        additionalTags();
-    });
+    }, function* () {
+        yield* nameTags(name, sortName);
+        yield* additionalTags;
+    }());
 }
 
-function expectSimpleTag(nextEvent: () => SaxEvent, name: string, inner: () => void) {
-    expectTag(nextEvent, name, {}, inner);
+function* expectSimpleTag(name: string, inner: Iterable<Predicate<SaxEvent>>): Iterable<Predicate<SaxEvent>> {
+    yield* expectTag(name, {}, inner);
 }
 
-function expectIsoList(nextEvent: () => SaxEvent, id: string, code: string) {
-    expectSimpleTag(nextEvent, `iso-3166-${id}-code-list`, () => expectPlainTextTag(nextEvent, `iso-3166-${id}-code`, code));
+function* expectIsoList(id: string, code: string): Iterable<Predicate<SaxEvent>> {
+    yield* expectSimpleTag(`iso-3166-${id}-code-list`, expectPlainTextTag(`iso-3166-${id}-code`, code));
 }
 
-function expectIsoList1(nextEvent: () => SaxEvent, code: string) {
-    expectIsoList(nextEvent, '1', code);
+function* expectIsoList1(code: string): Iterable<Predicate<SaxEvent>> {
+    yield* expectIsoList('1', code);
 }
 
-function expectUSIsoList(nextEvent: () => SaxEvent) {
+const expectUSIsoList: Iterable<Predicate<SaxEvent>> = expectIsoList1('US');
+/*
+function* expectUSIsoList() : Iterable<Predicate<SaxEvent>> {
     expectIsoList1(nextEvent, 'US');
 }
+*/
 
-function expectAreaRaw(nextEvent: () => SaxEvent, tagName: string, mbid: string, name: string, additionalTags: () => void) {
-    expectNamed(nextEvent, tagName, mbid, {}, name, additionalTags);
+function* expectAreaRaw(tagName: string, mbid: string, name: string, additionalTags: Iterable<Predicate<SaxEvent>>): Iterable<Predicate<SaxEvent>> {
+    yield* expectNamed(tagName, mbid, {}, expectEquals(name), name, additionalTags);
 }
 
-function expectArea(nextEvent: () => SaxEvent, mbid: string, name: string, additionalTags: () => void) {
-    expectAreaRaw(nextEvent, 'area', mbid, name, additionalTags);
+function* expectArea(mbid: string, name: string, additionalTags: Iterable<Predicate<SaxEvent>>): Iterable<Predicate<SaxEvent>> {
+    yield* expectAreaRaw('area', mbid, name, additionalTags);
 }
 
 function id(mbid: string): Attributes {
@@ -735,6 +761,8 @@ function id(mbid: string): Attributes {
         id: mbid
     }
 }
+
+const EMPTY_EVENTS = function* (): Iterable<Predicate<SaxEvent>> { }();
 
 function processCurrent(): boolean {
     return getObject('root', 'current', () => {
@@ -912,7 +940,7 @@ function processCurrent(): boolean {
 
 
 
-        function processMBResource(type: string, inner: (nextEvent: () => SaxEvent) => void, inc: string[], extraAttributes: Matcher<Attributes>): void {
+        function processMBResource(type: string, inner: Iterable<Predicate<SaxEvent>>, inc: string[], extraAttributes: Matcher<Attributes>, onNoMatch: () => void): void {
             if (lastAccessed === undefined) {
                 lastAccessed = Date.now();
             }
@@ -969,31 +997,54 @@ function processCurrent(): boolean {
                 }
             }
 
+            const predicates = matchTag('metadata', expectEquals({
+                xmlns: "http://musicbrainz.org/ns/mmd-2.0#"
+            }), matchTag(type, matchObject({
+                id: expectEquals(mbid),
+                ...extraAttributes,
+            }), inner));
+
+            for (const predicate of predicates) {
+                if (predicate(nextEvent())) {
+                    return;
+                }
+            }
+            onNoMatch();
+            //return true;
+
+            /*
             matchTag(nextEvent, 'metadata', expectEquals({
                 xmlns: "http://musicbrainz.org/ns/mmd-2.0#"
             }), () => matchTag(nextEvent, type, matchObject({
                 id: expectEquals(mbid),
                 ...extraAttributes,
             }), () => inner(nextEvent)));
+            */
 
         }
 
-        function processMBNamedResource(type: string, subType: Predicate<string>, typeId: Predicate<string>, name: string, additionalTags: (nextEvent: () => SaxEvent) => void, inc: string[]): void {
-            processMBResource(type, nextEvent => {
-                nameTags(nextEvent, name);
-                additionalTags(nextEvent);
-            }, inc, {
+        function processMBNamedResource(type: string, subType: Predicate<string>, typeId: Predicate<string>, name: Predicate<string>, sortName: string, additionalTags: Iterable<Predicate<SaxEvent>>, inc: string[], onNoMatch: () => void): void {
+            processMBResource(type, function* () {
+                yield* nameTags(name, sortName);
+                yield* additionalTags;
+            }(), inc, {
                     type: subType,
                     'type-id': typeId
-                });
+                }, onNoMatch);
         }
 
         function enqueueArea(mbid: string, found: () => void): void {
             enqueueMBResourceTask(mbid, 'area', found);
         }
 
+        function adjustLiteralProperty(nameSpace: string, name: string, literalTag: string): (actualValue: any) => boolean {
+            return actualValue => updateLiteralProperty(`${nameSpace}:${name}`, `${actualValue}`, literalTag, fail);
+        }
+
+
         function checkUpdateFormatProperty(name: string): (actualValue: any) => boolean {
-            return actualValue => updateLiteralProperty(`mm:format/${name}`, `${actualValue}`, 'n', fail);
+            return adjustLiteralProperty('mm', `format/${name}`, 'n')
+            //return actualValue => updateLiteralProperty(`mm:format/${name}`, `${actualValue}`, 'n', fail);
         }
 
         switch (type) {
@@ -1174,262 +1225,274 @@ function processCurrent(): boolean {
                         return false;
                     }));
             case 'mb:artist':
-                processMBNamedResource('artist', expectEquals('Group'), expectEquals("e431f5f6-b5d2-343d-8b36-72607fffb74b"), '112', (nextEvent: () => SaxEvent) => {
+                processMBNamedResource('artist', expectEquals('Group'), expectEquals("e431f5f6-b5d2-343d-8b36-72607fffb74b"), expectEquals('112'), '112', function* () {
 
-                    function localExpectArea(tagName: string, mbid: string, areaName: string, additionalTags: () => void) {
-                        expectAreaRaw(nextEvent, tagName, mbid, areaName, additionalTags);
+                    /*
+                    function* localExpectArea(tagName: string, mbid: string, areaName: string, additionalTags: Iterable<Predicate<SaxEvent>>) {
+                        yield * expectAreaRaw(tagName, mbid, areaName, additionalTags);
                     }
+                    */
 
+                    /*
                     function localExpectTextTag(name: string, value: string) {
-                        expectPlainTextTag(nextEvent, name, value);
+                        expectPlainTextTag(name, value);
                     }
+                    */
 
-                    localExpectTextTag('country', 'US');
-                    localExpectArea('area', "489ce91b-6658-3307-9877-795b68554c98", 'United States', () => expectUSIsoList(nextEvent));
-                    localExpectArea('begin-area', "26e0e534-19ea-4645-bfb3-1aa4e83a4046", 'Atlanta', () => { });
-                    expectSimpleTag(nextEvent, 'life-span', () => localExpectTextTag('begin', "1996"));
+                    yield* expectPlainTextTag('country', 'US');
+                    yield* expectAreaRaw('area', "489ce91b-6658-3307-9877-795b68554c98", 'United States', expectUSIsoList);
+                    yield* expectAreaRaw('begin-area', "26e0e534-19ea-4645-bfb3-1aa4e83a4046", 'Atlanta', EMPTY_EVENTS);
+                    yield* expectSimpleTag('life-span', expectPlainTextTag('begin', "1996"));
 
-                    function localExpectTag(name: string, attributes: Attributes, inner: () => void) {
-                        expectTag(nextEvent, name, attributes, inner);
+                    /*
+                    function* localExpectTag(name: string, attributes: Attributes, inner: Iterable<Predicate<SaxEvent>>) {
+                        yield* expectTag(name, attributes, inner);
                     }
+                    */
 
-                    function expectRecordingCore(id: string, title: string, length: string, others: () => void): void {
-                        localExpectTag('recording', {
+                    function expectRecordingCore(id: string, title: string, length: string, others: Iterable<Predicate<SaxEvent>>): Iterable<Predicate<SaxEvent>> {
+                        return expectTag('recording', {
                             id: id
-                        }, () => {
-                            localExpectTextTag("title", title);
-                            localExpectTextTag("length", length);
-                            others();
-                        });
+                        }, function* () {
+                            yield* expectPlainTextTag("title", title);
+                            yield* expectPlainTextTag("length", length);
+                            yield* others;
+                        }());
                     }
 
-                    function expectRecording(id: string, title: string, length: string): void {
-                        expectRecordingCore(id, title, length, () => { });
+                    function expectRecording(id: string, title: string, length: string): Iterable<Predicate<SaxEvent>> {
+                        return expectRecordingCore(id, title, length, EMPTY_EVENTS);
                     }
 
-                    function expectRecordingExtended(id: string, title: string, length: string, tag: string, tagValue: string): void {
-                        expectRecordingCore(id, title, length, () => localExpectTextTag(tag, tagValue));
+                    function expectRecordingExtended(id: string, title: string, length: string, tag: string, tagValue: string): Iterable<Predicate<SaxEvent>> {
+                        return expectRecordingCore(id, title, length, expectPlainTextTag(tag, tagValue));
                     }
 
-                    function expectRecordingDisambiguation(id: string, title: string, length: string, tagValue: string): void {
-                        expectRecordingExtended(id, title, length, "disambiguation", tagValue);
+                    function expectRecordingDisambiguation(id: string, title: string, length: string, tagValue: string): Iterable<Predicate<SaxEvent>> {
+                        return expectRecordingExtended(id, title, length, "disambiguation", tagValue);
                     }
 
 
-                    localExpectTag('recording-list', {
+                    yield* expectTag('recording-list', {
                         count: "268"
-                    }, () => {
-                        expectRecording("00cc81c5-0dd9-45bb-a27b-ef1d5454bf85", "All Cried Out", "277000");
-                        expectRecording("1cb4f0df-21ce-4454-9346-011a5c220fec", "1's for Ya", "187000");
-                        expectRecordingExtended("3d5a22ab-2a14-4206-a15b-e1f123076927", "Anywhere", "248000", "video", "true");
-                        expectRecording("4094e83b-40a8-4494-b686-a9673be0a563", "Anything", "229093");
-                        expectRecording("454c0f69-70a4-45e9-94ce-f207848fb118", "Anywhere", "197000");
-                        expectRecording("58d482f4-7070-451b-bf0f-c5d0cd1491fa", "Anywhere (remix)", "235000")
-                        expectRecording("7001506d-45cf-491a-bf76-a4da729eff1d", "Anywhere (interlude)", "70573");
-                        expectRecording("8101a28e-36f5-482a-b947-773d605e96de", "Anywhere", "247213");
-                        expectRecording("8540c247-8043-4001-bd2a-363f750fc98f", "Anywhere", "247493");
-                        expectRecording("8e6f61af-8a46-4d5f-9b59-d31ed6b66266", "Anywhere", "182826");
-                        expectRecording("91847fac-a4ff-443b-a4cb-92cc42f2ba24", "Be With You", "244973");
-                        expectRecording("9c954ae6-c25e-4fd6-856b-7b39a8461e16", "Can I Touch You", "304573");
-                        expectRecording("a36be457-c34e-4078-84da-24894d0e34d4", "Both of Us", "219000");
-                        expectRecording("b5d0a806-3bb2-474f-828d-55806de56531", "Anywhere (Slang club remix)", "236533");
-                        expectRecording("ba519c4e-6d74-4c17-9c3a-7bbb8d6e4680", "All My Love", "261866");
-                        expectRecording("c1ac5a1a-09f2-41f0-b6ca-8ead1730c18b", "Anywhere (remix)", "280533");
-                        expectRecording("d036d54a-639a-409d-81ac-f1293bb3c004", "All I Want Is You", "221706");
-                        expectRecording("d1f1b2b5-8496-4182-91a9-5e5aeea9b291", "Call My Name", "247640");
-                        expectRecordingDisambiguation("db8b99df-ed71-4ef9-ae3c-532c192226e7", "112 Intro", "76000", "Part III version");
-                        expectRecording("e0f71717-2e40-4546-b0b6-15805d62acb4", "All Cried Out (edit)", "223426");
-                        expectRecording("e87af726-1fa3-4804-821b-741e35cb2811", "All My Love", "283173");
-                        expectRecordingDisambiguation("f8aa3a67-5368-44c5-8d9e-4433dea9fab2", "112 Intro", "132960", "original version");
-                        expectRecording("fbf9e86b-3a11-4a08-b77d-1432e1e243c9", "Anywhere", "336880");
-                        expectRecording("fc479b8c-ebbe-46f0-84cf-f45615f165cf", "After the Love Has Gone", "243000");
-                        expectRecording("ff22df38-fe40-4487-9006-fdc6a4662fe0", "Anywhere", "244026")
-                    });
+                    }, function* () {
+                        yield* expectRecording("00cc81c5-0dd9-45bb-a27b-ef1d5454bf85", "All Cried Out", "277000");
+                        yield* expectRecording("1cb4f0df-21ce-4454-9346-011a5c220fec", "1's for Ya", "187000");
+                        yield* expectRecordingExtended("3d5a22ab-2a14-4206-a15b-e1f123076927", "Anywhere", "248000", "video", "true");
+                        yield* expectRecording("4094e83b-40a8-4494-b686-a9673be0a563", "Anything", "229093");
+                        yield* expectRecording("454c0f69-70a4-45e9-94ce-f207848fb118", "Anywhere", "197000");
+                        yield* expectRecording("58d482f4-7070-451b-bf0f-c5d0cd1491fa", "Anywhere (remix)", "235000")
+                        yield* expectRecording("7001506d-45cf-491a-bf76-a4da729eff1d", "Anywhere (interlude)", "70573");
+                        yield* expectRecording("8101a28e-36f5-482a-b947-773d605e96de", "Anywhere", "247213");
+                        yield* expectRecording("8540c247-8043-4001-bd2a-363f750fc98f", "Anywhere", "247493");
+                        yield* expectRecording("8e6f61af-8a46-4d5f-9b59-d31ed6b66266", "Anywhere", "182826");
+                        yield* expectRecording("91847fac-a4ff-443b-a4cb-92cc42f2ba24", "Be With You", "244973");
+                        yield* expectRecording("9c954ae6-c25e-4fd6-856b-7b39a8461e16", "Can I Touch You", "304573");
+                        yield* expectRecording("a36be457-c34e-4078-84da-24894d0e34d4", "Both of Us", "219000");
+                        yield* expectRecording("b5d0a806-3bb2-474f-828d-55806de56531", "Anywhere (Slang club remix)", "236533");
+                        yield* expectRecording("ba519c4e-6d74-4c17-9c3a-7bbb8d6e4680", "All My Love", "261866");
+                        yield* expectRecording("c1ac5a1a-09f2-41f0-b6ca-8ead1730c18b", "Anywhere (remix)", "280533");
+                        yield* expectRecording("d036d54a-639a-409d-81ac-f1293bb3c004", "All I Want Is You", "221706");
+                        yield* expectRecording("d1f1b2b5-8496-4182-91a9-5e5aeea9b291", "Call My Name", "247640");
+                        yield* expectRecordingDisambiguation("db8b99df-ed71-4ef9-ae3c-532c192226e7", "112 Intro", "76000", "Part III version");
+                        yield* expectRecording("e0f71717-2e40-4546-b0b6-15805d62acb4", "All Cried Out (edit)", "223426");
+                        yield* expectRecording("e87af726-1fa3-4804-821b-741e35cb2811", "All My Love", "283173");
+                        yield* expectRecordingDisambiguation("f8aa3a67-5368-44c5-8d9e-4433dea9fab2", "112 Intro", "132960", "original version");
+                        yield* expectRecording("fbf9e86b-3a11-4a08-b77d-1432e1e243c9", "Anywhere", "336880");
+                        yield* expectRecording("fc479b8c-ebbe-46f0-84cf-f45615f165cf", "After the Love Has Gone", "243000");
+                        yield* expectRecording("ff22df38-fe40-4487-9006-fdc6a4662fe0", "Anywhere", "244026")
+                    }());
 
 
 
-                }, ['recordings']);
-                enqueueArea("489ce91b-6658-3307-9877-795b68554c98", () => enqueueArea("26e0e534-19ea-4645-bfb3-1aa4e83a4046", () => enqueueMBResourceTask("00cc81c5-0dd9-45bb-a27b-ef1d5454bf85", 'recording', fail)));
+                }(), ['recordings'], () => enqueueArea("489ce91b-6658-3307-9877-795b68554c98", () => enqueueArea("26e0e534-19ea-4645-bfb3-1aa4e83a4046", () => enqueueMBResourceTask("00cc81c5-0dd9-45bb-a27b-ef1d5454bf85", 'recording', fail))));
                 return true;
             case 'mb:area':
-                processMBNamedResource('area', expectEquals('Country'), areaTypeId => enqueueMBTask(areaTypeId, `area-type`, 'mb:type', true, () => false), 'United States', (nextEvent: () => SaxEvent) => {
-                    expectUSIsoList(nextEvent);
+                processMBNamedResource('area', expectEquals('Country'), areaTypeId => enqueueMBTask(areaTypeId, `area-type`, 'mb:type', true, () => false), adjustLiteralProperty('mb', 'name', 's'), 'United States', function* () {
+                    yield* expectUSIsoList;
 
+                    /*
                     function localExpectTag(name: string, attributes: Attributes, inner: () => void) {
                         expectTag(nextEvent, name, attributes, inner);
                     }
+                    */
 
+                    /*
                     function localExpectPlainTextTag(name: string, value: string): void {
                         expectPlainTextTag(nextEvent, name, value);
                     }
-
-                    function expectTagTagWithCount(count: string, name: string) {
-                        localExpectTag('tag', { count: count }, () => localExpectPlainTextTag('name', name));
+                    */
+                    function expectTagTagWithCount(count: string, name: string): Iterable<Predicate<SaxEvent>> {
+                        return expectTag('tag', { count: count }, expectPlainTextTag('name', name));
                     }
 
-                    function expectTagTag(name: string) {
-                        expectTagTagWithCount('0', name);
+                    function expectTagTag(name: string): Iterable<Predicate<SaxEvent>> {
+                        return expectTagTagWithCount('0', name);
                     }
 
-                    function localExpectIsoList(id: string, code: string) {
-                        expectIsoList(nextEvent, id, code);
+                    /*
+                    function localExpectIsoList(id: string, code: string): Iterable<Predicate<SaxEvent>> {
+                        return expectIsoList(id, code);
                     }
+                    */
 
-                    function expectPartOfRaw(mbid: string, name: string, iso1List: () => void, code: string) {
-                        localExpectTag('relation', {
+                    function expectPartOfRaw(mbid: string, name: string, iso1List: Iterable<Predicate<SaxEvent>>, code: string): Iterable<Predicate<SaxEvent>> {
+                        return expectTag('relation', {
                             'type-id': "de7cc874-8b1b-3a05-8272-f3834c968fb7",
                             type: "part of"
-                        }, () => {
-                            localExpectPlainTextTag('target', mbid);
-                            expectArea(nextEvent, mbid, name, () => {
-                                iso1List();
-                                localExpectIsoList('2', code);
-                            })
+                        }, function* () {
+                            yield* expectPlainTextTag('target', mbid);
+                            yield* expectArea(mbid, name, function* () {
+                                yield* iso1List;
+                                yield* expectIsoList('2', code);
+                            }())
 
-                        })
+                        }())
                     }
 
-                    function expectPartOf(mbid: string, name: string, code: string) {
-                        expectPartOfRaw(mbid, name, () => { }, code)
+                    function expectPartOf(mbid: string, name: string, code: string): Iterable<Predicate<SaxEvent>> {
+                        return expectPartOfRaw(mbid, name, EMPTY_EVENTS, code)
                     }
 
-                    function expectPartOf2(mbid: string, name: string, code1: string, code2: string) {
-                        expectPartOfRaw(mbid, name, () => localExpectIsoList('1', code1), code2);
+                    function expectPartOf2(mbid: string, name: string, code1: string, code2: string): Iterable<Predicate<SaxEvent>> {
+                        return expectPartOfRaw(mbid, name, expectIsoList('1', code1), code2);
                     }
 
-                    localExpectTag('alias-list', {
+                    yield* expectTag('alias-list', {
                         count: "1"
-                    }, () => expectTextTag(nextEvent, 'alias', {
+                    }, expectTextTag('alias', {
                         'sort-name': "USA",
                         type: "Search hint",
                         'type-id': "7090dd35-e32e-3422-8a48-224821c2468b"
                     }, 'USA'));
-                    localExpectTag('relation-list', {
+                    yield* expectTag('relation-list', {
                         'target-type': 'area'
-                    }, () => {
-                        expectPartOf('02e01cf9-b0ed-4286-ac6d-16989f92ced6', 'Virginia', 'US-VA');
-                        expectPartOf('0573177b-9ff9-4643-80bc-ed2513419267', 'Ohio', 'US-OH');
-                        expectPartOf('05f68b4c-10f3-49b5-b28c-260a1b707043', 'Massachusetts', 'US-MA');
-                        expectPartOf('0c693f90-d889-4abe-a0e6-6aac212388e3', 'New Mexico', 'US-NM');
-                        expectPartOf('10cb2ebd-1bc7-4c11-b10d-54f60c421d20', 'Wisconsin', 'US-WI');
-                        expectPartOf('1462269e-911b-4db3-be41-434393484e34', 'Missouri', 'US-MO');
-                        expectPartOf('1b420c08-51a5-4bdd-9b0e-cd601703d20b', 'Hawaii', 'US-HI');
-                        expectPartOf('1ed51cbe-4272-4df9-9b18-44b0d4714086', 'Maryland', 'US-MD');
-                        expectPartOf('2066f663-1055-4383-aaa6-08d09ec81e57', 'South Dakota', 'US-SD');
-                        expectPartOf('29fa065f-a568-418c-98b9-5023f64d9312', 'Michigan', 'US-MI');
-                        expectPartOf('373183af-56db-44d7-b06a-5877c02c5f01', 'Colorado', 'US-CO');
-                        expectPartOf('376ea713-8f27-4ab1-818b-9cca72023382', 'Oregon', 'US-OR');
-                        expectPartOf2('3906cf32-00a7-32df-93cc-4710c5f5a542', 'Puerto Rico', 'PR', 'US-PR');
-                        expectPartOf('39383cce-6f78-4afe-b19a-8377995ce702', 'Washington', 'US-WA');
-                        expectPartOf2('43dd540a-78cd-319f-bab9-214b5430f3f2', 'Guam', 'GU', 'US-GU');
-                        expectPartOf('4ca644d9-18a6-4605-9d71-3eae8b3ab2ee', 'New Hampshire', 'US-NH');
-                        expectPartOf2('4e8596fe-cbee-34ce-8b35-1f3c9bc094d6', 'United States Minor Outlying Islands', 'UM', 'US-UM');
-                        expectPartOf('6fddb177-f3fc-4c30-9d49-9c7e949fe0bc', 'Mississippi', 'US-MS');
-                        expectPartOf('75d8fdcf-03e9-43d9-9399-131b8e118b0b', 'Pennsylvania', 'US-PA');
-                        expectPartOf('75e398a3-5f3f-4224-9cd8-0fe44715bc95', 'New York', 'US-NY');
-                        expectPartOf('7a0e4090-2ab5-4a28-acef-6173e3885fa7', 'Delaware', 'US-DE');
-                        expectPartOf('7deb769c-1eaa-4b7a-aecf-c395d82a1e73', 'Utah', 'US-UT');
-                        expectPartOf('821b0738-e1a2-4636-82e0-b5ca8b331679', 'Alaska', 'US-AK');
-                        expectPartOf('85255cb8-edb9-4a66-b23a-a5261d42c116', 'Kentucky', 'US-KY');
-                        expectPartOf('8788d6c2-c779-4be5-ad47-cf0a95e0f2a0', 'Arkansas', 'US-AR');
-                        expectPartOf('88772016-5866-496a-8de7-4340e922d663', 'Connecticut', 'US-CT');
-                        expectPartOf('8c2196d9-b7be-4051-90d1-ac81895355f1', 'Illinois', 'US-IL');
-                        expectPartOf('8c3615bc-bd11-4bf0-b237-405161aac8b7', 'Iowa', 'US-IA');
-                        expectPartOf2('9a84fea2-1c1f-3908-a44a-6fa2b6fa7b26', 'Northern Mariana Islands', 'MP', 'US-MP');
-                        expectPartOf('a3435b4a-f42c-404e-beee-f290f62a5e1c', 'Vermont', 'US-VT');
-                        expectPartOf('a36544c1-cb40-4f44-9e0e-7a5a69e403a8', 'New Jersey', 'US-NJ');
-                        expectPartOf('a5ff428a-ad62-4752-8f8d-14107c574117', 'Nebraska', 'US-NE');
-                        expectPartOf('ab47b3b2-838d-463c-9907-30dcd3438d65', 'Nevada', 'US-NV');
-                        expectPartOf('ae0110b6-13d4-4998-9116-5b926287aa23', 'California', 'US-CA');
-                        expectPartOf('aec173a2-0f12-489e-812b-7d2c252e4b62', 'South Carolina', 'US-SC');
-                        expectPartOf('af4758fa-92d7-4f49-ac74-f58d3113c7c5', 'North Dakota', 'US-ND');
-                        expectPartOf('af59135f-38b5-4ea4-b4e2-dd28c5f0bad7', 'Washington, D.C.', 'US-DC');
-                        expectPartOf('b8c5f945-678b-43eb-a77a-f237d7f01493', 'Rhode Island', 'US-RI');
-                        expectPartOf('bb32d812-8161-44e1-8a73-7a0d4a6d3f96', 'West Virginia', 'US-WV');
-                        expectPartOf('bf9353d8-da52-4fd9-8645-52b2349b4914', 'Arizona', 'US-AZ');
-                        expectPartOf('c2dca60c-5a5f-43b9-8591-3d4e454cac4e', 'Wyoming', 'US-WY');
-                        expectPartOf('c45232cf-5848-45d7-84ae-94755f8fe37e', 'Maine', 'US-ME');
-                        expectPartOf('c747e5a9-3ac7-4dfb-888f-193ff598c62f', 'Kansas', 'US-KS');
-                        expectPartOf('cc55c78b-15c9-45dd-8ff4-4a212c54eff3', 'Indiana', 'US-IN');
-                        expectPartOf('cffc0190-1aa2-489f-b6f9-43b9a9e01a91', 'Alabama', 'US-AL');
-                        expectPartOf('d10ba752-c9ce-4804-afc0-7ff94aa5d8d6', 'Georgia', 'US-GA');
-                        expectPartOf('d2083d84-09e2-4d45-8fc0-45eed33748b5', 'Oklahoma', 'US-OK');
-                        expectPartOf('d2918f1a-c51e-4a4a-ad7f-cdd88877b25f', 'Florida', 'US-FL');
-                        expectPartOf('d4ab49e7-1d25-45e2-8659-b147e0ea3684', 'North Carolina', 'US-NC');
-                        expectPartOf2('e228a3c1-53c0-3ec9-842b-ec1b2138e387', 'American Samoa', 'AS', 'US-AS');
-                        expectPartOf('f2532a8e-276c-457a-b3d9-0a7706535178', 'Idaho', 'US-ID');
-                        expectPartOf('f5ffcc03-ebf2-466a-bb11-b38c6c0c84f5', 'Minnesota', 'US-MN');
-                        expectPartOf('f934c8da-e40e-4056-8f8c-212e68fdcaec', 'Texas', 'US-TX');
-                        expectPartOf('f9caf2d8-9638-4b96-bc49-8462339d4b2e', 'Tennessee', 'US-TN');
-                        expectPartOf('fb8840b9-ff2f-4484-8540-7112ee426ea7', 'Montana', 'US-MT');
-                        expectPartOf('fc68ecf5-507e-4012-b60b-d93747a3cfa7', 'Louisiana', 'US-LA');
-                    })
-                    localExpectTag('tag-list', {}, () => {
-                        expectTagTag('fail');
-                        expectTagTag('place');
-                        expectTagTagWithCount('-1', 'the tag voters have no sense of humour. vote either fail or whatever as an answer!');
-                        expectTagTag('un member state');
-                        expectTagTag('united states of what?');
-                        expectTagTag('vote either fail or whatever as an answer! united states of what??');
-                        expectTagTag('whatever');
-                    })
+                    }, function* () {
+                        yield* expectPartOf('02e01cf9-b0ed-4286-ac6d-16989f92ced6', 'Virginia', 'US-VA');
+                        yield* expectPartOf('0573177b-9ff9-4643-80bc-ed2513419267', 'Ohio', 'US-OH');
+                        yield* expectPartOf('05f68b4c-10f3-49b5-b28c-260a1b707043', 'Massachusetts', 'US-MA');
+                        yield* expectPartOf('0c693f90-d889-4abe-a0e6-6aac212388e3', 'New Mexico', 'US-NM');
+                        yield* expectPartOf('10cb2ebd-1bc7-4c11-b10d-54f60c421d20', 'Wisconsin', 'US-WI');
+                        yield* expectPartOf('1462269e-911b-4db3-be41-434393484e34', 'Missouri', 'US-MO');
+                        yield* expectPartOf('1b420c08-51a5-4bdd-9b0e-cd601703d20b', 'Hawaii', 'US-HI');
+                        yield* expectPartOf('1ed51cbe-4272-4df9-9b18-44b0d4714086', 'Maryland', 'US-MD');
+                        yield* expectPartOf('2066f663-1055-4383-aaa6-08d09ec81e57', 'South Dakota', 'US-SD');
+                        yield* expectPartOf('29fa065f-a568-418c-98b9-5023f64d9312', 'Michigan', 'US-MI');
+                        yield* expectPartOf('373183af-56db-44d7-b06a-5877c02c5f01', 'Colorado', 'US-CO');
+                        yield* expectPartOf('376ea713-8f27-4ab1-818b-9cca72023382', 'Oregon', 'US-OR');
+                        yield* expectPartOf2('3906cf32-00a7-32df-93cc-4710c5f5a542', 'Puerto Rico', 'PR', 'US-PR');
+                        yield* expectPartOf('39383cce-6f78-4afe-b19a-8377995ce702', 'Washington', 'US-WA');
+                        yield* expectPartOf2('43dd540a-78cd-319f-bab9-214b5430f3f2', 'Guam', 'GU', 'US-GU');
+                        yield* expectPartOf('4ca644d9-18a6-4605-9d71-3eae8b3ab2ee', 'New Hampshire', 'US-NH');
+                        yield* expectPartOf2('4e8596fe-cbee-34ce-8b35-1f3c9bc094d6', 'United States Minor Outlying Islands', 'UM', 'US-UM');
+                        yield* expectPartOf('6fddb177-f3fc-4c30-9d49-9c7e949fe0bc', 'Mississippi', 'US-MS');
+                        yield* expectPartOf('75d8fdcf-03e9-43d9-9399-131b8e118b0b', 'Pennsylvania', 'US-PA');
+                        yield* expectPartOf('75e398a3-5f3f-4224-9cd8-0fe44715bc95', 'New York', 'US-NY');
+                        yield* expectPartOf('7a0e4090-2ab5-4a28-acef-6173e3885fa7', 'Delaware', 'US-DE');
+                        yield* expectPartOf('7deb769c-1eaa-4b7a-aecf-c395d82a1e73', 'Utah', 'US-UT');
+                        yield* expectPartOf('821b0738-e1a2-4636-82e0-b5ca8b331679', 'Alaska', 'US-AK');
+                        yield* expectPartOf('85255cb8-edb9-4a66-b23a-a5261d42c116', 'Kentucky', 'US-KY');
+                        yield* expectPartOf('8788d6c2-c779-4be5-ad47-cf0a95e0f2a0', 'Arkansas', 'US-AR');
+                        yield* expectPartOf('88772016-5866-496a-8de7-4340e922d663', 'Connecticut', 'US-CT');
+                        yield* expectPartOf('8c2196d9-b7be-4051-90d1-ac81895355f1', 'Illinois', 'US-IL');
+                        yield* expectPartOf('8c3615bc-bd11-4bf0-b237-405161aac8b7', 'Iowa', 'US-IA');
+                        yield* expectPartOf2('9a84fea2-1c1f-3908-a44a-6fa2b6fa7b26', 'Northern Mariana Islands', 'MP', 'US-MP');
+                        yield* expectPartOf('a3435b4a-f42c-404e-beee-f290f62a5e1c', 'Vermont', 'US-VT');
+                        yield* expectPartOf('a36544c1-cb40-4f44-9e0e-7a5a69e403a8', 'New Jersey', 'US-NJ');
+                        yield* expectPartOf('a5ff428a-ad62-4752-8f8d-14107c574117', 'Nebraska', 'US-NE');
+                        yield* expectPartOf('ab47b3b2-838d-463c-9907-30dcd3438d65', 'Nevada', 'US-NV');
+                        yield* expectPartOf('ae0110b6-13d4-4998-9116-5b926287aa23', 'California', 'US-CA');
+                        yield* expectPartOf('aec173a2-0f12-489e-812b-7d2c252e4b62', 'South Carolina', 'US-SC');
+                        yield* expectPartOf('af4758fa-92d7-4f49-ac74-f58d3113c7c5', 'North Dakota', 'US-ND');
+                        yield* expectPartOf('af59135f-38b5-4ea4-b4e2-dd28c5f0bad7', 'Washington, D.C.', 'US-DC');
+                        yield* expectPartOf('b8c5f945-678b-43eb-a77a-f237d7f01493', 'Rhode Island', 'US-RI');
+                        yield* expectPartOf('bb32d812-8161-44e1-8a73-7a0d4a6d3f96', 'West Virginia', 'US-WV');
+                        yield* expectPartOf('bf9353d8-da52-4fd9-8645-52b2349b4914', 'Arizona', 'US-AZ');
+                        yield* expectPartOf('c2dca60c-5a5f-43b9-8591-3d4e454cac4e', 'Wyoming', 'US-WY');
+                        yield* expectPartOf('c45232cf-5848-45d7-84ae-94755f8fe37e', 'Maine', 'US-ME');
+                        yield* expectPartOf('c747e5a9-3ac7-4dfb-888f-193ff598c62f', 'Kansas', 'US-KS');
+                        yield* expectPartOf('cc55c78b-15c9-45dd-8ff4-4a212c54eff3', 'Indiana', 'US-IN');
+                        yield* expectPartOf('cffc0190-1aa2-489f-b6f9-43b9a9e01a91', 'Alabama', 'US-AL');
+                        yield* expectPartOf('d10ba752-c9ce-4804-afc0-7ff94aa5d8d6', 'Georgia', 'US-GA');
+                        yield* expectPartOf('d2083d84-09e2-4d45-8fc0-45eed33748b5', 'Oklahoma', 'US-OK');
+                        yield* expectPartOf('d2918f1a-c51e-4a4a-ad7f-cdd88877b25f', 'Florida', 'US-FL');
+                        yield* expectPartOf('d4ab49e7-1d25-45e2-8659-b147e0ea3684', 'North Carolina', 'US-NC');
+                        yield* expectPartOf2('e228a3c1-53c0-3ec9-842b-ec1b2138e387', 'American Samoa', 'AS', 'US-AS');
+                        yield* expectPartOf('f2532a8e-276c-457a-b3d9-0a7706535178', 'Idaho', 'US-ID');
+                        yield* expectPartOf('f5ffcc03-ebf2-466a-bb11-b38c6c0c84f5', 'Minnesota', 'US-MN');
+                        yield* expectPartOf('f934c8da-e40e-4056-8f8c-212e68fdcaec', 'Texas', 'US-TX');
+                        yield* expectPartOf('f9caf2d8-9638-4b96-bc49-8462339d4b2e', 'Tennessee', 'US-TN');
+                        yield* expectPartOf('fb8840b9-ff2f-4484-8540-7112ee426ea7', 'Montana', 'US-MT');
+                        yield* expectPartOf('fc68ecf5-507e-4012-b60b-d93747a3cfa7', 'Louisiana', 'US-LA');
+                    }())
+                    yield* expectTag('tag-list', {}, function* () {
+                        yield* expectTagTag('fail');
+                        yield* expectTagTag('place');
+                        yield* expectTagTagWithCount('-1', 'the tag voters have no sense of humour. vote either fail or whatever as an answer!');
+                        yield* expectTagTag('un member state');
+                        yield* expectTagTag('united states of what?');
+                        yield* expectTagTag('vote either fail or whatever as an answer! united states of what??');
+                        yield* expectTagTag('whatever');
+                    }())
 
-                }, ['aliases', 'annotation', 'tags', 'ratings', 'area-rels']);
-                enqueueArea('02e01cf9-b0ed-4286-ac6d-16989f92ced6', fail);
+                }(), ['aliases', 'annotation', 'tags', 'ratings', 'area-rels'], () => enqueueArea('02e01cf9-b0ed-4286-ac6d-16989f92ced6', fail));
                 return true;
             case 'mb:release':
 
-                processMBResource('release', nextEvent => {
+                processMBResource('release', function* () {
 
+                    /*
                     function localExpectPlainTextTag(name: string, value: string): void {
                         expectPlainTextTag(nextEvent, name, value);
                     }
+                    */
 
-                    function localExpectTextAndEnum(name: string, value: string, enumName: string, mbid: string, enumValue: string): void {
-                        localExpectPlainTextTag(name, value);
-                        expectTextTag(nextEvent, enumName, id(mbid), enumValue);
+                    function* localExpectTextAndEnum(name: string, value: string, enumName: string, mbid: string, enumValue: string): Iterable<Predicate<SaxEvent>> {
+                        yield* expectPlainTextTag(name, value);
+                        yield* expectTextTag(enumName, id(mbid), enumValue);
 
                     }
-                    localExpectTextAndEnum('title', 'Room 112', 'status', "4e304316-386d-3409-af2e-78857eec5cfe", 'Official');
-                    localExpectTextAndEnum('quality', 'normal', 'packaging', "ec27701a-4a22-37f4-bfac-6616e0f9750a", 'Jewel Case');
+                    yield* localExpectTextAndEnum('title', 'Room 112', 'status', "4e304316-386d-3409-af2e-78857eec5cfe", 'Official');
+                    yield* localExpectTextAndEnum('quality', 'normal', 'packaging', "ec27701a-4a22-37f4-bfac-6616e0f9750a", 'Jewel Case');
+                    /*
                     function localExpectSimpleTag(name: string, inner: () => void): void {
                         expectSimpleTag(nextEvent, name, inner);
                     }
-                    localExpectSimpleTag('text-representation', () => {
-                        localExpectPlainTextTag('language', 'eng');
-                        localExpectPlainTextTag('script', 'Latn');
-                    });
+                    */
+                    yield* expectSimpleTag('text-representation', function* () {
+                        yield* expectPlainTextTag('language', 'eng');
+                        yield* expectPlainTextTag('script', 'Latn');
+                    }());
 
-                    function expectDate() {
-                        localExpectPlainTextTag('date', '1998-11-16');
+                    const expectDate = () => expectPlainTextTag('date', '1998-11-16');
+
+                    yield* expectDate(); //localExpectPlainTextTag('date', '1998-11-16');
+                    yield* expectPlainTextTag('country', 'DE');
+                    yield* expectTag('release-event-list', { count: '1' }, expectSimpleTag('release-event', function* () {
+                        console.log(`yield expectDate`);
+                        yield* expectDate();
+                        console.log(`yield expectArea`);
+                        yield* expectArea('85752fda-13c4-31a3-bee5-0e5cb1f51dad', 'Germany', expectIsoList1('DE'));
+                    }()));
+
+                    function expectTrue(name: string): Iterable<Predicate<SaxEvent>> {
+                        return expectPlainTextTag(name, 'true');
                     }
 
-                    expectDate(); //localExpectPlainTextTag('date', '1998-11-16');
-                    localExpectPlainTextTag('country', 'DE');
-                    expectTag(nextEvent, 'release-event-list', { count: '1' }, () => localExpectSimpleTag('release-event', () => {
-                        expectDate();
-                        expectArea(nextEvent, '85752fda-13c4-31a3-bee5-0e5cb1f51dad', 'Germany', () => expectIsoList1(nextEvent, 'DE'))
-                    }));
-
-                    function expectTrue(name: string): void {
-                        localExpectPlainTextTag(name, 'true');
-                    }
-
-                    localExpectPlainTextTag('barcode', '786127302127');
-                    localExpectPlainTextTag('asin', 'B00000D9VN');
-                    localExpectSimpleTag('cover-art-archive', () => {
-                        expectTrue('artwork');
-                        localExpectPlainTextTag('count', '19');
-                        expectTrue('front');
-                        expectTrue('back');
-                    })
+                    yield* expectPlainTextTag('barcode', '786127302127');
+                    yield* expectPlainTextTag('asin', 'B00000D9VN');
+                    yield* expectSimpleTag('cover-art-archive', function* () {
+                        yield* expectTrue('artwork');
+                        yield* expectPlainTextTag('count', '19');
+                        yield* expectTrue('front');
+                        yield* expectTrue('back');
+                    }());
                     //fail();
                     /*
                     expectPlainTextTag(nextEvent, 'sort-name', name);
                     additionalTags();
                     */
-                }, [], {});
-                enqueueArea('85752fda-13c4-31a3-bee5-0e5cb1f51dad', fail);
+                }(), [], {}, () => enqueueArea('85752fda-13c4-31a3-bee5-0e5cb1f51dad', fail));
                 return true;
             default:
                 fail();
