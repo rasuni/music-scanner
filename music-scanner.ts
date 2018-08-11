@@ -19,7 +19,6 @@ commander.version('0.0.1').description('music scanner command line tool');
 
 interface Recording {
     readonly type: "recording";
-    readonly mbid: string;
     title?: string;
     //length?: number;
     //artist?: number;
@@ -96,7 +95,7 @@ type Record = LoadedRecord | DeletedRecord;
 */
 
 
-//type Consumer<T> = (result: T) => void;
+type Consumer<T> = (value: T) => void;
 
 function getRunner(): (value?: any) => void {
     const currentFiber = Fiber.current;
@@ -105,7 +104,7 @@ function getRunner(): (value?: any) => void {
 
 const yieldValue = Fiber.yield;
 
-function waitFor<R>(asyncFunction: (consumer: (result: R) => void) => void): R {
+function waitFor<R>(asyncFunction: (consumer: Consumer<R>) => void): R {
     asyncFunction(getRunner());
     return yieldValue();
 }
@@ -118,7 +117,7 @@ interface Pair<F, S> {
 type BiConsumer<F, S> = (first: F, second: S) => void;
 
 function waitFor2<F, S>(asyncFunction: (consumer: BiConsumer<F, S>) => void): Pair<F, S> {
-    return waitFor((consumer: (result: Pair<F, S>) => void) => asyncFunction((first: F, second: S) => consumer({
+    return waitFor((consumer: Consumer<Pair<F, S>>) => asyncFunction((first: F, second: S) => consumer({
         first: first,
         second: second
     })));
@@ -218,20 +217,17 @@ function assertEquals(actual: any, expected: any): void {
 }
 
 
+
 function isUndefined(value: any): value is undefined {
     return value === undefined;
 }
+
 
 function assertUndefined(value: any): void {
     assert(isUndefined(value));
 }
 /*
- 
-interface AddInfo {
-    added: boolean,
-    id: number
-}
- 
+  
 interface OpenTagEvent {
     readonly type: 'openTag';
     readonly tag: sax.Tag;
@@ -460,26 +456,81 @@ function decodeStringLiteral(stringLiteral: string) {
     assertEquals(segments[0], 's');
     return decodeURIComponent(segments[1]);
 }
-function prepareStream(stream: any): void {
+
+function makeBlockingQueue<T>(assignProducers: Consumer<Consumer<T>>): Provider<T> {
+    const buffer: T[] = [];
+    let waiting: boolean = false;
+    const run = getRunner();
+    assignProducers((item: T) => {
+        if (waiting) {
+            assertEquals(buffer.length, 0);
+            run(item);
+        }
+        else {
+            buffer.push(item);
+        }
+    });
+    /*
+    function push(item: T): void {
+        if (waiting) {
+            assertEquals(buffer.length, 0);
+            run(item);
+        }
+        else {
+            buffer.push(item);
+        }
+    }
+    
+
+    parser.onopentag = tag => push({ type: 'openTag', tag: tag as sax.Tag });
+    parser.onerror = fail;
+    parser.onclosetag = name => push({ type: 'closeTag', name: name });
+    parser.ontext = text => push({ type: "text", text: text });
+    */
+
+    return () => {
+        //const event = buffer.shift();
+        if (buffer.length == 0) {
+            failIf(waiting);
+            waiting = true;
+            const next = yieldValue();
+            waiting = false;
+            return next;
+        }
+        else {
+            return buffer.shift();
+        }
+    }
+
+}
+
+function prepareStream(stream: any): Provider<any> {
 
     function on(event: string, handler: any): void {
         stream.on(event, handler);
     }
+    on('error', fail);
 
+    return makeBlockingQueue((push: Consumer<any>) => {
+        on('data', push);
+        on('end', push);
+    });
+    /*
     on('error', fail);
     const run = getRunner();
     on('data', run);
     on('end', run);
+    */
 }
 
 function streamOpt<T>(stream: any, onEmpty: () => T, onData: (data: any) => T): T {
-    prepareStream(stream);
-    const data = yieldValue();
+    const next = prepareStream(stream);
+    const data = next();
     if (isUndefined(data)) {
         return onEmpty();
     }
     else {
-        assertUndefined(yieldValue());
+        assertUndefined(next());
         return onData(data);
     }
 }
@@ -512,11 +563,10 @@ function defineCommand(cmdSyntax: string, description: string, options: string[]
 
 const db = levelgraph(level(dbPath), { joinAlgorithm: 'basic' });
 
+
 function get<T>(pattern: StatementPattern, onEmpty: () => T, onStatement: (statement: Statement<string>) => T): T {
     return streamOpt(db.getStream(pattern), onEmpty, onStatement);
 }
-
-//type Direction = "out" | "in";
 
 function navigate<T>(source: string, predicate: string, isOutDirection: boolean, notFound: () => T, found: (target: string) => T): T {
 
@@ -640,36 +690,21 @@ interface CloseTagEvent {
 
 type SaxEvent = OpenTagEvent | TextEvent | CloseTagEvent;
 
-//IterableIterator<Predicatee<SaxEvent>>
-
 interface Attributes {
     readonly [key: string]: string;
 }
-
-/*
-function expectEvent(expected: SaxEvent): Predicate<SaxEvent> {
-    return expectEquals(expected);
-    //assertEquals(nextEvent(), expected);
-}
-*/
-
-/*
-function* processInner(inner: Iterable<Predicate<SaxEvent>>, name: string): Iterable<Predicate<SaxEvent>> {
-    yield* inner;
-    yield expectEquals({
-        type: 'closeTag',
-        name: name
-    })
-}
-*/
 
 function onNoMatch<T>(value: T, matchers: Matcher<T>, notFound: () => void): void {
     searchMatch(value, matchers, () => { }, notFound);
 }
 
 
+function isDefined(value: any): value is boolean | number | string | object {
+    return value !== undefined;
+}
+
 function* enumOptional<T>(value: string | undefined, provideMapped: () => T) {
-    if (value !== undefined) {
+    if (isDefined(value)) {
         yield provideMapped();
     }
 }
@@ -741,11 +776,6 @@ function* expectIsoList1(code: string): Iterable<Predicate<SaxEvent>> {
 }
 
 const expectUSIsoList: Iterable<Predicate<SaxEvent>> = expectIsoList1('US');
-/*
-function* expectUSIsoList() : Iterable<Predicate<SaxEvent>> {
-    expectIsoList1(nextEvent, 'US');
-}
-*/
 
 function* expectAreaRaw(tagName: string, mbid: string, name: string, additionalTags: Iterable<Predicate<SaxEvent>>): Iterable<Predicate<SaxEvent>> {
     yield* expectNamed(tagName, mbid, name, additionalTags);
@@ -762,6 +792,12 @@ function id(mbid: string): Attributes {
 }
 
 const EMPTY_EVENTS = function* (): Iterable<Predicate<SaxEvent>> { }();
+
+type Provider<T> = () => T;
+
+function getStream(pattern: StatementPattern): Provider<Statement<string>> {
+    return prepareStream(db.getStream(pattern));
+}
 
 function processCurrent(): boolean {
     return getObject('root', 'current', () => {
@@ -844,25 +880,13 @@ function processCurrent(): boolean {
             }, alreadyAdded);
         }
 
-        function enqueueTasks(items: string[], type: string, predicate: string, parentPredicate: string | undefined /*additionalAttribute: (add: BiConsumer<string, string>) => void*/): void {
+        function enqueueTasks(items: string[], type: string, predicate: string, parentPredicate: string | undefined): void {
             if (isUndefined(items.find(name => enqueueTask(name, type, predicate, parentPredicate, undefined, true, () => false)))) {
                 console.log('  completed');
                 moveToNext();
             }
         }
 
-
-        /*
-        function getStringProperty(predicate: string) {
-            return decodeStringLiteral(getPropertyFromCurrent(predicate));
-        }
-        */
-
-        /*
-        function delCurrent(predicate: string, object: string): UpdateStatement {
-            return del(currentTask, predicate, object);
-        }
-        */
 
         function stat<T>(path: string, success: (stats: fs.Stats) => T, missing: () => T): T {
             const result: Pair<NodeJS.ErrnoException, fs.Stats> = waitFor2((consumer: (first: NodeJS.ErrnoException, second: fs.Stats) => void) => fs.stat(path, consumer));
@@ -885,12 +909,11 @@ function processCurrent(): boolean {
             const result: Pair<object, any> = waitFor2(consumer => fs.readdir(path, consumer));
             assertEquals(result.first, null);
             const files = result.second;
-            //const files = wait2Success((consumer: (first: NodeJS.ErrnoException, second: string[]) => void) => fs.readdir(path, consumer));
             if (isEmpty(files)) {
                 remove('delete empty directory', 'rmdir', path);
             }
             else {
-                enqueueTasks(files, 'fileSystemEntry', 'name', 'directory' /*add => add('directory', currentTask)*/);
+                enqueueTasks(files, 'fileSystemEntry', 'name', 'directory');
             }
             return true;
         }
@@ -966,6 +989,14 @@ function processCurrent(): boolean {
             const parser = sax.parser(true, {});
             resp.on('data', (chunk: any) => parser.write(chunk));
             resp.on('end', () => parser.close());
+            const nextEvent = makeBlockingQueue((push: Consumer<SaxEvent>) => {
+                parser.onopentag = tag => push({ type: 'openTag', tag: tag as sax.Tag });
+                parser.onerror = fail;
+                parser.onclosetag = name => push({ type: 'closeTag', name: name });
+                parser.ontext = text => push({ type: "text", text: text });
+            });
+
+            /*
             const buffer: SaxEvent[] = [];
             let waiting: boolean = false;
             function push(event: SaxEvent): void {
@@ -977,7 +1008,8 @@ function processCurrent(): boolean {
                     buffer.push(event);
                 }
             }
-            parser.onopentag = tag => push({ type: "openTag", tag: tag as sax.Tag });
+
+            parser.onopentag = tag => push({ type: 'openTag', tag: tag as sax.Tag });
             parser.onerror = fail;
             parser.onclosetag = name => push({ type: 'closeTag', name: name });
             parser.ontext = text => push({ type: "text", text: text });
@@ -995,7 +1027,7 @@ function processCurrent(): boolean {
                     return event;
                 }
             }
-
+            */
             const predicates = matchTag('metadata', expectEquals({
                 xmlns: "http://musicbrainz.org/ns/mmd-2.0#"
             }), matchTag(type, matchObject({
@@ -1042,7 +1074,7 @@ function processCurrent(): boolean {
 
 
         function adjustLiteralProperty(nameSpace: string, name: string, literalTag: string): (actualValue: any) => boolean {
-            return actualValue => updateLiteralProperty(`${nameSpace}:${name}`, `${actualValue}`, literalTag, fail);
+            return actualValue => updateLiteralProperty(`${nameSpace}:${name}`, `${actualValue}`, literalTag, () => false);
         }
 
 
@@ -1204,10 +1236,10 @@ function processCurrent(): boolean {
                     }), () => stat(vPath, () => {
                         assertMissing({ predicate: 'directory', object: currentTask });
                         const next = getPropertyFromCurrent('next');
-                        prepareStream(db.getStream({ subject: currentTask }));
+                        const nextStatement = getStream({ subject: currentTask });
                         const updateStatements: UpdateStatement[] = [];
                         for (; ;) {
-                            const statement = yieldValue();
+                            const statement = nextStatement();
                             if (isUndefined(statement)) {
                                 break;
                             }
@@ -1312,7 +1344,7 @@ function processCurrent(): boolean {
                 }(), ['recordings'], () => enqueueArea("489ce91b-6658-3307-9877-795b68554c98", () => enqueueArea("26e0e534-19ea-4645-bfb3-1aa4e83a4046", () => enqueueMBResourceTask("00cc81c5-0dd9-45bb-a27b-ef1d5454bf85", 'recording', fail))));
                 return true;
             case 'mb:area':
-                processMBNamedResource('area', expectEquals('Country'), areaTypeId => enqueueMBTask(areaTypeId, `area-type`, 'mb:type', true, () => false), adjustLiteralProperty('mb', 'name', 's'), 'United States', function* () {
+                processMBNamedResource('area', expectEquals('Country'), areaTypeId => enqueueMBTask(areaTypeId, 'area-type', 'mb:type', true, () => false), adjustLiteralProperty('mb', 'name', 's'), 'United States', function* () {
                     yield* expectUSIsoList;
 
                     /*
@@ -1526,6 +1558,16 @@ function processCurrent(): boolean {
                     additionalTags();
                     */
                 }(), ['artists', 'collections', 'labels'], {}, () => enqueueArtist('9132d515-dc0e-4494-85ae-20f06eed14f9', () => enqueueArea('85752fda-13c4-31a3-bee5-0e5cb1f51dad', () => enqueueMBResourceTask('c62e3985-6370-446a-bfb8-f1f6122e9c33', 'label', fail))));
+                return true;
+            case 'mb:area-type':
+                const nextSubject = getStream({ predicate: 'mb:type', object: currentTask });
+                const statement = nextSubject();
+                assert(isDefined(statement));
+                const nextPlayList = getStream({ subject: statement.subject, predicate: 'playlist' });
+                assertUndefined(nextPlayList());
+                assertUndefined(nextSubject());
+                //fail();
+                moveToNext();
                 return true;
             default:
                 fail();
