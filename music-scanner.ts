@@ -918,8 +918,26 @@ function processCurrent(): boolean {
             return true;
         }
 
+        function updateLiteralProperty(subject: string, predicate: string, predicatePath: string, value: string, literalTag: string, alreadyUpdated: () => boolean): boolean {
+            function literal(): string {
+                return `${literalTag}/${encodeURIComponent(value)}`
+            }
+            return getObject(subject, predicate, () => {
+                console.log(`  ${predicatePath}: undefined --> ${value}`);
+                update([
+                    put(subject, predicate, literal()),
+                    ...moveToNextStatements(),
+                ]);
+                return true;
+            }, (object: string) => {
+                assertEquals(object, literal());
+                return alreadyUpdated();
+            })
+        }
 
-        function updateLiteralProperty(predicate: string, value: string, literalTag: string, alreadyUpdated: () => boolean): boolean {
+        function updateLiteralPropertyOnCurrentTask(predicate: string, value: string, literalTag: string, alreadyUpdated: () => boolean): boolean {
+            return updateLiteralProperty(currentTask, predicate, predicate, value, literalTag, alreadyUpdated);
+            /*
             function literal(): string {
                 return `${literalTag}/${encodeURIComponent(value)}`
             }
@@ -934,10 +952,11 @@ function processCurrent(): boolean {
                 assertEquals(object, literal());
                 return alreadyUpdated();
             })
+            */
         }
 
         function updateEntryType(bValue: string, alreadyUpdated: () => boolean): boolean {
-            return updateLiteralProperty('isDirectory', bValue, 'b', alreadyUpdated);
+            return updateLiteralPropertyOnCurrentTask('isDirectory', bValue, 'b', alreadyUpdated);
         }
 
 
@@ -1074,7 +1093,7 @@ function processCurrent(): boolean {
 
 
         function adjustLiteralProperty(nameSpace: string, name: string, literalTag: string): (actualValue: any) => boolean {
-            return actualValue => updateLiteralProperty(`${nameSpace}:${name}`, `${actualValue}`, literalTag, () => false);
+            return actualValue => updateLiteralPropertyOnCurrentTask(`${nameSpace}:${name}`, `${actualValue}`, literalTag, () => false);
         }
 
 
@@ -1344,134 +1363,138 @@ function processCurrent(): boolean {
                 }(), ['recordings'], () => enqueueArea("489ce91b-6658-3307-9877-795b68554c98", () => enqueueArea("26e0e534-19ea-4645-bfb3-1aa4e83a4046", () => enqueueMBResourceTask("00cc81c5-0dd9-45bb-a27b-ef1d5454bf85", 'recording', fail))));
                 return true;
             case 'mb:area':
-                processMBNamedResource('area', expectEquals('Country'), areaTypeId => enqueueMBTask(areaTypeId, 'area-type', 'mb:type', true, () => false), adjustLiteralProperty('mb', 'name', 's'), 'United States', function* () {
-                    yield* expectUSIsoList;
+                processMBNamedResource('area',
+                    subType => updateLiteralProperty(getPropertyFromCurrent('mb:type'), 'mb:name', 'mb:type/mb:name', subType, 's', fail),
+                    areaTypeId => enqueueMBTask(areaTypeId, 'area-type', 'mb:type', true, () => false), adjustLiteralProperty('mb', 'name', 's'),
+                    'United States',
+                    function* () {
+                        yield* expectUSIsoList;
 
-                    /*
-                    function localExpectTag(name: string, attributes: Attributes, inner: () => void) {
-                        expectTag(nextEvent, name, attributes, inner);
-                    }
-                    */
+                        /*
+                        function localExpectTag(name: string, attributes: Attributes, inner: () => void) {
+                            expectTag(nextEvent, name, attributes, inner);
+                        }
+                        */
 
-                    /*
-                    function localExpectPlainTextTag(name: string, value: string): void {
-                        expectPlainTextTag(nextEvent, name, value);
-                    }
-                    */
-                    function expectTagTagWithCount(count: string, name: string): Iterable<Predicate<SaxEvent>> {
-                        return expectTag('tag', { count: count }, expectPlainTextTag('name', name));
-                    }
+                        /*
+                        function localExpectPlainTextTag(name: string, value: string): void {
+                            expectPlainTextTag(nextEvent, name, value);
+                        }
+                        */
+                        function expectTagTagWithCount(count: string, name: string): Iterable<Predicate<SaxEvent>> {
+                            return expectTag('tag', { count: count }, expectPlainTextTag('name', name));
+                        }
 
-                    function expectTagTag(name: string): Iterable<Predicate<SaxEvent>> {
-                        return expectTagTagWithCount('0', name);
-                    }
+                        function expectTagTag(name: string): Iterable<Predicate<SaxEvent>> {
+                            return expectTagTagWithCount('0', name);
+                        }
 
-                    /*
-                    function localExpectIsoList(id: string, code: string): Iterable<Predicate<SaxEvent>> {
-                        return expectIsoList(id, code);
-                    }
-                    */
+                        /*
+                        function localExpectIsoList(id: string, code: string): Iterable<Predicate<SaxEvent>> {
+                            return expectIsoList(id, code);
+                        }
+                        */
 
-                    function expectPartOfRaw(mbid: string, name: string, iso1List: Iterable<Predicate<SaxEvent>>, code: string): Iterable<Predicate<SaxEvent>> {
-                        return expectTag('relation', {
-                            'type-id': "de7cc874-8b1b-3a05-8272-f3834c968fb7",
-                            type: "part of"
-                        }, function* () {
-                            yield* expectPlainTextTag('target', mbid);
-                            yield* expectArea(mbid, name, function* () {
-                                yield* iso1List;
-                                yield* expectIsoList('2', code);
+                        function expectPartOfRaw(mbid: string, name: string, iso1List: Iterable<Predicate<SaxEvent>>, code: string): Iterable<Predicate<SaxEvent>> {
+                            return expectTag('relation', {
+                                'type-id': "de7cc874-8b1b-3a05-8272-f3834c968fb7",
+                                type: "part of"
+                            }, function* () {
+                                yield* expectPlainTextTag('target', mbid);
+                                yield* expectArea(mbid, name, function* () {
+                                    yield* iso1List;
+                                    yield* expectIsoList('2', code);
+                                }())
+
                             }())
+                        }
 
+                        function expectPartOf(mbid: string, name: string, code: string): Iterable<Predicate<SaxEvent>> {
+                            return expectPartOfRaw(mbid, name, EMPTY_EVENTS, code)
+                        }
+
+                        function expectPartOf2(mbid: string, name: string, code1: string, code2: string): Iterable<Predicate<SaxEvent>> {
+                            return expectPartOfRaw(mbid, name, expectIsoList('1', code1), code2);
+                        }
+
+                        yield* expectTag('alias-list', {
+                            count: "1"
+                        }, expectTextTag('alias', {
+                            'sort-name': "USA",
+                            type: "Search hint",
+                            'type-id': "7090dd35-e32e-3422-8a48-224821c2468b"
+                        }, 'USA'));
+                        yield* expectTag('relation-list', {
+                            'target-type': 'area'
+                        }, function* () {
+                            yield* expectPartOf('02e01cf9-b0ed-4286-ac6d-16989f92ced6', 'Virginia', 'US-VA');
+                            yield* expectPartOf('0573177b-9ff9-4643-80bc-ed2513419267', 'Ohio', 'US-OH');
+                            yield* expectPartOf('05f68b4c-10f3-49b5-b28c-260a1b707043', 'Massachusetts', 'US-MA');
+                            yield* expectPartOf('0c693f90-d889-4abe-a0e6-6aac212388e3', 'New Mexico', 'US-NM');
+                            yield* expectPartOf('10cb2ebd-1bc7-4c11-b10d-54f60c421d20', 'Wisconsin', 'US-WI');
+                            yield* expectPartOf('1462269e-911b-4db3-be41-434393484e34', 'Missouri', 'US-MO');
+                            yield* expectPartOf('1b420c08-51a5-4bdd-9b0e-cd601703d20b', 'Hawaii', 'US-HI');
+                            yield* expectPartOf('1ed51cbe-4272-4df9-9b18-44b0d4714086', 'Maryland', 'US-MD');
+                            yield* expectPartOf('2066f663-1055-4383-aaa6-08d09ec81e57', 'South Dakota', 'US-SD');
+                            yield* expectPartOf('29fa065f-a568-418c-98b9-5023f64d9312', 'Michigan', 'US-MI');
+                            yield* expectPartOf('373183af-56db-44d7-b06a-5877c02c5f01', 'Colorado', 'US-CO');
+                            yield* expectPartOf('376ea713-8f27-4ab1-818b-9cca72023382', 'Oregon', 'US-OR');
+                            yield* expectPartOf2('3906cf32-00a7-32df-93cc-4710c5f5a542', 'Puerto Rico', 'PR', 'US-PR');
+                            yield* expectPartOf('39383cce-6f78-4afe-b19a-8377995ce702', 'Washington', 'US-WA');
+                            yield* expectPartOf2('43dd540a-78cd-319f-bab9-214b5430f3f2', 'Guam', 'GU', 'US-GU');
+                            yield* expectPartOf('4ca644d9-18a6-4605-9d71-3eae8b3ab2ee', 'New Hampshire', 'US-NH');
+                            yield* expectPartOf2('4e8596fe-cbee-34ce-8b35-1f3c9bc094d6', 'United States Minor Outlying Islands', 'UM', 'US-UM');
+                            yield* expectPartOf('6fddb177-f3fc-4c30-9d49-9c7e949fe0bc', 'Mississippi', 'US-MS');
+                            yield* expectPartOf('75d8fdcf-03e9-43d9-9399-131b8e118b0b', 'Pennsylvania', 'US-PA');
+                            yield* expectPartOf('75e398a3-5f3f-4224-9cd8-0fe44715bc95', 'New York', 'US-NY');
+                            yield* expectPartOf('7a0e4090-2ab5-4a28-acef-6173e3885fa7', 'Delaware', 'US-DE');
+                            yield* expectPartOf('7deb769c-1eaa-4b7a-aecf-c395d82a1e73', 'Utah', 'US-UT');
+                            yield* expectPartOf('821b0738-e1a2-4636-82e0-b5ca8b331679', 'Alaska', 'US-AK');
+                            yield* expectPartOf('85255cb8-edb9-4a66-b23a-a5261d42c116', 'Kentucky', 'US-KY');
+                            yield* expectPartOf('8788d6c2-c779-4be5-ad47-cf0a95e0f2a0', 'Arkansas', 'US-AR');
+                            yield* expectPartOf('88772016-5866-496a-8de7-4340e922d663', 'Connecticut', 'US-CT');
+                            yield* expectPartOf('8c2196d9-b7be-4051-90d1-ac81895355f1', 'Illinois', 'US-IL');
+                            yield* expectPartOf('8c3615bc-bd11-4bf0-b237-405161aac8b7', 'Iowa', 'US-IA');
+                            yield* expectPartOf2('9a84fea2-1c1f-3908-a44a-6fa2b6fa7b26', 'Northern Mariana Islands', 'MP', 'US-MP');
+                            yield* expectPartOf('a3435b4a-f42c-404e-beee-f290f62a5e1c', 'Vermont', 'US-VT');
+                            yield* expectPartOf('a36544c1-cb40-4f44-9e0e-7a5a69e403a8', 'New Jersey', 'US-NJ');
+                            yield* expectPartOf('a5ff428a-ad62-4752-8f8d-14107c574117', 'Nebraska', 'US-NE');
+                            yield* expectPartOf('ab47b3b2-838d-463c-9907-30dcd3438d65', 'Nevada', 'US-NV');
+                            yield* expectPartOf('ae0110b6-13d4-4998-9116-5b926287aa23', 'California', 'US-CA');
+                            yield* expectPartOf('aec173a2-0f12-489e-812b-7d2c252e4b62', 'South Carolina', 'US-SC');
+                            yield* expectPartOf('af4758fa-92d7-4f49-ac74-f58d3113c7c5', 'North Dakota', 'US-ND');
+                            yield* expectPartOf('af59135f-38b5-4ea4-b4e2-dd28c5f0bad7', 'Washington, D.C.', 'US-DC');
+                            yield* expectPartOf('b8c5f945-678b-43eb-a77a-f237d7f01493', 'Rhode Island', 'US-RI');
+                            yield* expectPartOf('bb32d812-8161-44e1-8a73-7a0d4a6d3f96', 'West Virginia', 'US-WV');
+                            yield* expectPartOf('bf9353d8-da52-4fd9-8645-52b2349b4914', 'Arizona', 'US-AZ');
+                            yield* expectPartOf('c2dca60c-5a5f-43b9-8591-3d4e454cac4e', 'Wyoming', 'US-WY');
+                            yield* expectPartOf('c45232cf-5848-45d7-84ae-94755f8fe37e', 'Maine', 'US-ME');
+                            yield* expectPartOf('c747e5a9-3ac7-4dfb-888f-193ff598c62f', 'Kansas', 'US-KS');
+                            yield* expectPartOf('cc55c78b-15c9-45dd-8ff4-4a212c54eff3', 'Indiana', 'US-IN');
+                            yield* expectPartOf('cffc0190-1aa2-489f-b6f9-43b9a9e01a91', 'Alabama', 'US-AL');
+                            yield* expectPartOf('d10ba752-c9ce-4804-afc0-7ff94aa5d8d6', 'Georgia', 'US-GA');
+                            yield* expectPartOf('d2083d84-09e2-4d45-8fc0-45eed33748b5', 'Oklahoma', 'US-OK');
+                            yield* expectPartOf('d2918f1a-c51e-4a4a-ad7f-cdd88877b25f', 'Florida', 'US-FL');
+                            yield* expectPartOf('d4ab49e7-1d25-45e2-8659-b147e0ea3684', 'North Carolina', 'US-NC');
+                            yield* expectPartOf2('e228a3c1-53c0-3ec9-842b-ec1b2138e387', 'American Samoa', 'AS', 'US-AS');
+                            yield* expectPartOf('f2532a8e-276c-457a-b3d9-0a7706535178', 'Idaho', 'US-ID');
+                            yield* expectPartOf('f5ffcc03-ebf2-466a-bb11-b38c6c0c84f5', 'Minnesota', 'US-MN');
+                            yield* expectPartOf('f934c8da-e40e-4056-8f8c-212e68fdcaec', 'Texas', 'US-TX');
+                            yield* expectPartOf('f9caf2d8-9638-4b96-bc49-8462339d4b2e', 'Tennessee', 'US-TN');
+                            yield* expectPartOf('fb8840b9-ff2f-4484-8540-7112ee426ea7', 'Montana', 'US-MT');
+                            yield* expectPartOf('fc68ecf5-507e-4012-b60b-d93747a3cfa7', 'Louisiana', 'US-LA');
                         }())
-                    }
+                        yield* expectTag('tag-list', {}, function* () {
+                            yield* expectTagTag('fail');
+                            yield* expectTagTag('place');
+                            yield* expectTagTagWithCount('-1', 'the tag voters have no sense of humour. vote either fail or whatever as an answer!');
+                            yield* expectTagTag('un member state');
+                            yield* expectTagTag('united states of what?');
+                            yield* expectTagTag('vote either fail or whatever as an answer! united states of what??');
+                            yield* expectTagTag('whatever');
+                        }())
 
-                    function expectPartOf(mbid: string, name: string, code: string): Iterable<Predicate<SaxEvent>> {
-                        return expectPartOfRaw(mbid, name, EMPTY_EVENTS, code)
-                    }
-
-                    function expectPartOf2(mbid: string, name: string, code1: string, code2: string): Iterable<Predicate<SaxEvent>> {
-                        return expectPartOfRaw(mbid, name, expectIsoList('1', code1), code2);
-                    }
-
-                    yield* expectTag('alias-list', {
-                        count: "1"
-                    }, expectTextTag('alias', {
-                        'sort-name': "USA",
-                        type: "Search hint",
-                        'type-id': "7090dd35-e32e-3422-8a48-224821c2468b"
-                    }, 'USA'));
-                    yield* expectTag('relation-list', {
-                        'target-type': 'area'
-                    }, function* () {
-                        yield* expectPartOf('02e01cf9-b0ed-4286-ac6d-16989f92ced6', 'Virginia', 'US-VA');
-                        yield* expectPartOf('0573177b-9ff9-4643-80bc-ed2513419267', 'Ohio', 'US-OH');
-                        yield* expectPartOf('05f68b4c-10f3-49b5-b28c-260a1b707043', 'Massachusetts', 'US-MA');
-                        yield* expectPartOf('0c693f90-d889-4abe-a0e6-6aac212388e3', 'New Mexico', 'US-NM');
-                        yield* expectPartOf('10cb2ebd-1bc7-4c11-b10d-54f60c421d20', 'Wisconsin', 'US-WI');
-                        yield* expectPartOf('1462269e-911b-4db3-be41-434393484e34', 'Missouri', 'US-MO');
-                        yield* expectPartOf('1b420c08-51a5-4bdd-9b0e-cd601703d20b', 'Hawaii', 'US-HI');
-                        yield* expectPartOf('1ed51cbe-4272-4df9-9b18-44b0d4714086', 'Maryland', 'US-MD');
-                        yield* expectPartOf('2066f663-1055-4383-aaa6-08d09ec81e57', 'South Dakota', 'US-SD');
-                        yield* expectPartOf('29fa065f-a568-418c-98b9-5023f64d9312', 'Michigan', 'US-MI');
-                        yield* expectPartOf('373183af-56db-44d7-b06a-5877c02c5f01', 'Colorado', 'US-CO');
-                        yield* expectPartOf('376ea713-8f27-4ab1-818b-9cca72023382', 'Oregon', 'US-OR');
-                        yield* expectPartOf2('3906cf32-00a7-32df-93cc-4710c5f5a542', 'Puerto Rico', 'PR', 'US-PR');
-                        yield* expectPartOf('39383cce-6f78-4afe-b19a-8377995ce702', 'Washington', 'US-WA');
-                        yield* expectPartOf2('43dd540a-78cd-319f-bab9-214b5430f3f2', 'Guam', 'GU', 'US-GU');
-                        yield* expectPartOf('4ca644d9-18a6-4605-9d71-3eae8b3ab2ee', 'New Hampshire', 'US-NH');
-                        yield* expectPartOf2('4e8596fe-cbee-34ce-8b35-1f3c9bc094d6', 'United States Minor Outlying Islands', 'UM', 'US-UM');
-                        yield* expectPartOf('6fddb177-f3fc-4c30-9d49-9c7e949fe0bc', 'Mississippi', 'US-MS');
-                        yield* expectPartOf('75d8fdcf-03e9-43d9-9399-131b8e118b0b', 'Pennsylvania', 'US-PA');
-                        yield* expectPartOf('75e398a3-5f3f-4224-9cd8-0fe44715bc95', 'New York', 'US-NY');
-                        yield* expectPartOf('7a0e4090-2ab5-4a28-acef-6173e3885fa7', 'Delaware', 'US-DE');
-                        yield* expectPartOf('7deb769c-1eaa-4b7a-aecf-c395d82a1e73', 'Utah', 'US-UT');
-                        yield* expectPartOf('821b0738-e1a2-4636-82e0-b5ca8b331679', 'Alaska', 'US-AK');
-                        yield* expectPartOf('85255cb8-edb9-4a66-b23a-a5261d42c116', 'Kentucky', 'US-KY');
-                        yield* expectPartOf('8788d6c2-c779-4be5-ad47-cf0a95e0f2a0', 'Arkansas', 'US-AR');
-                        yield* expectPartOf('88772016-5866-496a-8de7-4340e922d663', 'Connecticut', 'US-CT');
-                        yield* expectPartOf('8c2196d9-b7be-4051-90d1-ac81895355f1', 'Illinois', 'US-IL');
-                        yield* expectPartOf('8c3615bc-bd11-4bf0-b237-405161aac8b7', 'Iowa', 'US-IA');
-                        yield* expectPartOf2('9a84fea2-1c1f-3908-a44a-6fa2b6fa7b26', 'Northern Mariana Islands', 'MP', 'US-MP');
-                        yield* expectPartOf('a3435b4a-f42c-404e-beee-f290f62a5e1c', 'Vermont', 'US-VT');
-                        yield* expectPartOf('a36544c1-cb40-4f44-9e0e-7a5a69e403a8', 'New Jersey', 'US-NJ');
-                        yield* expectPartOf('a5ff428a-ad62-4752-8f8d-14107c574117', 'Nebraska', 'US-NE');
-                        yield* expectPartOf('ab47b3b2-838d-463c-9907-30dcd3438d65', 'Nevada', 'US-NV');
-                        yield* expectPartOf('ae0110b6-13d4-4998-9116-5b926287aa23', 'California', 'US-CA');
-                        yield* expectPartOf('aec173a2-0f12-489e-812b-7d2c252e4b62', 'South Carolina', 'US-SC');
-                        yield* expectPartOf('af4758fa-92d7-4f49-ac74-f58d3113c7c5', 'North Dakota', 'US-ND');
-                        yield* expectPartOf('af59135f-38b5-4ea4-b4e2-dd28c5f0bad7', 'Washington, D.C.', 'US-DC');
-                        yield* expectPartOf('b8c5f945-678b-43eb-a77a-f237d7f01493', 'Rhode Island', 'US-RI');
-                        yield* expectPartOf('bb32d812-8161-44e1-8a73-7a0d4a6d3f96', 'West Virginia', 'US-WV');
-                        yield* expectPartOf('bf9353d8-da52-4fd9-8645-52b2349b4914', 'Arizona', 'US-AZ');
-                        yield* expectPartOf('c2dca60c-5a5f-43b9-8591-3d4e454cac4e', 'Wyoming', 'US-WY');
-                        yield* expectPartOf('c45232cf-5848-45d7-84ae-94755f8fe37e', 'Maine', 'US-ME');
-                        yield* expectPartOf('c747e5a9-3ac7-4dfb-888f-193ff598c62f', 'Kansas', 'US-KS');
-                        yield* expectPartOf('cc55c78b-15c9-45dd-8ff4-4a212c54eff3', 'Indiana', 'US-IN');
-                        yield* expectPartOf('cffc0190-1aa2-489f-b6f9-43b9a9e01a91', 'Alabama', 'US-AL');
-                        yield* expectPartOf('d10ba752-c9ce-4804-afc0-7ff94aa5d8d6', 'Georgia', 'US-GA');
-                        yield* expectPartOf('d2083d84-09e2-4d45-8fc0-45eed33748b5', 'Oklahoma', 'US-OK');
-                        yield* expectPartOf('d2918f1a-c51e-4a4a-ad7f-cdd88877b25f', 'Florida', 'US-FL');
-                        yield* expectPartOf('d4ab49e7-1d25-45e2-8659-b147e0ea3684', 'North Carolina', 'US-NC');
-                        yield* expectPartOf2('e228a3c1-53c0-3ec9-842b-ec1b2138e387', 'American Samoa', 'AS', 'US-AS');
-                        yield* expectPartOf('f2532a8e-276c-457a-b3d9-0a7706535178', 'Idaho', 'US-ID');
-                        yield* expectPartOf('f5ffcc03-ebf2-466a-bb11-b38c6c0c84f5', 'Minnesota', 'US-MN');
-                        yield* expectPartOf('f934c8da-e40e-4056-8f8c-212e68fdcaec', 'Texas', 'US-TX');
-                        yield* expectPartOf('f9caf2d8-9638-4b96-bc49-8462339d4b2e', 'Tennessee', 'US-TN');
-                        yield* expectPartOf('fb8840b9-ff2f-4484-8540-7112ee426ea7', 'Montana', 'US-MT');
-                        yield* expectPartOf('fc68ecf5-507e-4012-b60b-d93747a3cfa7', 'Louisiana', 'US-LA');
-                    }())
-                    yield* expectTag('tag-list', {}, function* () {
-                        yield* expectTagTag('fail');
-                        yield* expectTagTag('place');
-                        yield* expectTagTagWithCount('-1', 'the tag voters have no sense of humour. vote either fail or whatever as an answer!');
-                        yield* expectTagTag('un member state');
-                        yield* expectTagTag('united states of what?');
-                        yield* expectTagTag('vote either fail or whatever as an answer! united states of what??');
-                        yield* expectTagTag('whatever');
-                    }())
-
-                }(), ['aliases', 'annotation', 'tags', 'ratings', 'area-rels'], () => enqueueArea('02e01cf9-b0ed-4286-ac6d-16989f92ced6', fail));
+                    }(), ['aliases', 'annotation', 'tags', 'ratings', 'area-rels'], () => enqueueArea('02e01cf9-b0ed-4286-ac6d-16989f92ced6', fail));
                 return true;
             case 'mb:release':
 
@@ -1552,11 +1575,6 @@ function processCurrent(): boolean {
                         expectLabel('29d43312-a8ed-4d7b-9f4e-f5650318aebb', 'Bad Boy Records', []),
                         expectLabelAdd('29d7c88f-5200-4418-a683-5c94ea032e38', 'BMG', 'disambiguation', 'the former Bertelsmann Music Group, defunct since 2004-08-05; for releases dated 2008 and later, use "BMG Rights Management"')
                     ]);
-                    //fail();
-                    /*
-                    expectPlainTextTag(nextEvent, 'sort-name', name);
-                    additionalTags();
-                    */
                 }(), ['artists', 'collections', 'labels'], {}, () => enqueueArtist('9132d515-dc0e-4494-85ae-20f06eed14f9', () => enqueueArea('85752fda-13c4-31a3-bee5-0e5cb1f51dad', () => enqueueMBResourceTask('c62e3985-6370-446a-bfb8-f1f6122e9c33', 'label', fail))));
                 return true;
             case 'mb:area-type':
