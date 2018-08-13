@@ -799,6 +799,34 @@ function getStream(pattern: StatementPattern): Provider<Statement<string>> {
     return prepareStream(db.getStream(pattern));
 }
 
+interface NameCredit {
+    readonly attributes: Attributes;
+    readonly mbid: string;
+    readonly name: string;
+    readonly additionalTags: Iterable<Predicate<SaxEvent>>
+}
+
+function nameCredit(attributes: Attributes, mbid: string, name: string, additionalTags: Iterable<Predicate<SaxEvent>>): NameCredit {
+    return {
+        attributes: attributes,
+        mbid: mbid,
+        name: name,
+        additionalTags: additionalTags
+    }
+}
+
+function* expectArtistCredit(nameCredits: Iterable<NameCredit>): Iterable<Predicate<SaxEvent>> {
+    yield* expectSimpleTag('artist-credit', function* () {
+        for (const nameCredit of nameCredits) {
+            yield* expectTag('name-credit', nameCredit.attributes, function* () {
+                yield* expectNamed('artist', nameCredit.mbid, nameCredit.name, nameCredit.additionalTags);
+            }());
+        }
+    }());
+};
+
+const ARTIST_112 = nameCredit({}, '9132d515-dc0e-4494-85ae-20f06eed14f9', '112', []);
+
 function processCurrent(): boolean {
     return getObject('root', 'current', () => {
         console.log('initializing database');
@@ -1027,12 +1055,12 @@ function processCurrent(): boolean {
                     buffer.push(event);
                 }
             }
-
+ 
             parser.onopentag = tag => push({ type: 'openTag', tag: tag as sax.Tag });
             parser.onerror = fail;
             parser.onclosetag = name => push({ type: 'closeTag', name: name });
             parser.ontext = text => push({ type: "text", text: text });
-
+ 
             function nextEvent(): SaxEvent {
                 const event = buffer.shift();
                 if (isUndefined(event)) {
@@ -1523,11 +1551,7 @@ function processCurrent(): boolean {
                         yield* expectPlainTextTag('script', 'Latn');
                     }());
 
-                    yield* expectSimpleTag('artist-credit', function* () {
-                        yield* expectSimpleTag('name-credit', function* () {
-                            yield* expectNamed('artist', '9132d515-dc0e-4494-85ae-20f06eed14f9', '112', []);
-                        }());
-                    }());
+                    yield* expectArtistCredit([ARTIST_112]);
 
                     const expectDate = () => expectPlainTextTag('date', '1998-11-16');
 
@@ -1586,6 +1610,14 @@ function processCurrent(): boolean {
                 assertUndefined(nextSubject());
                 //fail();
                 moveToNext();
+                return true;
+            case 'mb:recording':
+                processMBResource('recording', function* () {
+                    yield* expectPlainTextTag('title', 'All Cried Out');
+                    yield* expectPlainTextTag('length', '277000');
+                    yield* expectArtistCredit([nameCredit({ joinphrase: " duet with " }, 'fedd7b2a-bda1-4914-984a-e66fb4f2a561', 'Allure', expectPlainTextTag('disambiguation', 'female R&B group')), ARTIST_112]);
+                }(), ['artists'], {}, () => enqueueArtist('fedd7b2a-bda1-4914-984a-e66fb4f2a561', fail));
+                //fail();
                 return true;
             default:
                 fail();
