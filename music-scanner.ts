@@ -1119,6 +1119,11 @@ function processCurrent(): boolean {
             enqueueMBResourceTask(mbid, 'artist', found);
         }
 
+        function enqueueRecording(mbid: string, found: () => void): void {
+            enqueueMBResourceTask(mbid, 'recording', found);
+        }
+
+
 
         function adjustLiteralProperty(nameSpace: string, name: string, literalTag: string): (actualValue: any) => boolean {
             return actualValue => updateLiteralPropertyOnCurrentTask(`${nameSpace}:${name}`, `${actualValue}`, literalTag, () => false);
@@ -1310,28 +1315,10 @@ function processCurrent(): boolean {
             case 'mb:artist':
                 processMBNamedResource('artist', expectEquals('Group'), expectEquals("e431f5f6-b5d2-343d-8b36-72607fffb74b"), expectEquals('112'), '112', function* () {
 
-                    /*
-                    function* localExpectArea(tagName: string, mbid: string, areaName: string, additionalTags: Iterable<Predicate<SaxEvent>>) {
-                        yield * expectAreaRaw(tagName, mbid, areaName, additionalTags);
-                    }
-                    */
-
-                    /*
-                    function localExpectTextTag(name: string, value: string) {
-                        expectPlainTextTag(name, value);
-                    }
-                    */
-
                     yield* expectPlainTextTag('country', 'US');
                     yield* expectAreaRaw('area', "489ce91b-6658-3307-9877-795b68554c98", 'United States', expectUSIsoList);
                     yield* expectAreaRaw('begin-area', "26e0e534-19ea-4645-bfb3-1aa4e83a4046", 'Atlanta', EMPTY_EVENTS);
                     yield* expectSimpleTag('life-span', expectPlainTextTag('begin', "1996"));
-
-                    /*
-                    function* localExpectTag(name: string, attributes: Attributes, inner: Iterable<Predicate<SaxEvent>>) {
-                        yield* expectTag(name, attributes, inner);
-                    }
-                    */
 
                     function expectRecordingCore(id: string, title: string, length: string, others: Iterable<Predicate<SaxEvent>>): Iterable<Predicate<SaxEvent>> {
                         return expectTag('recording', {
@@ -1388,7 +1375,7 @@ function processCurrent(): boolean {
 
 
 
-                }(), ['recordings'], () => enqueueArea("489ce91b-6658-3307-9877-795b68554c98", () => enqueueArea("26e0e534-19ea-4645-bfb3-1aa4e83a4046", () => enqueueMBResourceTask("00cc81c5-0dd9-45bb-a27b-ef1d5454bf85", 'recording', fail))));
+                }(), ['recordings'], () => enqueueArea("489ce91b-6658-3307-9877-795b68554c98", () => enqueueArea("26e0e534-19ea-4645-bfb3-1aa4e83a4046", () => enqueueRecording("00cc81c5-0dd9-45bb-a27b-ef1d5454bf85", () => enqueueRecording('1cb4f0df-21ce-4454-9346-011a5c220fec', fail)))));
                 return true;
             case 'mb:area':
                 processMBNamedResource('area',
@@ -1398,17 +1385,6 @@ function processCurrent(): boolean {
                     function* () {
                         yield* expectUSIsoList;
 
-                        /*
-                        function localExpectTag(name: string, attributes: Attributes, inner: () => void) {
-                            expectTag(nextEvent, name, attributes, inner);
-                        }
-                        */
-
-                        /*
-                        function localExpectPlainTextTag(name: string, value: string): void {
-                            expectPlainTextTag(nextEvent, name, value);
-                        }
-                        */
                         function expectTagTagWithCount(count: string, name: string): Iterable<Predicate<SaxEvent>> {
                             return expectTag('tag', { count: count }, expectPlainTextTag('name', name));
                         }
