@@ -588,19 +588,6 @@ function navigate<T>(source: string, predicate: string, isOutDirection: boolean,
 
 function getObject<T>(subject: string, predicate: string, notFound: () => T, found: (object: string) => T): T {
     return navigate(subject, predicate, true, notFound, found);
-    /*
-    return get({ subject: subject, predicate: predicate }, notFound, statement => {
- 
-        function verify(key: keyof Statement<string>, expected: string) {
-            assertEquals(statement[key], expected);
-        }
- 
-        verify('subject', subject);
-        verify('predicate', predicate);
- 
-        return found(statement.object);
-    });
-    */
 }
 
 
@@ -628,6 +615,7 @@ function searchMatch<T, R>(object: T, checkers: Matcher<T>, found: () => R, notF
     for (const compareValue of compareObjects(object, checkers)) {
         const checker = compareValue.expected as Predicate<any>;
         assertType(checker, 'function');
+        console.log(compareValue.actual);
         if (checker(compareValue.actual)) {
             return found();
         }
@@ -659,16 +647,18 @@ function update(changeSet: UpdateStatement[]): void {
 
 }
 
+const FALSE = () => false;
+
 function matchObject<T>(checkers: Matcher<T>): Predicate<T> {
     return (object: T) => {
-        return searchMatch(object, checkers, () => true, () => false);
+        return searchMatch(object, checkers, () => true, FALSE);
         //return false;
     }
 }
 
 const expectJpgImage = matchObject({
     format: expectEquals("jpg"),
-    data: () => false
+    data: FALSE
 });
 
 let lastAccessed: number | undefined = undefined;
@@ -909,7 +899,7 @@ function processCurrent(): boolean {
         }
 
         function enqueueTasks(items: string[], type: string, predicate: string, parentPredicate: string | undefined): void {
-            if (isUndefined(items.find(name => enqueueTask(name, type, predicate, parentPredicate, undefined, true, () => false)))) {
+            if (isUndefined(items.find(name => enqueueTask(name, type, predicate, parentPredicate, undefined, true, FALSE)))) {
                 console.log('  completed');
                 moveToNext();
             }
@@ -1126,7 +1116,7 @@ function processCurrent(): boolean {
 
 
         function adjustLiteralProperty(nameSpace: string, name: string, literalTag: string): (actualValue: any) => boolean {
-            return actualValue => updateLiteralPropertyOnCurrentTask(`${nameSpace}:${name}`, `${actualValue}`, literalTag, () => false);
+            return actualValue => updateLiteralPropertyOnCurrentTask(`${nameSpace}:${name}`, `${actualValue}`, literalTag, FALSE);
         }
 
 
@@ -1379,8 +1369,10 @@ function processCurrent(): boolean {
                 return true;
             case 'mb:area':
                 processMBNamedResource('area',
-                    subType => updateLiteralProperty(getPropertyFromCurrent('mb:type'), 'mb:name', 'mb:type/mb:name', subType, 's', fail),
-                    areaTypeId => enqueueMBTask(areaTypeId, 'area-type', 'mb:type', true, () => false), adjustLiteralProperty('mb', 'name', 's'),
+                    subType => getObject(currentTask, 'mb:type', FALSE, areaTypeTask => updateLiteralProperty(areaTypeTask, 'mb:name', 'mb:type/mb:name', subType, 's', fail)),
+                    //subType => updateLiteralProperty(getPropertyFromCurrent('mb:type'), 'mb:name', 'mb:type/mb:name', subType, 's', fail),
+                    areaTypeId => enqueueMBTask(areaTypeId, 'area-type', 'mb:type', true, fail),
+                    adjustLiteralProperty('mb', 'name', 's'),
                     'United States',
                     function* () {
                         yield* expectUSIsoList;
