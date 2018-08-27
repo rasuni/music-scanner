@@ -615,7 +615,7 @@ function searchMatch<T, R>(object: T, checkers: Matcher<T>, found: () => R, notF
     for (const compareValue of compareObjects(object, checkers)) {
         const checker = compareValue.expected as Predicate<any>;
         assertType(checker, 'function');
-        console.log(compareValue.actual);
+        //console.log(compareValue.actual);
         if (checker(compareValue.actual)) {
             return found();
         }
@@ -864,7 +864,7 @@ function processCurrent(): boolean {
             moveToNext();
         }
 
-        function enqueueTask<T>(name: string, type: string, namePredicate: string, parentPredicate: string | undefined, linkPredicate: string | undefined,/*additionalAttributes: (add: BiConsumer<string, string>) => void,*/ enqueued: T, alreadyAdded: () => T): T {
+        function enqueueTask<T>(name: string, type: string, namePredicate: string, parentPredicate: string | undefined, linkPredicate: string | undefined,/*additionalAttributes: (add: BiConsumer<string, string>) => void,*/ enqueued: T, alreadyAdded: (id: string) => T): T {
 
             const nameObject = `s/${encodeURIComponent(name)}`;
 
@@ -895,7 +895,7 @@ function processCurrent(): boolean {
                 // when appending a task to prev.
                 moveToNext();
                 return enqueued;
-            }, alreadyAdded);
+            }, (found: any) => alreadyAdded(found.s));
         }
 
         function enqueueTasks(items: string[], type: string, predicate: string, parentPredicate: string | undefined): void {
@@ -936,7 +936,28 @@ function processCurrent(): boolean {
             return true;
         }
 
+        function updateProperty(subject: string, predicate: string, predicatePath: string, value: string, objectValue: string, alreadyUpdated: () => boolean): boolean {
+            /*
+            function objectValue(): string {
+                return toObject(value);`${literalTag}/${encodeURIComponent(value)}`
+            }
+            */
+            return getObject(subject, predicate, () => {
+                console.log(`  ${predicatePath}: undefined --> ${value}`);
+                update([
+                    put(subject, predicate, objectValue),
+                    ...moveToNextStatements(),
+                ]);
+                return true;
+            }, (object: string) => {
+                assertEquals(object, objectValue;
+                return alreadyUpdated();
+            })
+        }
+
         function updateLiteralProperty(subject: string, predicate: string, predicatePath: string, value: string, literalTag: string, alreadyUpdated: () => boolean): boolean {
+            return updateProperty(subject, predicate, predicatePath, value, `${literalTag}/${encodeURIComponent(value)}`, alreadyAdded);
+            /*
             function literal(): string {
                 return `${literalTag}/${encodeURIComponent(value)}`
             }
@@ -951,6 +972,7 @@ function processCurrent(): boolean {
                 assertEquals(object, literal());
                 return alreadyUpdated();
             })
+            */
         }
 
         function updateLiteralPropertyOnCurrentTask(predicate: string, value: string, literalTag: string, alreadyUpdated: () => boolean): boolean {
@@ -985,7 +1007,7 @@ function processCurrent(): boolean {
             return stat(path, stat => (stat.isDirectory() ? directory : file)(), missing);
         }
 
-        function enqueueMBTask<T>(mbid: string, resource: string, linkPredicate: string | undefined, enqueued: T, alreadyExists: () => T): T {
+        function enqueueMBTask<T>(mbid: string, resource: string, linkPredicate: string | undefined, enqueued: T, alreadyExists: (id: string) => T): T {
             return enqueueTask(mbid, `mb:${resource}`, 'mb:mbid', undefined, linkPredicate, enqueued, alreadyExists);
         }
 
@@ -1371,7 +1393,7 @@ function processCurrent(): boolean {
                 processMBNamedResource('area',
                     subType => getObject(currentTask, 'mb:type', FALSE, areaTypeTask => updateLiteralProperty(areaTypeTask, 'mb:name', 'mb:type/mb:name', subType, 's', fail)),
                     //subType => updateLiteralProperty(getPropertyFromCurrent('mb:type'), 'mb:name', 'mb:type/mb:name', subType, 's', fail),
-                    areaTypeId => enqueueMBTask(areaTypeId, 'area-type', 'mb:type', true, fail),
+                    areaTypeId => enqueueMBTask(areaTypeId, 'area-type', 'mb:type', true, (id: string) => updateLiteralPropertyOnCurrentTask('mb:type', id, 's', fail)),
                     adjustLiteralProperty('mb', 'name', 's'),
                     'United States',
                     function* () {
