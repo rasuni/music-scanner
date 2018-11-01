@@ -12,8 +12,7 @@ import * as mm from 'music-metadata';
 import * as https from 'https';
 import * as sax from 'sax';
 import * as readline from 'readline';
-
-//import { release } from 'os';
+import opn = require('opn');
 
 commander.version('0.0.1').description('music-scanner command line tool');
 
@@ -223,13 +222,6 @@ function makeBlockingQueue<T>(assignProducers: Consumer<Consumer<T>>): Provider<
 
 function makeBlockingStream<T>(on: (event: string, consumer: Consumer<T>) => void): Provider<T> {
 
-    /*
-    function on(event: string, handler: any): void {
-        stream.on(event, handler);
-    }
-    on('error', fail);
-    */
-
     return makeBlockingQueue((push: Consumer<any>) => {
         on('data', push);
         on('end', push);
@@ -340,7 +332,6 @@ function searchMatch<T, R>(object: T, checkers: Matcher<T>, found: () => R, notF
     for (const compareValue of compareObjects(object, checkers)) {
         const checker = compareValue.expected as Predicate<any>;
         assertType(checker, 'function');
-        //console.log(compareValue.actual);
         if (checker(compareValue.actual)) {
             return found();
         }
@@ -361,7 +352,6 @@ function asString(value: any): string {
         case 'symbol':
             return value.toString();
         case 'object':
-            //const toString = Object.getOwnPropertyDescriptor (value, "toString");
             return isUndefined(Object.getOwnPropertyDescriptor(value, "toString")) ? `{${mapDictionary(value, (name, vname) => `${name}:${asString(vname)}`).join(',')}}` : value.toString();
         case 'string':
             return `"${value}"`;
@@ -720,8 +710,6 @@ function expectReleaseEventList(elements: Sequence<Predicate<SaxEvent>>[]): Sequ
 
 const expect1975 = expectDate('1975');
 
-//const expectUnitedStates = expectArea("489ce91b-6658-3307-9877-795b68554c98", 'United States', expectUSIsoList);
-
 function expectRelease(id: string, title: string, official: Sequence<Predicate<SaxEvent>>, country: string, areaId: string, packaging: Sequence<Predicate<SaxEvent>>, barcode: Sequence<Predicate<SaxEvent>>): Sequence<Predicate<SaxEvent>> {
     return expectTiteledEntity('release', id, title, concat(
         official,
@@ -733,31 +721,14 @@ function expectRelease(id: string, title: string, official: Sequence<Predicate<S
             expect1975,
             expectArea(areaId, 'United States', expectUSIsoList)
         )]),
-        barcode, //matchTagAndAttributes('barcode', {}, undefined)
-    ));
-}
-
-function expectRecordingCore(id: string, title: string, length: string, others: Sequence<Predicate<SaxEvent>>): Sequence<Predicate<SaxEvent>> {
-    return expectTiteledEntity('recording', id, title, concat(
-        expectPlainTextTag("length", length),
-        others
+        barcode
     ));
 }
 
 
 const expectOfficial = expectNamedEntity('status', '4e304316-386d-3409-af2e-78857eec5cfe', 'Official');
 
-function expectRecording(id: string, title: string, length: string): Sequence<Predicate<SaxEvent>> {
-    return expectRecordingCore(id, title, length, undefined);
-}
 
-function expectRecordingExtended(id: string, title: string, length: string, tag: string, tagValue: string): Sequence<Predicate<SaxEvent>> {
-    return expectRecordingCore(id, title, length, expectPlainTextTag(tag, tagValue));
-}
-
-function expectRecordingDisambiguation(id: string, title: string, length: string, tagValue: string): Sequence<Predicate<SaxEvent>> {
-    return expectRecordingExtended(id, title, length, "disambiguation", tagValue);
-}
 
 function expectTagTagWithCount(count: string, name: string): Sequence<Predicate<SaxEvent>> {
     return expectTag('tag', { count: count }, expectPlainTextTag('name', name));
@@ -909,37 +880,44 @@ function tryAdd<T>(name: string, type: string, namePredicate: string, parentPred
 function assertDefined(value: any): void {
     failIf(isUndefined(value));
 }
+interface Entity {
+    readonly id: string;
+}
+interface Area {
+    id: string;
+}
 
 interface Artist {
     id: string;
+    area: Area;
 }
 
 interface ArtistCredit {
     readonly artist: Artist;
 }
 
-interface MBRecording {
+interface Recording {
     readonly id: string;
     readonly "artist-credit": ArtistCredit[];
 }
 
-interface MBTrack {
+interface Track {
     readonly id: string;
 }
 
-interface MBMedium {
-    readonly tracks: MBTrack[];
+interface Medium {
+    readonly tracks: Track[];
     readonly position: number;
 }
 
-interface MBRelease {
+interface Release {
     readonly id: string;
-    readonly media: MBMedium[];
+    readonly media: Medium[];
 }
 
-interface MBReleaseList {
+interface ReleaseList {
     readonly "release-count": number;
-    readonly releases: MBRelease[];
+    readonly releases: Release[];
 }
 
 interface AcoustIdRecording {
@@ -1002,6 +980,10 @@ function processCurrent(): boolean {
         return completed();
     }
 
+    function enqueueTopLevelTask(name: string, type: string, namePredicate: string, alreadyAdded: (id: string) => boolean): boolean {
+        return enqueueUnlinkedTask(name, type, namePredicate, undefined, alreadyAdded);
+    }
+
     function enqueueTasks(items: string[], type: string, predicate: string, parentPredicate: string | undefined): void {
         enqueueNextTask(items, item => item, type, predicate, parentPredicate, undefined, () => {
             console.log('  completed');
@@ -1030,12 +1012,8 @@ function processCurrent(): boolean {
     function processDirectory(path: string): boolean {
         const result: Pair<object, string[]> = waitFor2(consumer => fs.readdir(path, consumer));
         assertEquals(result.first, null);
-        //const allFiles: string[] = result.second;
         const files = result.second.filter(name => !name.startsWith('.'));
 
-        //onst index = files.indexOf(".DS_Store");
-        //failIf(index === -1);
-        //files.splice(index, 1);
         if (isEmpty(files)) {
             fail();
             remove('delete empty directory', 'rmdir', path);
@@ -1080,8 +1058,8 @@ function processCurrent(): boolean {
         return enqueueTask(mbid, `mb:${resource}`, 'mb:mbid', undefined, linkPredicate, enqueued, alreadyExists);
     }
 
-    function enqueueMBResourceTask(mbid: string, resource: string, found: () => void): void {
-        enqueueMBTask(mbid, resource, undefined, undefined, found);
+    function enqueueMBResourceTask(mbid: string, resource: string, found: (id: string) => boolean): boolean {
+        return enqueueMBTask(mbid, resource, undefined, true, found);
     }
 
     function getStringProperty(name: string) {
@@ -1100,7 +1078,11 @@ function processCurrent(): boolean {
         }
         else {
             const now = Date.now();
-            assert(now - la <= minimumDelay);
+            const diff = now - la;
+            if (diff <= minimumDelay) {
+                setTimeout(getRunner(), diff);
+                yieldValue();
+            }
             update(now);
         }
 
@@ -1110,7 +1092,6 @@ function processCurrent(): boolean {
     function processMBResource(type: string, inner: Sequence<Predicate<SaxEvent>>, inc: string[], extraAttributes: Matcher<Attributes>, onNoMatch: () => void): void {
         complyWithRateLimit('musicbrainz.org', 1000);
         const mbid = getStringProperty('mb:mbid');
-        //const incString = inc.length === 0 ? '' : '?inc=' + inc.join('+');
         const resourcePath = `/ws/2/${type}/${mbid}${inc.length === 0 ? '' : '?inc=' + inc.join('+')}`;
         console.log(`https://musicbrainz.org${resourcePath}`)
         const run = getRunner();
@@ -1164,16 +1145,19 @@ function processCurrent(): boolean {
     }
 
     function enqueueArea(mbid: string, found: () => void): void {
-        enqueueMBResourceTask(mbid, 'area', found);
+        enqueueMBResourceTask(mbid, 'area', () => {
+            found();
+            return true;
+        });
     }
 
     function enqueueArtist(mbid: string, found: () => void): void {
-        enqueueMBResourceTask(mbid, 'artist', found);
+        enqueueMBResourceTask(mbid, 'artist', () => {
+            found();
+            return true;
+        });
     }
 
-    function enqueueRecording(mbid: string, found: () => void): void {
-        enqueueMBResourceTask(mbid, 'recording', found);
-    }
 
 
 
@@ -1181,18 +1165,21 @@ function processCurrent(): boolean {
         return actualValue => updateLiteralPropertyOnCurrentTask(`${nameSpace}:${name}`, `${actualValue}`, literalTag, FALSE);
     }
 
+    function url(hostName: string, type: string, id: string): string {
+        return `https://${hostName}/${type}/${id}`;
+    }
 
-    function wsGet<T>(id: string, hostName: string, minimalDelay: number, path: string, params: string, logType: string): T {
-        //const id = getStringProperty(idPredicate);
-        complyWithRateLimit(hostName, minimalDelay);
-
-        //const resourcePath = `/ws/2/recording/${mbid}?fmt=json&inc=artists`;
-        const resourcePath = `/${path}?${params}`;
-
-        console.log(`https://${hostName}/${logType}/${id}`);
+    function wsGet<T>(minimalDelay: number, path: string, params: Dictionary<string>, apiHost: string): T {
+        complyWithRateLimit(apiHost, minimalDelay);
+        let resourcePath = `/${path}`;
+        const paramString = mapDictionary(params, (key, value) => `${key}=${encodeURIComponent(value)}`).join('&');
+        if (paramString.length !== 0) {
+            resourcePath = `${resourcePath}?${paramString}`
+        }
+        //console.log(url(hostName, logType, id));
         const run = getRunner();
         https.get({
-            hostname: hostName,
+            hostname: apiHost,
             path: resourcePath,
             port: 443,
             headers: { 'user-agent': 'rasuni-musicscanner/0.0.1 ( https://musicbrainz.org/user/rasuni )' }
@@ -1210,6 +1197,29 @@ function processCurrent(): boolean {
         }
         return JSON.parse(response);
 
+    }
+
+
+    function mbGet<T>(resource: string, params: Dictionary<string>): T {
+        //console.log(url('musicbrainz.org', logType, mbid));
+        return wsGet(1000, `ws/2/${resource}`, {
+            fmt: 'json',
+            ...params
+        }, 'musicbrainz.org')
+    }
+
+    function getMBEntity<T>(type: string, params: Dictionary<string>): T {
+        const mbid = getStringProperty('mb:mbid');
+        console.log(url('musicbrainz.org', type, mbid));
+
+        const metaData: Entity = mbGet(`${type}/${mbid}`, params);
+        assertEquals(metaData.id, mbid);
+        //console.log(metaData.area.id);
+        return metaData as any;
+    }
+
+    function enqueueNextEntityTask<T>(items: T[], entity: (item: T) => Entity, type: string, completed: () => boolean): boolean {
+        return enqueueNextTask(items, item => entity(item).id, `mb:${type}`, 'mb:mbid', undefined, true, completed);
     }
 
 
@@ -1259,14 +1269,6 @@ function processCurrent(): boolean {
             return processFileSystemPath(entryPath,
                 () => processDirectory(entryPath),
                 () => {
-                    //fail();
-                    /*
-                    if (entryName === '.DS_Store') {
-                        remove('deleting file', 'unlink', entryPath);
-                        return true;
-                    }
-                    else {
-                    */
                     switch (path.extname(entryName)) {
                         case '.flac':
                         case '.m4a':
@@ -1281,110 +1283,30 @@ function processCurrent(): boolean {
                             let metaData: mm.IAudioMetadata = r.metaData;
                             const common = metaData.common;
                             const acoustid = common.acoustid_id;
-                            assertDefined(acoustid);
-                            return enqueueUnlinkedTask(acoustid as string, 'acoustid', 'acoustid', undefined, () => {
-                                const trackId = common.musicbrainz_trackid;
-                                assertDefined(trackId);
-                                enqueueMBResourceTask(trackId as string, 'track', fail);
-                                return true;
-                            });
-
-                            /*
-                            fail();
-
-                            onNoMatch<mm.IAudioMetadata>(metaData, {
-                                format: matchObject<mm.IFormat>({
-                                    dataformat: expectEquals("flac"),
-                                    lossless: expectEquals(true),
-                                    numberOfChannels: expectEquals(2),
-                                    bitsPerSample: expectEquals(16),
-                                    sampleRate: checkUpdateFormatProperty('sampleRate'),
-                                    duration: checkUpdateFormatProperty('duration'),
-                                    tagTypes: expectEquals(["vorbis"]),
-                                }),
-                                common: matchObject<mm.ICommonTagsResult>({
-                                    track: expectEquals({
-                                        no: 1,
-                                        of: 19
-                                    }),
-                                    disk: expectEquals({
-                                        no: 1,
-                                        of: 1
-                                    }),
-                                    barcode: expectEquals(786127302127),
-                                    producer: expectEquals(["Kevin Wales", "Harve Pierre", "Diddy", "J-Dub"]),
-                                    title: expectEquals("Room 112 (intro)"),
-                                    releasecountry: expectEquals("DE"),
-                                    label: expectEquals("BMG"),
-                                    musicbrainz_albumartistid: expectEquals(["9132d515-dc0e-4494-85ae-20f06eed14f9"]),
-                                    year: expectEquals(1998),
-                                    date: expectEquals("1998-11-16"),
-                                    musicbrainz_trackid: expectEquals("562abb04-da87-3ab1-9866-ce8f24853701"),
-                                    asin: expectEquals("B00000D9VN"),
-                                    albumartistsort: expectEquals("112"),
-                                    originaldate: expectEquals("1998-11-10"),
-                                    language: expectEquals("eng"),
-                                    script: expectEquals("Latn"),
-                                    work: expectEquals("Room 112 (intro)"),
-                                    musicbrainz_albumid: expectEquals("9ce47bcf-97d1-4534-b77e-b19ba6c98511"),
-                                    releasestatus: expectEquals("official"),
-                                    albumartist: expectEquals("112"),
-                                    acoustid_id: expectEquals("91b4acf0-f50a-4087-9a65-48ae0034854b"),
-                                    catalognumber: expectEquals("78612-73021-2"),
-                                    album: expectEquals("Room 112"),
-                                    musicbrainz_artistid: expectEquals(["9132d515-dc0e-4494-85ae-20f06eed14f9"]),
-                                    media: expectEquals("CD"),
-                                    releasetype: expectEquals(["album"]),
-                                    mixer: expectEquals(["Michael Patterson"]),
-                                    originalyear: expectEquals(1998),
-                                    isrc: expectEquals("USAR19800507"),
-                                    musicbrainz_releasegroupid: expectEquals("a15cf6a3-c02a-316f-8e3d-15cd8ddf95f0"),
-                                    artist: expectEquals("112"),
-                                    writer: expectEquals(["Michael Keith", "Quinnes Parker", "J-Dub", "Lamont Maxwell", "Slim", "Daron Jones"]),
-                                    musicbrainz_workid: expectEquals("af499b43-2556-45c6-87e9-4879f5cf7abe"),
-                                    musicbrainz_recordingid: expectEquals("9b871449-7109-42fe-835b-6957a006e25d"),
-                                    artistsort: expectEquals("112"),
-                                    artists: expectEquals(["112"]),
-                                    genre: expectEquals(["R B"]),
-                                    picture: matchObject<any>({
-                                        0: expectJpgImage,
-                                        1: expectJpgImage,
-                                        2: expectJpgImage,
-                                        3: expectJpgImage,
-                                        4: expectJpgImage,
-                                        5: expectJpgImage,
-                                        6: expectJpgImage,
-                                        7: expectJpgImage,
-                                        8: expectJpgImage,
-                                        9: expectJpgImage,
-                                        10: expectJpgImage,
-                                        11: expectJpgImage,
-                                        12: expectJpgImage,
-                                        13: expectJpgImage,
-                                        14: expectJpgImage,
-                                        15: expectJpgImage,
-                                        16: expectJpgImage,
-                                        17: expectJpgImage,
-                                        18: expectJpgImage,
-                                    }),
-                                }),
-                                native: expectEquals(undefined)
-                            }, () => enqueueArtist("9132d515-dc0e-4494-85ae-20f06eed14f9", () => enqueueMBResourceTask("9ce47bcf-97d1-4534-b77e-b19ba6c98511", "release", fail)));
-                            */
-                            return true;
+                            if (isDefined(acoustid)) {
+                                return enqueueTopLevelTask(acoustid, 'acoustid', 'acoustid', () => {
+                                    const trackId = common.musicbrainz_trackid;
+                                    assertDefined(trackId);
+                                    return enqueueMBResourceTask(trackId as string, 'track', taskId => {
+                                        return getObject(taskId, 'mb:title', () => {
+                                            console.log('  Please check tagging in picard');
+                                            moveToNext();
+                                            return false;
+                                        }, fail);
+                                    })
+                                });
+                            }
+                            else {
+                                console.error("  acoustid is missing!");
+                                return false;
+                            };
                         case '.jpg':
                             remove('deleting file', 'unlink', entryPath);
                             return true;
-                        /*
-                        fail();
-                        return true;
-                        */
-                        //break;
                         default:
                             // *.mkv
                             logError('unknown file type!');
                             return false;
-
                     }
 
 
@@ -1417,43 +1339,10 @@ function processCurrent(): boolean {
                     return false;
                 }));
         case 'mb:artist':
-            fail();
-            processMBNamedResource('artist', expectEquals('Group'), expectEquals("e431f5f6-b5d2-343d-8b36-72607fffb74b"), expectEquals('112'), '112', concat(
-                expectUsCountry,
-                expectArea("489ce91b-6658-3307-9877-795b68554c98", 'United States', expectUSIsoList),
-                expectAreaRaw('begin-area', "26e0e534-19ea-4645-bfb3-1aa4e83a4046", 'Atlanta', undefined),
-                expectLifeSpan('1996', undefined),
-                expectTag('recording-list', {
-                    count: "268"
-                }, concat(
-                    expectRecording("00cc81c5-0dd9-45bb-a27b-ef1d5454bf85", "All Cried Out", "277000"),
-                    expectRecording("1cb4f0df-21ce-4454-9346-011a5c220fec", "1's for Ya", "187000"),
-                    expectRecordingExtended("3d5a22ab-2a14-4206-a15b-e1f123076927", "Anywhere", "248000", "video", "true"),
-                    expectRecording("4094e83b-40a8-4494-b686-a9673be0a563", "Anything", "229093"),
-                    expectRecording("454c0f69-70a4-45e9-94ce-f207848fb118", "Anywhere", "197000"),
-                    expectRecording("58d482f4-7070-451b-bf0f-c5d0cd1491fa", "Anywhere (remix)", "235000"),
-                    expectRecording("7001506d-45cf-491a-bf76-a4da729eff1d", "Anywhere (interlude)", "70573"),
-                    expectRecording("8101a28e-36f5-482a-b947-773d605e96de", "Anywhere", "247213"),
-                    expectRecording("8540c247-8043-4001-bd2a-363f750fc98f", "Anywhere", "247493"),
-                    expectRecording("8e6f61af-8a46-4d5f-9b59-d31ed6b66266", "Anywhere", "182826"),
-                    expectRecording("91847fac-a4ff-443b-a4cb-92cc42f2ba24", "Be With You", "244973"),
-                    expectRecording("9c954ae6-c25e-4fd6-856b-7b39a8461e16", "Can I Touch You", "304573"),
-                    expectRecording("a36be457-c34e-4078-84da-24894d0e34d4", "Both of Us", "219000"),
-                    expectRecording("b5d0a806-3bb2-474f-828d-55806de56531", "Anywhere (Slang club remix)", "236533"),
-                    expectRecording("ba519c4e-6d74-4c17-9c3a-7bbb8d6e4680", "All My Love", "261866"),
-                    expectRecording("c1ac5a1a-09f2-41f0-b6ca-8ead1730c18b", "Anywhere (remix)", "280533"),
-                    expectRecording("d036d54a-639a-409d-81ac-f1293bb3c004", "All I Want Is You", "221706"),
-                    expectRecording("d1f1b2b5-8496-4182-91a9-5e5aeea9b291", "Call My Name", "247640"),
-                    expectRecordingDisambiguation("db8b99df-ed71-4ef9-ae3c-532c192226e7", "112 Intro", "76000", "Part III version"),
-                    expectRecording("e0f71717-2e40-4546-b0b6-15805d62acb4", "All Cried Out (edit)", "223426"),
-                    expectRecording("e87af726-1fa3-4804-821b-741e35cb2811", "All My Love", "283173"),
-                    expectRecordingDisambiguation("f8aa3a67-5368-44c5-8d9e-4433dea9fab2", "112 Intro", "132960", "original version"),
-                    expectRecording("fbf9e86b-3a11-4a08-b77d-1432e1e243c9", "Anywhere", "336880"),
-                    expectRecording("fc479b8c-ebbe-46f0-84cf-f45615f165cf", "After the Love Has Gone", "243000"),
-                    expectRecording("ff22df38-fe40-4487-9006-fdc6a4662fe0", "Anywhere", "244026")
-                ))
-            ), ['recordings'], () => enqueueArea("489ce91b-6658-3307-9877-795b68554c98", () => enqueueArea("26e0e534-19ea-4645-bfb3-1aa4e83a4046", () => enqueueRecording("00cc81c5-0dd9-45bb-a27b-ef1d5454bf85", () => enqueueRecording('1cb4f0df-21ce-4454-9346-011a5c220fec', fail)))));
-            return true;
+
+            const artist: Artist = getMBEntity('artist', {});
+
+            return enqueueTopLevelTask(artist.area.id, 'mb:area', 'mb:mbid', fail);
         case 'mb:area':
             fail();
             processMBNamedResource('area',
@@ -1578,23 +1467,22 @@ function processCurrent(): boolean {
                 ])
             ), ['artists', 'collections', 'labels'], {}, () => enqueueArtist('9132d515-dc0e-4494-85ae-20f06eed14f9', () => enqueueArea('85752fda-13c4-31a3-bee5-0e5cb1f51dad', () => enqueueMBResourceTask('c62e3985-6370-446a-bfb8-f1f6122e9c33', 'label', fail))));
             return true;
-        /*
-        case 'mb:area-type':
-            const nextSubject = getStream({ predicate: 'mb:type', object: currentTask });
-            const statement = nextSubject();
-            assert(isDefined(statement));
-            const nextPlayList = getStream({ subject: statement.subject, predicate: 'playlist' });
-            assertUndefined(nextPlayList());
-            assertUndefined(nextSubject());
-            //fail();
-            moveToNext();
-            return true;
-        */
         case 'mb:recording':
-            const mbid = getStringProperty('mb:mbid');
-            const metaData: MBRecording = wsGet(mbid, 'musicbrainz.org', 1000, `ws/2/recording/${mbid}`, 'fmt=json&inc=artists', 'recording');
-            assertEquals(metaData.id, mbid);
-            return enqueueNextTask(metaData["artist-credit"], artistCredit => artistCredit.artist.id, 'mb:artist', 'mb:mbid', undefined, true, fail);
+
+            const recording: Recording = getMBEntity('recording', {
+                inc: 'artists'
+            });
+            return enqueueNextEntityTask(recording["artist-credit"], artistCredit => artistCredit.artist, 'artist', () => {
+                const mbid = getStringProperty('mb:mbid');
+                const releaseList: ReleaseList = mbGet('release', {
+                    recording: mbid
+                });
+                //console.log(releaseList);
+                const releases = releaseList.releases;
+                assertEquals(releaseList["release-count"], releases.length);
+                return enqueueNextEntityTask(releaseList.releases, release => release, 'release', fail);
+
+            });
         case 'mb:label':
             fail();
 
@@ -1623,61 +1511,47 @@ function processCurrent(): boolean {
             return true;
         case 'acoustid':
             const acoustid = getStringProperty('acoustid');
-            const result: AcoustIdMetaData = wsGet(acoustid, 'api.acoustid.org', 334, '/v2/lookup', `client=0mgRxc969N&meta=recordingids&trackid=${acoustid}`, 'track');
-            /*
-            assert(isUndefined(lastAccessedAcoustId));
-            lastAccessedAcoustId = Date.now();
-            const resourcePath = `/v2/lookup?client=0mgRxc969N&meta=recordingids&trackid=${acoustid}`;
-            console.log(`https://acoustid.org/track/${acoustid}`);
-            const run = getRunner();
-            https.get({
-                hostname: 'api.acoustid.org',
-                path: resourcePath,
-                port: 443,
-                headers: { 'user-agent': 'rasuni-musicscanner/0.0.1 ( https://musicbrainz.org/user/rasuni )' }
-            }, run).on("error", fail);
-            const resp = yieldValue();
-            assertEquals(resp.statusCode, 200);
-            const nextChunk = makeBlockingStream((event: string, consumer: Consumer<string>) => resp.on(event, consumer));
-            let response = '';
-            for (; ;) {
-                const chunk = nextChunk();
-                if (isUndefined(chunk)) {
-                    break;
-                }
-                response += chunk;
-            }
-            const result = JSON.parse(response);
-            */
+            console.log(url('acoustid.org', 'track', acoustid));
+            const result: AcoustIdMetaData = wsGet(334, '/v2/lookup', {
+                client: '0mgRxc969N',
+                meta: 'recordingids',
+                trackid: acoustid
+            }, 'api.acoustid.org');
             assertEquals(result.status, "ok");
             const results = result.results;
             assertEquals(results.length, 1);
             const firstResult = results[0];
             assertEquals(firstResult.id, acoustid);
-            return enqueueNextTask(firstResult.recordings, recording => recording.id, 'mb:recording', 'mb:mbid', undefined, true, fail);
+            return enqueueNextEntityTask(firstResult.recordings, recording => recording, 'recording', () => {
+                console.log("  completed: please check acoustid resource");
+                opn(url('acoustid.org', 'track', acoustid));
+                moveToNext();
+                return false;
+            });
         case 'mb:track':
-            {
-                const mbid = getStringProperty('mb:mbid');
-                const metaData: MBReleaseList = wsGet(mbid, 'musicbrainz.org', 1000, 'ws/2/release', `track=${mbid}&fmt=json`, 'track');
-                console.log(metaData);
-                assertEquals(metaData["release-count"], 1);
-                const release = metaData.releases[0];
-                const releaseId = release.id;
-                const medium = release.media.find(media => isDefined(media.tracks.find(track => track.id === mbid)));
-                const position = (medium as MBMedium).position;
-                return tryAddKeyedTask('mb:medium', {
-                    "mb:release-id": encodeString(releaseId),
-                    "mb:position": encodeLiteral('n', `${position}`)
-                }, `${releaseId}/${position}`, '  ', undefined, () => {
-                    moveToNext();
-                    return true;
-                }, fail);
-                fail();
-                //return enqueueNextTask(metaData["artist-credit"], artistCredit => artistCredit.artist.id, 'mb:artist', 'mb:mbid', undefined, true, fail);
-            }
 
-            fail();
-            return true;
+            const mbid = getStringProperty('mb:mbid');
+            console.log(url('musicbrainz.org', 'track', mbid));
+
+            const metaData: ReleaseList = mbGet('release', {
+                track: mbid
+            });
+            console.log(metaData);
+            assertEquals(metaData["release-count"], 1);
+            const release = metaData.releases[0];
+            const releaseId = release.id;
+            const medium = release.media.find(media => isDefined(media.tracks.find(track => track.id === mbid)));
+            const position = (medium as Medium).position;
+            return tryAddKeyedTask('mb:medium', {
+                "mb:release-id": encodeString(releaseId),
+                "mb:position": encodeLiteral('n', `${position}`)
+            }, `${releaseId}/${position}`, '  ', undefined, () => {
+                moveToNext();
+                return true;
+            }, fail);
+        // TODO: update mb:title on track task
+
+
         default:
             fail();
             return false;
@@ -1918,12 +1792,17 @@ defineCommand('dump', 'dump database to text format', [], () => {
             case 'mb:medium':
                 console.log(`https://musicbrainz.org/release/${getStringProperty('mb:release-id')}/disc/${decodeLiteral(getPropertyFromCurrent('mb:position'), 'n')}`);
                 break;
+            case 'mb:area':
+                mbResource('area');
+                break;
+            case 'mb:release':
+                mbResource('release');
+                break;
             default:
 
                 fail();
                 break;
         }
-        //console.log(type === 'root' ? '<root>' : decodeStringLiteral(getPropertyFromCurrent(type)));
         const next = getPropertyFromCurrent('next');
         if (next === first) {
             break;
