@@ -14,6 +14,7 @@
     "level": "^2.1.1",
     "levelgraph": "^2.1.1",
     "music-metadata": "^0.9.13",
+    "opn": "^5.4.0",
     "rimraf": "^2.6.2",
     "sax": "^1.2.4",
     "uuid": "^3.2.1"
@@ -21,6 +22,7 @@
   "devDependencies": {
     "@types/fibers": "0.0.30",
     "@types/node": "^8.5.1",
+    "@types/opn": "^5.1.0",
     "@types/rimraf": "^2.0.2",
     "@types/sax": "^1.0.0",
     "@types/uuid": "^3.4.3",
