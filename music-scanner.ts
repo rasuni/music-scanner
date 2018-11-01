@@ -13,6 +13,8 @@ import * as https from 'https';
 import * as sax from 'sax';
 import * as readline from 'readline';
 
+//import { release } from 'os';
+
 commander.version('0.0.1').description('music-scanner command line tool');
 
 
@@ -80,6 +82,7 @@ function assertObject(value: any) {
 interface Dictionary<T> {
     readonly [name: string]: T;
 }
+
 
 interface CompareValues<T> {
     actual: any,
@@ -177,12 +180,16 @@ function del(subject: string, predicate: string, object: string): UpdateStatemen
     return updateStatement('del', subject, predicate, object);
 }
 
+function decodeLiteral(literal: string, prefix: string) {
+    const segments = literal.split('/');
+    assertEquals(segments.length, 2);
+    assertEquals(segments[0], prefix);
+    return decodeURIComponent(segments[1]);
+}
+
 
 function decodeStringLiteral(stringLiteral: string) {
-    const segments = stringLiteral.split('/');
-    assertEquals(segments.length, 2);
-    assertEquals(segments[0], 's');
-    return decodeURIComponent(segments[1]);
+    return decodeLiteral(stringLiteral, 's')
 }
 
 function makeBlockingQueue<T>(assignProducers: Consumer<Consumer<T>>): Provider<T> {
@@ -402,7 +409,9 @@ function matchObject<T>(checkers: Matcher<T>): Predicate<T> {
     return res;
 }
 
-let lastAccessed: number | undefined = undefined;
+let lastAccessed: {
+    [name: string]: number;
+} = {};
 
 interface OpenTagEvent {
     readonly type: 'openTag';
@@ -850,28 +859,21 @@ function appendToPrev(taskId: string): UpdateStatement[] {
 }
 
 
-function tryAdd<T>(name: string, type: string, namePredicate: string, parentPredicate: string | undefined, prefix: string, linkPredicate: string | undefined, enqueued: () => T, alreadyAdded: (found: any) => T): T {
-
-    const nameObject = `s/${encodeURIComponent(name)}`;
+function tryAddKeyedTask<T>(type: string, keys: Dictionary<string>, path: string, prefix: string, linkPredicate: string | undefined, enqueued: () => T, alreadyAdded: (found: any) => T): T {
 
     const currentTask = getCurrentTask();
 
 
     function mapAttributeValues<S, T>(mapper: (subject: S, predicate: string, object: string) => T, subject: S): T[] {
 
-        function map(predicate: string, object: string): T {
-            return mapper(subject, predicate, object);
-        }
-
-        return [
-            map('type', type),
-            map(namePredicate, nameObject),
-            ...enumOptional(parentPredicate, () => map(parentPredicate as string, currentTask))
-        ];
+        return mapDictionary({
+            type: type,
+            ...keys
+        }, (key, value) => mapper(subject, key, value));
     }
 
     return streamOpt(db.searchStream(mapAttributeValues(statement, db.v('s'))), () => {
-        console.log(`${prefix}adding ${type} ${name}`);
+        console.log(`${prefix}adding ${type} ${path}`);
         const taskId = `task/${uuid()}`;
         update([
             ...mapAttributeValues(put, taskId),
@@ -883,10 +885,74 @@ function tryAdd<T>(name: string, type: string, namePredicate: string, parentPred
     }, alreadyAdded);
 }
 
-let lastAccessedAcoustId: undefined | number = undefined;
+function encodeLiteral(literalTag: string, rawString: string): string {
+    return `${literalTag}/${encodeURIComponent(rawString)}`
+}
+
+function encodeString(value: string): string {
+    return encodeLiteral('s', value)
+}
+
+function tryAdd<T>(name: string, type: string, namePredicate: string, parentPredicate: string | undefined, prefix: string, linkPredicate: string | undefined, enqueued: () => T, alreadyAdded: (found: any) => T): T {
+
+
+    let keys: any = {
+    };
+    keys[namePredicate] = encodeString(name);
+    if (isDefined(parentPredicate)) {
+        keys[parentPredicate] = getCurrentTask();
+    }
+    return tryAddKeyedTask(type, keys, name, prefix, linkPredicate, enqueued, alreadyAdded);
+
+}
 
 function assertDefined(value: any): void {
     failIf(isUndefined(value));
+}
+
+interface Artist {
+    id: string;
+}
+
+interface ArtistCredit {
+    readonly artist: Artist;
+}
+
+interface MBRecording {
+    readonly id: string;
+    readonly "artist-credit": ArtistCredit[];
+}
+
+interface MBTrack {
+    readonly id: string;
+}
+
+interface MBMedium {
+    readonly tracks: MBTrack[];
+    readonly position: number;
+}
+
+interface MBRelease {
+    readonly id: string;
+    readonly media: MBMedium[];
+}
+
+interface MBReleaseList {
+    readonly "release-count": number;
+    readonly releases: MBRelease[];
+}
+
+interface AcoustIdRecording {
+    readonly id: string;
+}
+
+interface AcoustIdTrack {
+    readonly id: string;
+    readonly recordings: AcoustIdRecording[];
+}
+interface AcoustIdMetaData {
+    readonly status: string;
+    readonly results: AcoustIdTrack[];
 }
 
 function processCurrent(): boolean {
@@ -910,14 +976,13 @@ function processCurrent(): boolean {
 
 
     function remove(message: string, removeMethod: 'unlink' | 'rmdir', path: string): void {
-        console.log(`  ${message} `);
+        console.log(`  ${message}`);
         assertSame(waitFor(cb => fs[removeMethod](path, cb)), null);
         moveToNext();
     }
 
 
     function enqueueTask<T>(name: string, type: string, namePredicate: string, parentPredicate: string | undefined, linkPredicate: string | undefined, enqueued: T, alreadyAdded: (id: string) => T): T {
-
         return tryAdd(name, type, namePredicate, parentPredicate, '  ', linkPredicate, () => {
             moveToNext();
             return enqueued;
@@ -996,7 +1061,7 @@ function processCurrent(): boolean {
     }
 
     function updateLiteralProperty(subject: string, predicate: string, predicatePath: string, value: string, literalTag: string, alreadyUpdated: () => boolean): boolean {
-        return updateProperty(subject, predicate, predicatePath, value, `${literalTag} /${encodeURIComponent(value)}`, alreadyUpdated);
+        return updateProperty(subject, predicate, predicatePath, value, encodeLiteral(literalTag, value), alreadyUpdated);
     }
 
     function updateLiteralPropertyOnCurrentTask(predicate: string, value: string, literalTag: string, alreadyUpdated: () => boolean): boolean {
@@ -1023,18 +1088,27 @@ function processCurrent(): boolean {
         return decodeStringLiteral(getPropertyFromCurrent(name));
     }
 
+    function complyWithRateLimit(server: string, minimumDelay: number) {
 
-    function processMBResource(type: string, inner: Sequence<Predicate<SaxEvent>>, inc: string[], extraAttributes: Matcher<Attributes>, onNoMatch: () => void): void {
-        if (lastAccessed === undefined) {
-            lastAccessed = Date.now();
+        function update(la: number) {
+            lastAccessed[server] = la;
+        }
+
+        const la = lastAccessed[server];
+        if (isUndefined(la)) {
+            update(Date.now());
         }
         else {
             const now = Date.now();
-            assert(now - lastAccessed <= 1000);
-            //setTimeout(resolve, ms);
-            lastAccessed = now;
+            assert(now - la <= minimumDelay);
+            update(now);
         }
-        lastAccessed = Date.now();
+
+    }
+
+
+    function processMBResource(type: string, inner: Sequence<Predicate<SaxEvent>>, inc: string[], extraAttributes: Matcher<Attributes>, onNoMatch: () => void): void {
+        complyWithRateLimit('musicbrainz.org', 1000);
         const mbid = getStringProperty('mb:mbid');
         //const incString = inc.length === 0 ? '' : '?inc=' + inc.join('+');
         const resourcePath = `/ws/2/${type}/${mbid}${inc.length === 0 ? '' : '?inc=' + inc.join('+')}`;
@@ -1105,6 +1179,37 @@ function processCurrent(): boolean {
 
     function adjustLiteralProperty(nameSpace: string, name: string, literalTag: string): (actualValue: any) => boolean {
         return actualValue => updateLiteralPropertyOnCurrentTask(`${nameSpace}:${name}`, `${actualValue}`, literalTag, FALSE);
+    }
+
+
+    function wsGet<T>(id: string, hostName: string, minimalDelay: number, path: string, params: string, logType: string): T {
+        //const id = getStringProperty(idPredicate);
+        complyWithRateLimit(hostName, minimalDelay);
+
+        //const resourcePath = `/ws/2/recording/${mbid}?fmt=json&inc=artists`;
+        const resourcePath = `/${path}?${params}`;
+
+        console.log(`https://${hostName}/${logType}/${id}`);
+        const run = getRunner();
+        https.get({
+            hostname: hostName,
+            path: resourcePath,
+            port: 443,
+            headers: { 'user-agent': 'rasuni-musicscanner/0.0.1 ( https://musicbrainz.org/user/rasuni )' }
+        }, run).on("error", fail);
+        const resp = yieldValue();
+        assertEquals(resp.statusCode, 200);
+        const nextChunk = makeBlockingStream((event: string, consumer: Consumer<string>) => resp.on(event, consumer));
+        let response = '';
+        for (; ;) {
+            const chunk = nextChunk();
+            if (isUndefined(chunk)) {
+                break;
+            }
+            response += chunk;
+        }
+        return JSON.parse(response);
+
     }
 
 
@@ -1276,6 +1381,7 @@ function processCurrent(): boolean {
                         */
                         //break;
                         default:
+                            // *.mkv
                             logError('unknown file type!');
                             return false;
 
@@ -1485,14 +1591,10 @@ function processCurrent(): boolean {
             return true;
         */
         case 'mb:recording':
-            fail();
-            processMBResource('recording', concat(
-                expectPlainTextTag('title', 'All Cried Out'),
-                expectPlainTextTag('length', '277000'),
-                expectArtistCredit(sequence(nameCredit({ joinphrase: " duet with " }, 'fedd7b2a-bda1-4914-984a-e66fb4f2a561', 'Allure', expectPlainTextTag('disambiguation', 'female R&B group')), ARTIST_112))
-            ), ['artists'], {}, () => enqueueArtist('fedd7b2a-bda1-4914-984a-e66fb4f2a561', fail));
-            //fail();
-            return true;
+            const mbid = getStringProperty('mb:mbid');
+            const metaData: MBRecording = wsGet(mbid, 'musicbrainz.org', 1000, `ws/2/recording/${mbid}`, 'fmt=json&inc=artists', 'recording');
+            assertEquals(metaData.id, mbid);
+            return enqueueNextTask(metaData["artist-credit"], artistCredit => artistCredit.artist.id, 'mb:artist', 'mb:mbid', undefined, true, fail);
         case 'mb:label':
             fail();
 
@@ -1521,6 +1623,8 @@ function processCurrent(): boolean {
             return true;
         case 'acoustid':
             const acoustid = getStringProperty('acoustid');
+            const result: AcoustIdMetaData = wsGet(acoustid, 'api.acoustid.org', 334, '/v2/lookup', `client=0mgRxc969N&meta=recordingids&trackid=${acoustid}`, 'track');
+            /*
             assert(isUndefined(lastAccessedAcoustId));
             lastAccessedAcoustId = Date.now();
             const resourcePath = `/v2/lookup?client=0mgRxc969N&meta=recordingids&trackid=${acoustid}`;
@@ -1544,12 +1648,36 @@ function processCurrent(): boolean {
                 response += chunk;
             }
             const result = JSON.parse(response);
+            */
             assertEquals(result.status, "ok");
             const results = result.results;
             assertEquals(results.length, 1);
             const firstResult = results[0];
             assertEquals(firstResult.id, acoustid);
-            return enqueueNextTask(firstResult.recordings, recording => (recording as any).id, 'mb:recording', 'mb:mbid', undefined, true, fail);
+            return enqueueNextTask(firstResult.recordings, recording => recording.id, 'mb:recording', 'mb:mbid', undefined, true, fail);
+        case 'mb:track':
+            {
+                const mbid = getStringProperty('mb:mbid');
+                const metaData: MBReleaseList = wsGet(mbid, 'musicbrainz.org', 1000, 'ws/2/release', `track=${mbid}&fmt=json`, 'track');
+                console.log(metaData);
+                assertEquals(metaData["release-count"], 1);
+                const release = metaData.releases[0];
+                const releaseId = release.id;
+                const medium = release.media.find(media => isDefined(media.tracks.find(track => track.id === mbid)));
+                const position = (medium as MBMedium).position;
+                return tryAddKeyedTask('mb:medium', {
+                    "mb:release-id": encodeString(releaseId),
+                    "mb:position": encodeLiteral('n', `${position}`)
+                }, `${releaseId}/${position}`, '  ', undefined, () => {
+                    moveToNext();
+                    return true;
+                }, fail);
+                fail();
+                //return enqueueNextTask(metaData["artist-credit"], artistCredit => artistCredit.artist.id, 'mb:artist', 'mb:mbid', undefined, true, fail);
+            }
+
+            fail();
+            return true;
         default:
             fail();
             return false;
@@ -1783,6 +1911,12 @@ defineCommand('dump', 'dump database to text format', [], () => {
                 break;
             case 'mb:track':
                 mbResource('track');
+                break;
+            case 'mb:artist':
+                mbResource('artist');
+                break;
+            case 'mb:medium':
+                console.log(`https://musicbrainz.org/release/${getStringProperty('mb:release-id')}/disc/${decodeLiteral(getPropertyFromCurrent('mb:position'), 'n')}`);
                 break;
             default:
 

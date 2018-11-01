@@ -1,0 +1,3031 @@
+https://musicbrainz.org/release/807d1c07-d545-48d7-9112-ad934ef2eb42
+https://musicbrainz.org/release-group/bb612467-2f4f-4839-a171-f92e880c0925
+https://musicbrainz.org/release-group/947a7546-fa86-4b52-bdf5-444af2e0483f
+https://musicbrainz.org/artist/ad79836d-9849-44df-8789-180bbc823f3c
+https://musicbrainz.org/artist/fb698413-0e4f-4e78-9ac2-f085bc4a2b2d
+https://en.wikipedia.org/wiki/Argentina
+https://en.wikipedia.org/wiki/Tandil
+https://en.wikipedia.org/wiki/Soprano
+https://en.wikipedia.org/wiki/Mar%C3%ADa_Cristina_Kiehr
+https://musicbrainz.org/release/5a1f7e94-dfda-4b9d-b1ac-860060b63c71
+https://musicbrainz.org/release-group/477c4cf4-1ff0-3d0b-bd3f-0ed972b7751d
+https://musicbrainz.org/release-group/64215722-0ccb-4d55-997f-6cc9dc1d2733
+https://musicbrainz.org/artist/66409de3-747d-4f4d-acac-7f6eb01646ee
+https://en.wikipedia.org/wiki/Tenor
+https://en.wikipedia.org/wiki/Gerd_T%C3%BCrk
+https://musicbrainz.org/release-group/721a1d78-0728-462f-8957-cb76d9ef0b76
+https://musicbrainz.org/artist/34607a03-9774-42db-a54c-c15796c69118
+/Volumes/Musik/C/Caldara, Antonio; Kiehr, María Cristina, Dominguez, Rosa, Fink, Bernarda, Scholl, Andreas, Türk, Gerd, Schola Cantorum Basiliensis, Jacobs, René/Maddalena ai piedi di Cristo/1-01 Sinfonia.flac
+https://en.wikipedia.org/wiki/Basel
+https://en.wikipedia.org/wiki/Schola_Cantorum_Basiliensis
+https://musicbrainz.org/release-group/fa789e20-f98a-439d-b875-4b4317f6498d
+https://musicbrainz.org/artist/6ebd7458-37d8-4f3e-b933-25eab5848f22
+https://musicbrainz.org/recording/b7d6552a-6714-4ad7-ab85-3414471c514b
+https://acoustid.org/track/1ad5421f-ed01-4831-97e5-33f33c57963d
+https://musicbrainz.org/release-group/2ab9d0d3-d32d-3890-a1b7-f6e90d9ba54f
+https://musicbrainz.org/artist/255437fb-f9aa-4c10-b197-6ea79a66def2
+https://musicbrainz.org/recording/1c9a9d98-de8f-496c-a4c2-6a42eabe9d17
+https://musicbrainz.org/artist/fd5ade14-4f03-4145-94e8-138f86604c11
+https://musicbrainz.org/artist/47cb7c9e-e5a4-4319-b51c-5f69c52945eb
+https://en.wikipedia.org/wiki/Belgium
+https://en.wikipedia.org/wiki/Ren%C3%A9_Jacobs
+https://musicbrainz.org/release-group/7443b816-0f40-4b39-a57b-cf2dbace5e43
+https://musicbrainz.org/artist/47ba9b5a-a059-4bf5-a7b8-803b17145b92
+/Volumes/Musik/C/Caldara, Antonio; Kiehr, María Cristina, Dominguez, Rosa, Fink, Bernarda, Scholl, Andreas, Türk, Gerd, Schola Cantorum Basiliensis, Jacobs, René/Maddalena ai piedi di Cristo/1-02 Aria - Amor Terreno_ Dormi, o cara, e formi il sonno.flac
+https://musicbrainz.org/recording/a108694d-b65c-4ed9-8f01-bd21515767dc
+https://imslp.org/wiki/Category:Caldara,_Antonio
+https://imslp.org/wiki/Maddalena_ai_piedi_di_Cristo_(Caldara,_Antonio)
+https://musicbrainz.org/url/e2d963ec-6fe3-4119-910e-2315a946e555
+https://musicbrainz.org/work/6c9acb47-373c-44f8-b00f-b3f8f07b6819
+https://acoustid.org/track/eadc8af6-41c3-4e6f-8a6a-53b676d46931
+/Volumes/Musik/C/Caldara, Antonio; Kiehr, María Cristina, Dominguez, Rosa, Fink, Bernarda, Scholl, Andreas, Türk, Gerd, Schola Cantorum Basiliensis, Jacobs, René/Maddalena ai piedi di Cristo/1-03 Recitativo - Amor Terreno_ Così godea la mente.flac
+https://acoustid.org/track/df7e0a60-a61b-4e21-9060-590ada631299
+/Volumes/Musik/C/Caldara, Antonio; Kiehr, María Cristina, Dominguez, Rosa, Fink, Bernarda, Scholl, Andreas, Türk, Gerd, Schola Cantorum Basiliensis, Jacobs, René/Maddalena ai piedi di Cristo/1-04 Aria - Amor Terreno_ Deh, librate amoretti.flac
+https://musicbrainz.org/recording/7e550ae3-25da-4e5c-9331-cb9b58253751
+https://acoustid.org/track/c6cc9263-4228-486d-be4c-6b6eaff51b8f
+/Volumes/Musik/C/Caldara, Antonio; Kiehr, María Cristina, Dominguez, Rosa, Fink, Bernarda, Scholl, Andreas, Türk, Gerd, Schola Cantorum Basiliensis, Jacobs, René/Maddalena ai piedi di Cristo/1-05 Recitativo - Amor Celeste, Amor Terreno_ Del sonno lusinghiero.flac
+https://acoustid.org/track/49c367ab-eb84-43b4-b85f-99150ea2dde4
+/Volumes/Musik/C/Caldara, Antonio; Kiehr, María Cristina, Dominguez, Rosa, Fink, Bernarda, Scholl, Andreas, Türk, Gerd, Schola Cantorum Basiliensis, Jacobs, René/Maddalena ai piedi di Cristo/1-06 Aria - Amor Celeste_ La ragione, s'un'alma conseglia.flac
+/Volumes/Musik/C/Caldara, Antonio; Kiehr, María Cristina, Dominguez, Rosa, Fink, Bernarda, Scholl, Andreas, Türk, Gerd, Schola Cantorum Basiliensis, Jacobs, René/Maddalena ai piedi di Cristo/1-07 Recitativo - Amor Celeste, Amor Terreno_ Così sciolta da'lacci de' su.flac
+/Volumes/Musik/C/Caldara, Antonio; Kiehr, María Cristina, Dominguez, Rosa, Fink, Bernarda, Scholl, Andreas, Türk, Gerd, Schola Cantorum Basiliensis, Jacobs, René/Maddalena ai piedi di Cristo
+    1-01 Sinfonia.flac
+    1-02 Aria - Amor Terreno_ Dormi, o cara, e formi il sonno.flac
+    1-03 Recitativo - Amor Terreno_ Così godea la mente.flac
+    1-04 Aria - Amor Terreno_ Deh, librate amoretti.flac
+    1-05 Recitativo - Amor Celeste, Amor Terreno_ Del sonno lusinghiero.flac
+    1-06 Aria - Amor Celeste_ La ragione, s'un'alma conseglia.flac
+    1-07 Recitativo - Amor Celeste, Amor Terreno_ Così sciolta da'lacci de' su.flac
+/Volumes/Musik/C/Caldara, Antonio; Kiehr, María Cristina, Dominguez, Rosa, Fink, Bernarda, Scholl, Andreas, Türk, Gerd, Schola Cantorum Basiliensis, Jacobs, René
+    Maddalena ai piedi di Cristo
+https://en.wikipedia.org/wiki/Tucson,_Arizona
+https://en.wikipedia.org/wiki/Calexico_%28band%29
+https://musicbrainz.org/release-group/81f7e32b-bc7c-3647-8c82-cbb5eed40eff
+https://musicbrainz.org/artist/5e372a49-5672-4fb8-ba14-18c90780c4f9
+https://musicbrainz.org/recording/4b004235-a09e-4cbc-9d98-b19d216fd4dd
+https://musicbrainz.org/release/12184f6e-a9ea-406e-aebb-8ebe46840f91
+https://musicbrainz.org/release/9123cda8-a6aa-4017-8b27-dbc9e5b6688d
+https://musicbrainz.org/recording/3d80f01d-3fad-45c2-b155-b6f7d4ed20a4
+https://acoustid.org/track/48f46a70-21f5-4d16-ab0a-79d5d7fd274d
+https://musicbrainz.org/isrc/USEP41738001
+https://musicbrainz.org/work/3145e942-9df4-446e-a136-d9b1a6b3bab2
+https://musicbrainz.org/release/021ebe5e-b14e-4878-9fd4-f7ef968b6301
+https://musicbrainz.org/label/82935ddb-a9d6-45a7-85e3-0b0add51fa1c
+https://musicbrainz.org/release-group/242a4265-9d26-4cac-8af6-a01cf8faf8d3
+https://musicbrainz.org/artist/a48bf6cf-6dd1-4d81-8976-373fe54ca791
+https://musicbrainz.org/release/99ff7897-f8e9-4088-a4bd-8bbbba3c5309
+/Volumes/Musik/C/Calexico/The Thread That Keeps Us/01 End of the World With You.flac
+https://en.wikipedia.org/wiki/Anti-_%28record_label%29
+https://musicbrainz.org/label/5b8cf470-f162-4ee3-9b9f-77ff4ee0c601
+https://musicbrainz.org/label/1bfd06be-a6ed-4ced-8159-7d4d2923a40c
+https://musicbrainz.org/recording/168047cc-e1bb-48ce-ae93-41f4f825039d
+https://acoustid.org/track/732502b5-4b8a-4be5-b22d-f011814d8423
+https://musicbrainz.org/isrc/USEP41738002
+/Volumes/Musik/C/Calexico/The Thread That Keeps Us/02 Voices in the Field.flac
+https://musicbrainz.org/release/86c9f7f6-9554-4297-bfe3-fb0ec78c6ff5
+https://musicbrainz.org/recording/875ea7e2-42e0-464d-856a-fb5feay994e45
+https://musicbrainz.org/recording/875ea7e2-42e0-464d-856a-fb5fea994e45
+https://acoustid.org/track/37cbad22-29da-4536-a506-99d797fccc29
+https://musicbrainz.org/isrc/USEP41738003
+/Volumes/Musik/C/Calexico/The Thread That Keeps Us/03 Bridge to Nowhere.flac
+https://musicbrainz.org/recording/6f72a2db-40f4-472b-a087-19c0dfebdb25
+https://acoustid.org/track/2ae063f6-61c1-4965-a938-1dcc6bae616b
+https://musicbrainz.org/release/3ea045aa-3d72-400b-a0b6-53159f6122e2
+/Volumes/Musik/C/Calexico/The Thread That Keeps Us/04 Spinball.flac
+https://acoustid.org/track/3acdda67-ff98-484c-84cf-091e95f9e1ce
+/Volumes/Musik/C/Calexico/The Thread That Keeps Us/05 Under the Wheels.flac
+/Volumes/Musik/C/Calexico/The Thread That Keeps Us/06 The Town & Miss Lorraine.flac
+/Volumes/Musik/C/Calexico/The Thread That Keeps Us
+    01 End of the World With You.flac
+    02 Voices in the Field.flac
+    03 Bridge to Nowhere.flac
+    04 Spinball.flac
+    05 Under the Wheels.flac
+    06 The Town & Miss Lorraine.flac
+/Volumes/Musik/C/Calexico
+    The Thread That Keeps Us
+/Volumes/Musik/C/Candyland/Suck It and See/01 Precious.flac
+/Volumes/Musik/C/Candyland/Suck It and See/02 Fountain O' Youth.flac
+/Volumes/Musik/C/Candyland/Suck It and See/03 Bitter Moon.flac
+/Volumes/Musik/C/Candyland/Suck It and See/04 Something to Somebody.flac
+/Volumes/Musik/C/Candyland/Suck It and See/05 Reternity.flac
+/Volumes/Musik/C/Candyland/Suck It and See
+    01 Precious.flac
+    02 Fountain O' Youth.flac
+    03 Bitter Moon.flac
+    04 Something to Somebody.flac
+    05 Reternity.flac
+/Volumes/Musik/C/Candyland
+    Suck It and See
+https://musicbrainz.org/recording/170cfbef-d865-4525-99a3-82ac49294179
+https://acoustid.org/track/6adbc9a5-2026-4b24-8053-e6167c004672
+https://musicbrainz.org/release/49a02660-ef5d-4d09-b0ea-0bb233e586ac
+/Volumes/Musik/C/Cappuccino/Du fehlst mir/01 Du fehlst mir (radio cut).flac
+https://acoustid.org/track/5c66ad63-3512-46e9-a317-cf896e50c81b
+/Volumes/Musik/C/Cappuccino/Du fehlst mir/02 Du fehlst mir (Manometer mix).flac
+/Volumes/Musik/C/Cappuccino/Du fehlst mir/03 Du fehlst mir (Derezan remix).flac
+/Volumes/Musik/C/Cappuccino/Du fehlst mir/04 Du fehlst mir (album version).flac
+/Volumes/Musik/C/Cappuccino/Du fehlst mir
+    01 Du fehlst mir (radio cut).flac
+    02 Du fehlst mir (Manometer mix).flac
+    03 Du fehlst mir (Derezan remix).flac
+    04 Du fehlst mir (album version).flac
+/Volumes/Musik/C/Cappuccino
+    Du fehlst mir
+https://acoustid.org/track/fed31f28-1b24-4ee7-b89f-a9e145bab055
+/Volumes/Musik/C/Captain Hollywood/Do that Thang/01 Do that Thang.wma
+/Volumes/Musik/C/Captain Hollywood/Do that Thang/02 Hey Girl.wma
+/Volumes/Musik/C/Captain Hollywood/Do that Thang/03 Soul Sister.wma
+/Volumes/Musik/C/Captain Hollywood/Do that Thang
+    01 Do that Thang.wma
+    02 Hey Girl.wma
+    03 Soul Sister.wma
+/Volumes/Musik/C/Captain Hollywood
+    Do that Thang
+/Volumes/Musik/C/Carlisle, Belinda/Live Your Life Be Free/01 Live Your Life Be Free.flac
+/Volumes/Musik/C/Carlisle, Belinda/Live Your Life Be Free/02 Do You Feel Like I Feel_.flac
+/Volumes/Musik/C/Carlisle, Belinda/Live Your Life Be Free
+    01 Live Your Life Be Free.flac
+    02 Do You Feel Like I Feel_.flac
+/Volumes/Musik/C/Carlisle, Belinda
+    Live Your Life Be Free
+/Volumes/Musik/C/Carreras, José/Mediterranean Passion/01 Vincenzo d'Annibale - O paese d'o sole.flac
+/Volumes/Musik/C/Carreras, José/Mediterranean Passion
+    01 Vincenzo d'Annibale - O paese d'o sole.flac
+/Volumes/Musik/C/Carreras, José
+    Mediterranean Passion
+/Volumes/Musik/C/Caruso, Enrico/100 Greatest Arias
+/Volumes/Musik/C/Caruso, Enrico
+    100 Greatest Arias
+/Volumes/Musik/C
+    Caldara, Antonio; Kiehr, María Cristina, Dominguez, Rosa, Fink, Bernarda, Scholl, Andreas, Türk, Gerd, Schola Cantorum Basiliensis, Jacobs, René
+    Calexico
+    Candyland
+    Cappuccino
+    Captain Hollywood
+    Carlisle, Belinda
+    Carreras, José
+    Caruso, Enrico
+https://en.wikipedia.org/wiki/Maurizio_Pollini
+https://musicbrainz.org/artist/afdfd1f3-e3c2-47e7-b861-465678a3dbc2
+https://musicbrainz.org/release/964fb603-6cdc-4615-a599-78e36f4a4c4e
+https://musicbrainz.org/recording/966f1238-53af-43ff-9b9b-a64a6c2b0b7a
+https://acoustid.org/track/6d164c33-6ddb-4378-a653-3a5fe771bcf1
+https://www.amazon.co.uk/s/ref=dp_byline_sr_music_1?ie=UTF8&field-artist=Maurizio+Pollini&search-alias=music
+https://www.amazon.co.uk/gp/product/B076FWFL4Y
+/Volumes/Musik/D/Debussy, Claude; Pollini, Maurizio, Pollini, Daniele/Preludes II _ En blanc et noir/01 Préludes_ Book II_ 1. Brouillards (1).flac
+https://musicbrainz.org/recording/c14a7161-2c17-4258-956f-a8083a917c29
+https://acoustid.org/track/40d8c441-25a5-43ff-a7de-238d9cebb00b
+/Volumes/Musik/D/Debussy, Claude; Pollini, Maurizio, Pollini, Daniele/Preludes II _ En blanc et noir/02 Préludes_ Book II_ 2. Feuilles mortes (1).flac
+/Volumes/Musik/D/Debussy, Claude; Pollini, Maurizio, Pollini, Daniele/Preludes II _ En blanc et noir/03 Préludes_ Book II_ 3. La puerta del vino.flac
+/Volumes/Musik/D/Debussy, Claude; Pollini, Maurizio, Pollini, Daniele/Preludes II _ En blanc et noir/01 Préludes_ Book II_ 1. Brouillards.flac
+/Volumes/Musik/D/Debussy, Claude; Pollini, Maurizio, Pollini, Daniele/Preludes II _ En blanc et noir
+    01 Préludes_ Book II_ 1. Brouillards.flac
+    02 Préludes_ Book II_ 2. Feuilles mortes (1).flac
+    03 Préludes_ Book II_ 3. La puerta del vino.flac
+/Volumes/Musik/D/Debussy, Claude; Pollini, Maurizio, Pollini, Daniele
+    Preludes II _ En blanc et noir
+https://en.wikipedia.org/wiki/Pl%C3%A1cido_Domingo
+https://musicbrainz.org/artist/521df2bd-01f6-456e-9d5f-f081068819c2
+https://musicbrainz.org/release/435a180d-dfb1-4b65-b930-0ba319ad2ca5
+https://musicbrainz.org/recording/211a4969-8b85-488e-a17e-63d43e794e0a
+https://acoustid.org/track/98a3a340-ca32-46ec-88e1-8fa6b1e64389
+https://www.amazon.com/-/e/B000APVNZG
+https://www.amazon.com/gp/product/B01G46X654
+https://www.amazon.com/s/ref=dp_byline_sr_music_1?ie=UTF8&field-artist=Research+Composer&search-alias=music
+https://www.amazon.com/gp/product/B000002V7J
+https://musicbrainz.org/release/d3982099-a5b3-4c89-9cf7-9734cffa1388
+https://musicbrainz.org/recording/b447a4bc-072b-49d9-91d6-7319ee905d38
+https://musicbrainz.org/release/499c6d3e-e5ae-48f9-aada-67b2e6efdff8
+/Volumes/Musik/D/Domingo, Plácido/Italian Delights/01 Il trovatore_ _Di quella pira_.flac
+https://acoustid.org/track/548cbb4a-f4a8-4571-b393-f9d8c93823c1
+/Volumes/Musik/D/Domingo, Plácido/Italian Delights/02 La traviata_ _Dei mei bollenti spiriti_.flac
+https://acoustid.org/track/444dc6f7-fcd0-4ff9-8a08-a6dccc2b61eb
+https://musicbrainz.org/recording/4aa65f7f-cfda-4a08-86ad-8b5339fd0950
+/Volumes/Musik/D/Domingo, Plácido/Italian Delights/03 I Pagliacci_ _Recitar...Vesti la giubba_.flac
+https://acoustid.org/track/cd5ac157-7958-4327-91bd-702adae66a98
+/Volumes/Musik/D/Domingo, Plácido/Italian Delights/04 Tosca_ _Dammi i colori...Recondita armonia_.flac
+/Volumes/Musik/D/Domingo, Plácido/Italian Delights/05 Cavalleria rusticanai_ _Intanta amici, qua...Viva il vino spumeggiante_.flac
+/Volumes/Musik/D/Domingo, Plácido/Italian Delights
+    01 Il trovatore_ _Di quella pira_.flac
+    02 La traviata_ _Dei mei bollenti spiriti_.flac
+    03 I Pagliacci_ _Recitar...Vesti la giubba_.flac
+    04 Tosca_ _Dammi i colori...Recondita armonia_.flac
+    05 Cavalleria rusticanai_ _Intanta amici, qua...Viva il vino spumeggiante_.flac
+/Volumes/Musik/D/Domingo, Plácido
+    Italian Delights
+https://acoustid.org/track/95b644b6-d2e2-44e7-a987-49ee1f77ae24
+https://musicbrainz.org/recording/f7317f42-855d-45f2-91c8-c1210979c9f8
+/Volumes/Musik/D/Domingo, Plácido, Lanza, Mario, Heppner, Ben, Pavarotti, Luciano/Ten Tenors in Prayer/01 Johann Sebastian Bach _ Charles-François Gounod - Ave Maria (1).flac
+https://acoustid.org/track/62e44d2d-7b8f-4dd4-a30c-e148e33bb54b
+/Volumes/Musik/D/Domingo, Plácido, Lanza, Mario, Heppner, Ben, Pavarotti, Luciano/Ten Tenors in Prayer/02 Jules Massenet - Hérodiade_ _Ne pouvant réprimer_ ... _Adieu donc, vains objets_ (1).flac
+/Volumes/Musik/D/Domingo, Plácido, Lanza, Mario, Heppner, Ben, Pavarotti, Luciano/Ten Tenors in Prayer/03 Percy B. Kahn - Ave Maria.flac
+/Volumes/Musik/D/Domingo, Plácido, Lanza, Mario, Heppner, Ben, Pavarotti, Luciano/Ten Tenors in Prayer
+    01 Johann Sebastian Bach _ Charles-François Gounod - Ave Maria (1).flac
+    02 Jules Massenet - Hérodiade_ _Ne pouvant réprimer_ ... _Adieu donc, vains objets_ (1).flac
+    03 Percy B. Kahn - Ave Maria.flac
+/Volumes/Musik/D/Domingo, Plácido, Lanza, Mario, Heppner, Ben, Pavarotti, Luciano
+    Ten Tenors in Prayer
+https://musicbrainz.org/recording/670d57a9-e934-47c5-b81c-64baa03e35e1
+https://acoustid.org/track/d31ddd18-443a-4457-a400-6abfc3a65aeb
+https://musicbrainz.org/release/888c04c8-250b-444f-8b52-e4197b05359b
+/Volumes/Musik/D/Donizetti, Gaetano; Caballé, Montserrat, Vanzo, Alain, Paskalis, Kostas/Lucrezia Borgia/1-01 Lucrezia Borgia_ Prologue. Prelude (1).flac
+/Volumes/Musik/D/Donizetti, Gaetano; Caballé, Montserrat, Vanzo, Alain, Paskalis, Kostas/Lucrezia Borgia/1-02 Lucrezia Borgia_ Prologue, Scene I. _Bella Venezia!_.flac
+/Volumes/Musik/D/Donizetti, Gaetano; Caballé, Montserrat, Vanzo, Alain, Paskalis, Kostas/Lucrezia Borgia/1-02 Lucrezia Borgia_ Prologue, Scene I. _Bella Venezia!_ (1).flac
+/Volumes/Musik/D/Donizetti, Gaetano; Caballé, Montserrat, Vanzo, Alain, Paskalis, Kostas/Lucrezia Borgia
+    1-01 Lucrezia Borgia_ Prologue. Prelude (1).flac
+    1-02 Lucrezia Borgia_ Prologue, Scene I. _Bella Venezia!_ (1).flac
+/Volumes/Musik/D/Donizetti, Gaetano; Caballé, Montserrat, Vanzo, Alain, Paskalis, Kostas
+    Lucrezia Borgia
+https://acoustid.org/track/b30ffb82-d622-4fa3-9a79-2e615ab08b09
+/Volumes/Musik/D/Donizetti, Gaetano; Orchestre National de Lyon, Pidò, Evelino, Dessay, Natalie/Lucie de Lammermoor/1-01 Lucie de Lammermoor, Act I_ No. 1. Introduction & choeur_ Couronnez la crête des montagnes (Gilbert, Choeur).flac
+/Volumes/Musik/D/Donizetti, Gaetano; Orchestre National de Lyon, Pidò, Evelino, Dessay, Natalie/Lucie de Lammermoor/1-02 Lucie de Lammermoor, Act I_ No. 2. Scene & air avec choeur_ Quel air sombre! (Gilbert, Ashton).flac
+/Volumes/Musik/D/Donizetti, Gaetano; Orchestre National de Lyon, Pidò, Evelino, Dessay, Natalie/Lucie de Lammermoor
+    1-01 Lucie de Lammermoor, Act I_ No. 1. Introduction & choeur_ Couronnez la crête des montagnes (Gilbert, Choeur).flac
+    1-02 Lucie de Lammermoor, Act I_ No. 2. Scene & air avec choeur_ Quel air sombre! (Gilbert, Ashton).flac
+/Volumes/Musik/D/Donizetti, Gaetano; Orchestre National de Lyon, Pidò, Evelino, Dessay, Natalie
+    Lucie de Lammermoor
+/Volumes/Musik/D/Donizetti, Gaetano; Pavarotti, Luciano, Scotto, Renata, Cappuccilli, Piero, Manganotti, Gianfranco, Ferrin, Agostino, Stasio, di, Anna, Ricciardi, Franco, Orchestra Sinfonica di Torino della RAI/Lucia di Lammermoor Selezione/01 Prel.flac
+/Volumes/Musik/D/Donizetti, Gaetano; Pavarotti, Luciano, Scotto, Renata, Cappuccilli, Piero, Manganotti, Gianfranco, Ferrin, Agostino, Stasio, di, Anna, Ricciardi, Franco, Orchestra Sinfonica di Torino della RAI/Lucia di Lammermoor Selezione
+    01 Prel.flac
+/Volumes/Musik/D/Donizetti, Gaetano; Pavarotti, Luciano, Scotto, Renata, Cappuccilli, Piero, Manganotti, Gianfranco, Ferrin, Agostino, Stasio, di, Anna, Ricciardi, Franco, Orchestra Sinfonica di Torino della RAI
+    Lucia di Lammermoor Selezione
+/Volumes/Musik/D/Durbin, Deanna/America's Sweetheart of Song!
+/Volumes/Musik/D/Durbin, Deanna
+    America's Sweetheart of Song!
+/Volumes/Musik/D
+    Debussy, Claude; Pollini, Maurizio, Pollini, Daniele
+    Domingo, Plácido
+    Domingo, Plácido, Lanza, Mario, Heppner, Ben, Pavarotti, Luciano
+    Donizetti, Gaetano; Caballé, Montserrat, Vanzo, Alain, Paskalis, Kostas
+    Donizetti, Gaetano; Orchestre National de Lyon, Pidò, Evelino, Dessay, Natalie
+    Donizetti, Gaetano; Pavarotti, Luciano, Scotto, Renata, Cappuccilli, Piero, Manganotti, Gianfranco, Ferrin, Agostino, Stasio, di, Anna, Ricciardi, Franco, Orchestra Sinfonica di Torino della RAI
+    Durbin, Deanna
+https://acoustid.org/track/308984c9-a3e8-404a-a12c-fd78b719268b
+https://www.amazon.co.uk/s/ref=dp_byline_sr_music_1?ie=UTF8&field-artist=East+17&search-alias=music
+https://www.amazon.co.uk/gp/product/B0000579XA
+https://www.amazon.co.uk/gp/product/B0012IP4K0
+https://www.amazon.co.uk/gp/product/B000091H7X
+https://en.wikipedia.org/wiki/East_17
+https://musicbrainz.org/artist/ee20d564-25ca-4ef5-aba7-93a39f78ed60
+https://musicbrainz.org/recording/8518954a-f62d-47a1-bd91-44d61fbc5853
+/Volumes/Musik/E/East 17/House of Love/01 House of Love (Pedigree mix).flac
+https://musicbrainz.org/recording/8e84c08c-8dc8-4bbf-98a5-cab630c7ed79
+https://acoustid.org/track/9b3681de-1d9e-4ec1-85da-0b2995fa4f72
+https://musicbrainz.org/release/443ee4ba-a7ff-3b8d-8425-0e1b1f62ebf9
+https://musicbrainz.org/release-group/5f6d1f81-81b4-3fe7-a249-bcfcc50a3c10
+https://musicbrainz.org/release/450de677-073d-4cb6-a31e-aae83bf4747b
+/Volumes/Musik/E/East 17/House of Love/02 House of Love (Son of a Bitch mix).flac
+https://musicbrainz.org/recording/dacc38a9-754e-4e0b-8755-072f3c793461
+https://acoustid.org/track/da283f1d-5b0b-4c10-b7fb-358611a83237
+/Volumes/Musik/E/East 17/House of Love/03 House of Love (Glossy Coat mix).flac
+https://acoustid.org/track/803ff839-e9b1-4be2-8ba0-cf14eb98cc97
+/Volumes/Musik/E/East 17/House of Love/04 House of Love (Wet Nose mix).flac
+/Volumes/Musik/E/East 17/House of Love
+    01 House of Love (Pedigree mix).flac
+    02 House of Love (Son of a Bitch mix).flac
+    03 House of Love (Glossy Coat mix).flac
+    04 House of Love (Wet Nose mix).flac
+https://acoustid.org/track/0a885c12-9d48-410c-a718-45ebbfd2f3e9
+https://musicbrainz.org/recording/63534b4e-219f-4d0e-9701-880bab5e3fa3
+/Volumes/Musik/E/East 17/Stay Another Day/01 Stay Another Day (S.A.D. mix).flac
+https://acoustid.org/track/d4f1a7b1-ac14-4edb-a011-bd1eb12cf2e9
+/Volumes/Musik/E/East 17/Stay Another Day/02 Stay Another Day (Less Sad mix).flac
+/Volumes/Musik/E/East 17/Stay Another Day/03 Stay Another Day (More Sad mix).flac
+/Volumes/Musik/E/East 17/Stay Another Day/04 Stay Another Day (Not So Sad mix) (1).flac
+/Volumes/Musik/E/East 17/Stay Another Day/04 Stay Another Day (Not So Sad mix) (1).flac
+/Volumes/Musik/E/East 17/Stay Another Day
+    01 Stay Another Day (S.A.D. mix).flac
+    02 Stay Another Day (Less Sad mix).flac
+    03 Stay Another Day (More Sad mix).flac
+    04 Stay Another Day (Not So Sad mix) (1).flac
+https://acoustid.org/track/e7103745-793f-4fe7-bd03-23e37d81407b
+https://musicbrainz.org/recording/b0c6448d-2a19-46f8-8e81-4d86df6efae7
+/Volumes/Musik/E/East 17/Steam/01 Steam.flac
+https://acoustid.org/track/13640ea0-c7d2-4b31-845f-ff8820cd1a79
+/Volumes/Musik/E/East 17/Steam/02 Hold My Body Tight.flac
+/Volumes/Musik/E/East 17/Steam/03 Let It All Go.flac
+/Volumes/Musik/E/East 17/Steam
+    01 Steam.flac
+    02 Hold My Body Tight.flac
+    03 Let It All Go.flac
+/Volumes/Musik/E/East 17/Up All Night/01 Innocent Erotic.flac
+/Volumes/Musik/E/East 17/Up All Night/02 Thunder.flac
+/Volumes/Musik/E/East 17/Up All Night
+    01 Innocent Erotic.flac
+    02 Thunder.flac
+/Volumes/Musik/E/East 17
+    House of Love
+    Stay Another Day
+    Steam
+    Up All Night
+https://acoustid.org/track/87dbf04d-54c7-4f06-a320-69ee91eb1f6c
+https://musicbrainz.org/recording/3821ed10-e448-4608-8847-aaaf107b6b80
+/Volumes/Musik/E/Eternal/Before the Rain/01 Eternal - Don't You Love Me.flac
+https://acoustid.org/track/2bde47a1-5414-428a-a108-ddc75b445f6f
+https://musicbrainz.org/recording/71f51ca6-2e29-4816-9cc7-842fc1c16dd5
+/Volumes/Musik/E/Eternal/Before the Rain/02 Eternal duet with BeBe Winans - I Wanna Be the Only One.flac
+https://acoustid.org/track/73fdf21b-35f2-400e-a168-b1c3d6fcac3f
+/Volumes/Musik/E/Eternal/Before the Rain/03 Eternal - How Many Tears.flac
+/Volumes/Musik/E/Eternal/Before the Rain/04 Eternal - Grace Under Pressure.flac
+/Volumes/Musik/E/Eternal/Before the Rain
+    01 Eternal - Don't You Love Me.flac
+    02 Eternal duet with BeBe Winans - I Wanna Be the Only One.flac
+    03 Eternal - How Many Tears.flac
+    04 Eternal - Grace Under Pressure.flac
+/Volumes/Musik/E/Eternal/I Wanna Be the Only One/01 I Wanna Be the Only One (feat. BeBe Winans).flac
+/Volumes/Musik/E/Eternal/I Wanna Be the Only One/02 A Friend Is a Friend.flac
+/Volumes/Musik/E/Eternal/I Wanna Be the Only One/03 Show Me.flac
+/Volumes/Musik/E/Eternal/I Wanna Be the Only One
+    01 I Wanna Be the Only One (feat. BeBe Winans).flac
+    02 A Friend Is a Friend.flac
+    03 Show Me.flac
+/Volumes/Musik/E/Eternal
+    Before the Rain
+    I Wanna Be the Only One
+https://acoustid.org/track/8353afb8-e887-47a9-80d4-3fe93d2915fe
+/Volumes/Musik/E/Eurythmics/Greatest Hits/02 Sweet Dreams (Are Made of This).m4a
+/Volumes/Musik/E/Eurythmics/Greatest Hits/11 Miracle of Love.m4a
+/Volumes/Musik/E/Eurythmics/Greatest Hits
+    02 Sweet Dreams (Are Made of This).m4a
+    11 Miracle of Love.m4a
+/Volumes/Musik/E/Eurythmics
+    Greatest Hits
+/Volumes/Musik/E
+    East 17
+    Eternal
+    Eurythmics
+https://acoustid.org/track/c6f33bfb-7ef0-4833-b341-655d62c6c635
+https://musicbrainz.org/recording/3e279c28-3047-4d33-9421-0daebbbd9135
+/Volumes/Musik/F/Felix/It Will Make Me Crazy/01 It Will Make Me Crazy (edit).flac
+https://acoustid.org/track/d3212865-9fa8-42a3-a4c6-7e3ce255c879
+/Volumes/Musik/F/Felix/It Will Make Me Crazy/02 It Will Make Me Crazy (Big mix).flac
+/Volumes/Musik/F/Felix/It Will Make Me Crazy/03 It Will Make Me Crazy (Felix's piano mix).flac
+/Volumes/Musik/F/Felix/It Will Make Me Crazy/04 It Will Make Me Crazy (Red Jelly mix).flac
+/Volumes/Musik/F/Felix/It Will Make Me Crazy
+    01 It Will Make Me Crazy (edit).flac
+    02 It Will Make Me Crazy (Big mix).flac
+    03 It Will Make Me Crazy (Felix's piano mix).flac
+    04 It Will Make Me Crazy (Red Jelly mix).flac
+/Volumes/Musik/F/Felix
+    It Will Make Me Crazy
+/Volumes/Musik/F/Fleetwood Mac/Fleetwood Mac/1-01 Monday Morning.flac
+/Volumes/Musik/F/Fleetwood Mac/Fleetwood Mac/1-02 Warm Ways.flac
+/Volumes/Musik/F/Fleetwood Mac/Fleetwood Mac/1-03 Blue Letter.flac
+/Volumes/Musik/F/Fleetwood Mac/Fleetwood Mac
+    1-01 Monday Morning.flac
+    1-02 Warm Ways.flac
+    1-03 Blue Letter.flac
+/Volumes/Musik/F/Fleetwood Mac
+    Fleetwood Mac
+https://acoustid.org/track/05893695-9aab-4fdd-be73-a354a4d5e642
+/Volumes/Musik/F/Franchetti, Alberto, Giordano, Umberto, Leoncavallo, Ruggero, Mascagni, Pietro, Ponchielli, Amilcare, Puccini, Giacomo; Caruso, Enrico/Caruso Sings Verismo Arias/02 La Boheme, Act I - O soave fanciulla.flac
+/Volumes/Musik/F/Franchetti, Alberto, Giordano, Umberto, Leoncavallo, Ruggero, Mascagni, Pietro, Ponchielli, Amilcare, Puccini, Giacomo; Caruso, Enrico/Caruso Sings Verismo Arias/03 La Boheme, Act III - Addio dolce svegliare alla mattina.flac
+/Volumes/Musik/F/Franchetti, Alberto, Giordano, Umberto, Leoncavallo, Ruggero, Mascagni, Pietro, Ponchielli, Amilcare, Puccini, Giacomo; Caruso, Enrico/Caruso Sings Verismo Arias
+    02 La Boheme, Act I - O soave fanciulla.flac
+    03 La Boheme, Act III - Addio dolce svegliare alla mattina.flac
+/Volumes/Musik/F/Franchetti, Alberto, Giordano, Umberto, Leoncavallo, Ruggero, Mascagni, Pietro, Ponchielli, Amilcare, Puccini, Giacomo; Caruso, Enrico
+    Caruso Sings Verismo Arias
+/Volumes/Musik/F/Fregnas, Los/Los Fregnas/01 Akkijo.flac
+/Volumes/Musik/F/Fregnas, Los/Los Fregnas
+    01 Akkijo.flac
+/Volumes/Musik/F/Fregnas, Los
+    Los Fregnas
+/Volumes/Musik/F/Friends United Refugees/Friends United Refugees
+/Volumes/Musik/F/Friends United Refugees
+    Friends United Refugees
+/Volumes/Musik/F
+    Felix
+    Fleetwood Mac
+    Franchetti, Alberto, Giordano, Umberto, Leoncavallo, Ruggero, Mascagni, Pietro, Ponchielli, Amilcare, Puccini, Giacomo; Caruso, Enrico
+    Fregnas, Los
+    Friends United Refugees
+https://musicbrainz.org/recording/f504cd0a-0c17-44e3-a2ad-2f4d6db97cd1
+https://acoustid.org/track/959b7b1f-8f56-435b-b1f3-d3dc938bd18b
+https://musicbrainz.org/release/b6acd9c3-ee05-4bd4-9c08-04498f502088
+/Volumes/Musik/G/Garanča, Elīna/Meditation/01 Charles-François Gounod - Messe solennelle de Ste. Cécile_ Sanctus.flac
+https://acoustid.org/track/2d760928-d6ed-4003-8879-31c8937bd54f
+/Volumes/Musik/G/Garanča, Elīna/Meditation/02 Charles-François Gounod - Repentir (O Divine Redeemer).flac
+/Volumes/Musik/G/Garanča, Elīna/Meditation/03 Uģis Prauliņš - Dievaines.flac
+/Volumes/Musik/G/Garanča, Elīna/Meditation
+    01 Charles-François Gounod - Messe solennelle de Ste. Cécile_ Sanctus.flac
+    02 Charles-François Gounod - Repentir (O Divine Redeemer).flac
+    03 Uģis Prauliņš - Dievaines.flac
+/Volumes/Musik/G/Garanča, Elīna
+    Meditation
+https://acoustid.org/track/ddfcc88b-74f4-45f1-a7c2-748313134362
+/Volumes/Musik/G/Gounod, Charles-François/Faust (Choer et Orchestre du Capitole de Toulouse feat. conductor_ Michel Plasson)/1-01 Faust_ Introduction (1).flac
+/Volumes/Musik/G/Gounod, Charles-François/Faust (Choer et Orchestre du Capitole de Toulouse feat. conductor_ Michel Plasson)/1-02 Faust_ Acte I, Scène 1 _Rein! En vain j'interroge..._ (1).flac
+/Volumes/Musik/G/Gounod, Charles-François/Faust (Choer et Orchestre du Capitole de Toulouse feat. conductor_ Michel Plasson)
+    1-01 Faust_ Introduction (1).flac
+    1-02 Faust_ Acte I, Scène 1 _Rein! En vain j'interroge..._ (1).flac
+/Volumes/Musik/G/Gounod, Charles-François
+    Faust (Choer et Orchestre du Capitole de Toulouse feat. conductor_ Michel Plasson)
+/Volumes/Musik/G/Gounod, Charles-François; Björling, Jussi, Kirsten, Dorothy, Siepi, Cesare, Guarrera, Frank, Cleva, Fausto, Orchestra, Metropolitan Opera/Faust/1-01 Introduction.flac
+/Volumes/Musik/G/Gounod, Charles-François; Björling, Jussi, Kirsten, Dorothy, Siepi, Cesare, Guarrera, Frank, Cleva, Fausto, Orchestra, Metropolitan Opera/Faust
+    1-01 Introduction.flac
+/Volumes/Musik/G/Gounod, Charles-François; Björling, Jussi, Kirsten, Dorothy, Siepi, Cesare, Guarrera, Frank, Cleva, Fausto, Orchestra, Metropolitan Opera
+    Faust
+/Volumes/Musik/G/Gardot, Melody/Live In Europe
+/Volumes/Musik/G/Gardot, Melody
+    Live In Europe
+/Volumes/Musik/G/Genaux, Vivica
+/Volumes/Musik/G
+    Garanča, Elīna
+    Gardot, Melody
+    Genaux, Vivica
+    Gounod, Charles-François
+    Gounod, Charles-François; Björling, Jussi, Kirsten, Dorothy, Siepi, Cesare, Guarrera, Frank, Cleva, Fausto, Orchestra, Metropolitan Opera
+https://acoustid.org/track/a3c24bef-1ec7-44eb-a0c3-4a8e516e37ce
+/Volumes/Musik/H/H, Arthur/Amour chien fou/1-01 La boxeuse amoureuse.flac
+/Volumes/Musik/H/H, Arthur/Amour chien fou/1-02 Reine de coeur.flac
+/Volumes/Musik/H/H, Arthur/Amour chien fou
+    1-01 La boxeuse amoureuse.flac
+    1-02 Reine de coeur.flac
+/Volumes/Musik/H/H, Arthur
+    Amour chien fou
+/Volumes/Musik/H/Hailey Tuck/Junk/01 1 That Don't Make It Junk.flac
+/Volumes/Musik/H/Hailey Tuck/Junk
+    01 1 That Don't Make It Junk.flac
+/Volumes/Musik/H/Hailey Tuck
+    Junk
+/Volumes/Musik/H/Harper, Ben and Musselwhite, Charlie/No Mercy in This Land
+/Volumes/Musik/H/Harper, Ben and Musselwhite, Charlie
+    No Mercy in This Land
+/Volumes/Musik/H/Hempel, Frieda
+/Volumes/Musik/H
+    H, Arthur
+    Hailey Tuck
+    Harper, Ben and Musselwhite, Charlie
+    Hempel, Frieda
+/Volumes/Musik/J/Jaël/Easy Life/01 Easy Life (Tobtok remix radio edit).flac
+/Volumes/Musik/J/Jaël/Easy Life
+    01 Easy Life (Tobtok remix radio edit).flac
+/Volumes/Musik/J/Jaël
+    Easy Life
+/Volumes/Musik/J/Jain/Souldier
+/Volumes/Musik/J/Jain
+    Souldier
+/Volumes/Musik/J/jallajalla
+/Volumes/Musik/J
+    Jaël
+    Jain
+    jallajalla
+/Volumes/Musik/K/Kimberose/Chapter One
+/Volumes/Musik/K/Kimberose
+    Chapter One
+/Volumes/Musik/K/Kuti, Femi
+/Volumes/Musik/K
+    Kimberose
+    Kuti, Femi
+/Volumes/Musik/3/3T
+/Volumes/Musik/3
+    3T
+/Volumes/Musik
+    1
+    2
+    3
+    A
+    B
+    C
+    D
+    E
+    F
+    G
+    H
+    J
+    K
+/Volumes/Qmultimedia/2/2 Unlimited/The Complete History/1-07 Magic Friend.mkv
+/Volumes/Qmultimedia/2/2 Unlimited/The Complete History/1-08 Workaholic.mkv
+/Volumes/Qmultimedia/2/2 Unlimited/The Complete History
+    1-08 Workaholic.mkv
+/Volumes/Qmultimedia/2/2 Unlimited
+    The Complete History
+https://acoustid.org/track/56de8070-3ed4-4bd1-a821-af80300511d7
+https://www.amazon.de/gp/product/B001SOAZAM
+https://www.amazon.de/-/e/B001LHIO9K
+https://www.amazon.de/b/ref=dp_bc_1?ie=UTF8&node=255882
+https://www.amazon.de/gp/product/B00000JP1D
+/Volumes/Qmultimedia/2/2-4 Family/Take Me Home/04 Take Me Home (Wicked C.L.U.'s Phat-B mix - 12_).flac
+/Volumes/Qmultimedia/2/2-4 Family/Take Me Home/05 Take Me Home (T.H.C.'s Stretch-3000 mix - 12_).flac
+/Volumes/Qmultimedia/2/2-4 Family/Take Me Home
+    04 Take Me Home (Wicked C.L.U.'s Phat-B mix - 12_).flac
+    05 Take Me Home (T.H.C.'s Stretch-3000 mix - 12_).flac
+/Volumes/Qmultimedia/2/2-4 Family
+    Take Me Home
+https://en.wikipedia.org/wiki/Pop_duo
+https://en.wikipedia.org/wiki/2raumwohnung
+https://musicbrainz.org/release-group/69777116-2303-37c1-adfe-54019c0e68ac
+https://musicbrainz.org/artist/5579a23d-c411-4930-987d-ff89d77c1c12
+https://musicbrainz.org/release-group/a8973547-166a-3097-9fab-05e8c9699d12
+https://musicbrainz.org/release/b3056636-aa2b-4588-bfe7-5b32e18ac005
+https://musicbrainz.org/label/40ab4841-e93a-4557-a91f-d3fbe30e6af9
+https://musicbrainz.org/recording/4ba5d2d2-c621-40ea-acc7-22dc1e78b4e6
+https://acoustid.org/track/9843ac8a-0130-4c87-8caa-f14a1fba8d09
+https://www.amazon.de/gp/product/B005E5MV3A
+https://www.amazon.de/-/e/B000APUCKI
+https://www.amazon.de/Dance-Electronic-CDs-Vinyl/b/ref=dp_bc_2?ie=UTF8&node=255883
+https://www.amazon.de/gp/product/B000QFAHE8
+https://musicbrainz.org/isrc/DEC610600206
+/Volumes/Qmultimedia/2
+    2 Unlimited
+    2-4 Family
+/Volumes/Qmultimedia/4/4 Non Blondes/Bigger, Better, Faster, More!/06 Spaceman.flac
+/Volumes/Qmultimedia/4/4 Non Blondes/Bigger, Better, Faster, More!/07 Old Mr. Heffer.flac
+/Volumes/Qmultimedia/4/4 Non Blondes/Bigger, Better, Faster, More!
+    07 Old Mr. Heffer.flac
+/Volumes/Qmultimedia/4/4 Non Blondes/What's Up_
+/Volumes/Qmultimedia/4/4 Non Blondes
+    Bigger, Better, Faster, More!
+/Volumes/Qmultimedia/4/4 Reeves
+/Volumes/Qmultimedia/4
+    4 Non Blondes
+/Volumes/Qmultimedia/6/6-Zylinder/Da capo, Roberto!/04 Jodlerbraut.flac
+/Volumes/Qmultimedia/6/6-Zylinder/Da capo, Roberto!
+    05 Buonasera signorina.flac
+/Volumes/Qmultimedia/6/6-Zylinder
+    Da capo, Roberto!
+/Volumes/Qmultimedia/6
+    6-Zylinder
+/Volumes/Qmultimedia/A/3/3. Generation, Die/Bitte nicht/02 Bitte nicht (Last Night).flac
+/Volumes/Qmultimedia/A/3/3. Generation, Die/Bitte nicht/03 Bitte nicht (Heartbreak).flac
+/Volumes/Qmultimedia/A/3/3. Generation, Die/Bitte nicht
+    03 Bitte nicht (Heartbreak).flac
+/Volumes/Qmultimedia/A/3/3. Generation, Die/Ich will, dass Du mich liebst/01 Ich will, dass Du mich liebst (radio edit).flac
+/Volumes/Qmultimedia/A/3/3. Generation, Die/Ich will, dass Du mich liebst/02 Ich will, dass Du mich liebst (single edit).flac
+/Volumes/Qmultimedia/A/3/3. Generation, Die/Ich will, dass Du mich liebst
+    02 Ich will, dass Du mich liebst (single edit).flac
+/Volumes/Qmultimedia/A/3/3. Generation, Die/Leb!/01 Leb!.flac
+/Volumes/Qmultimedia/A/3/3. Generation, Die/Leb!
+    01 Leb!.flac
+/Volumes/Qmultimedia/A/3/3. Generation, Die/Vater wo bist Du_
+/Volumes/Qmultimedia/A/3/3. Generation, Die
+    Bitte nicht
+    Ich will, dass Du mich liebst
+    Leb!
+    Vater wo bist Du_
+/Volumes/Qmultimedia/A/3/3T/24_7/01 24_7 (radio edit).flac
+/Volumes/Qmultimedia/A/3/3T/24_7/02 24_7 (Maurice's radio edit).flac
+/Volumes/Qmultimedia/A/3/3T/24_7
+    02 24_7 (Maurice's radio edit).flac
+/Volumes/Qmultimedia/A/3/3T/Anything/01 Anything (single edit with a cappella intro) (1).flac
+/Volumes/Qmultimedia/A/3/3T/Anything
+    01 Anything (single edit with a cappella intro) (1).flac
+/Volumes/Qmultimedia/A/3/3T/Brotherhood
+/Volumes/Qmultimedia/A/3/3T
+    24_7
+    Anything
+    Brotherhood
+/Volumes/Qmultimedia/A/3/3rd Storee/Get With Me/01 Get With Me.flac
+/Volumes/Qmultimedia/A/3/3rd Storee/Get With Me
+    01 Get With Me.flac
+/Volumes/Qmultimedia/A/3/3rd Storee
+    Get With Me
+/Volumes/Qmultimedia/A/3/3rd Wish/I Am
+/Volumes/Qmultimedia/A/3/3rd Wish
+    I Am
+/Volumes/Qmultimedia/A/3
+    3. Generation, Die
+    3T
+    3rd Storee
+    3rd Wish
+/Volumes/Qmultimedia/A/A Kay BJ/Sleeping in My Car/02 Sleeping in My Car (Factory Team edit).flac
+/Volumes/Qmultimedia/A/A Kay BJ/Sleeping in My Car/03 Car in the Groove (B. Beat).flac
+/Volumes/Qmultimedia/A/A Kay BJ/Sleeping in My Car
+    03 Car in the Groove (B. Beat).flac
+/Volumes/Qmultimedia/A/A Kay BJ
+    Sleeping in My Car
+/Volumes/Qmultimedia/A/A-Teens/Mamma Mia/01 Mamma Mia (radio version).flac
+/Volumes/Qmultimedia/A/A-Teens/Mamma Mia/02 Mamma Mia (Giuseppe remix).flac
+/Volumes/Qmultimedia/A/A-Teens/Mamma Mia
+    02 Mamma Mia (Giuseppe remix).flac
+/Volumes/Qmultimedia/A/A-Teens/New Arrival/01 Floorfiller.flac
+/Volumes/Qmultimedia/A/A-Teens/New Arrival
+    01 Floorfiller.flac
+/Volumes/Qmultimedia/A/A-Teens/Teen Spirit
+/Volumes/Qmultimedia/A/A-Teens
+    Mamma Mia
+    New Arrival
+    Teen Spirit
+/Volumes/Qmultimedia/A/ABBA/Arrival/01 When I Kissed the Teacher.flac
+/Volumes/Qmultimedia/A/ABBA/Arrival
+    01 When I Kissed the Teacher.flac
+/Volumes/Qmultimedia/A/ABBA/Forever Gold
+/Volumes/Qmultimedia/A/ABBA
+    Arrival
+    Forever Gold
+/Volumes/Qmultimedia/A/ABC/The Lexicon of Love
+/Volumes/Qmultimedia/A/ABC
+    The Lexicon of Love
+/Volumes/Qmultimedia/A/AC_DC
+/Volumes/Qmultimedia/A
+    3
+    A Kay BJ
+    A-Teens
+    ABBA
+    ABC
+    AC_DC
+/Volumes/Qmultimedia/Amazon/Various artists/Rock's Greatest Hits Live - Volume 1
+/Volumes/Qmultimedia/Amazon/Various artists/Rock's Greatest Hits Live - Volume 5
+/Volumes/Qmultimedia/Amazon/Various artists
+    Rock's Greatest Hits Live - Volume 5
+/Volumes/Qmultimedia/Amazon
+    Various artists
+https://acoustid.org/track/fb45326c-c3ea-4dfd-b244-f38512ea669d
+/Volumes/Qmultimedia/B/B.G. The Prince of Rap/Get the Groove On/01 Stomp.flac
+/Volumes/Qmultimedia/B/B.G. The Prince of Rap/Get the Groove On/02 Get the Groove On.flac
+/Volumes/Qmultimedia/B/B.G. The Prince of Rap/Get the Groove On
+    01 Stomp.flac
+    02 Get the Groove On.flac
+/Volumes/Qmultimedia/B/B.G. The Prince of Rap
+    Get the Groove On
+/Volumes/Qmultimedia/B/BK & Real, Ed/HardHouse Anthems 2001/1-01 911 - The 4 Commitments (extended Basomatic mix).flac
+/Volumes/Qmultimedia/B/BK & Real, Ed/HardHouse Anthems 2001
+    1-01 911 - The 4 Commitments (extended Basomatic mix).flac
+/Volumes/Qmultimedia/B/BK & Real, Ed
+    HardHouse Anthems 2001
+/Volumes/Qmultimedia/B/BOOM BOOM SATELLITES/7 IGNITIONS _ AUTO RE-BIRTH
+/Volumes/Qmultimedia/B/BOOM BOOM SATELLITES
+    7 IGNITIONS _ AUTO RE-BIRTH
+/Volumes/Qmultimedia/B/BT
+/Volumes/Qmultimedia/B
+    B.G. The Prince of Rap
+    BK & Real, Ed
+    BOOM BOOM SATELLITES
+    BT
+/Volumes/Qmultimedia/Backstreet Boys/Get Down (You're the One for Me)/5-1
+/Volumes/Qmultimedia/Backstreet Boys/Get Down (You're the One for Me)/5-2
+/Volumes/Qmultimedia/Backstreet Boys/Get Down (You're the One for Me)
+    5-1
+    5-2
+/Volumes/Qmultimedia/Backstreet Boys/Quit Playing Games (With My Heart)/1
+/Volumes/Qmultimedia/Backstreet Boys/Quit Playing Games (With My Heart)
+    1
+/Volumes/Qmultimedia/Backstreet Boys
+    Get Down (You're the One for Me)
+    Quit Playing Games (With My Heart)
+/Volumes/Qmultimedia/Basia/London Warsaw New York
+/Volumes/Qmultimedia/Basia
+/Volumes/Qmultimedia/Basis
+/Volumes/Qmultimedia/Beastie Boys
+/Volumes/Qmultimedia
+    2
+    4
+    6
+    A
+    Amazon
+    B
+    Backstreet Boys
+    Basia
+    Basis
+    Beastie Boys
+https://en.wikipedia.org/wiki/Classical_period_(music)
+https://en.wikipedia.org/wiki/Romantic_music
+https://en.wikipedia.org/wiki/Carmen
+https://en.wikipedia.org/wiki/Georges_Bizet
+https://musicbrainz.org/artist/b6cb51fd-caab-4fc5-be1c-51caf2bb49a0
+https://musicbrainz.org/release-group/a262fa52-8680-44ef-89a1-bb464de34800
+https://musicbrainz.org/artist/9914f9f9-36c0-4156-8799-6544c60ab08c
+https://musicbrainz.org/artist/9bd20e6a-b41d-4983-a5b6-c0ff849fa235
+https://en.wikipedia.org/wiki/Lawrence_Tibbett
+https://musicbrainz.org/artist/ad5f7b86-f76e-43a6-8fa4-a90048a8b8e9
+https://musicbrainz.org/work/9a771cbb-6de4-3758-b917-05b69fa0b20b
+https://musicbrainz.org/release/2c92dbc0-e649-4f53-97a1-7b233ec384f9
+https://en.wikipedia.org/wiki/Delos_Productions
+https://musicbrainz.org/label/6897b9b1-68f3-440b-afc3-d238e44b93f0
+https://musicbrainz.org/artist/94828a25-2b05-41cb-a978-ca25a2991553
+https://musicbrainz.org/recording/740fe1ee-1c42-46b4-9529-d632361ce2ec
+https://acoustid.org/track/d118d416-145d-42a4-aa50-20469aca1397
+https://www.amazon.com/s/ref=dp_byline_sr_music_1?ie=UTF8&field-artist=Unknown&search-alias=music
+https://www.amazon.com/gp/product/B01A7UDIA6
+https://www.amazon.com/music-rock-classical-pop-jazz/b/ref=dp_bc_1?ie=UTF8&node=5174
+https://www.amazon.com/gp/product/B00000072P
+https://en.wikipedia.org/wiki/Composer
+https://en.wikipedia.org/wiki/Ruggero_Leoncavallo
+https://musicbrainz.org/release-group/136211c2-9049-3cd5-bb33-ef22155aa133
+https://musicbrainz.org/artist/9bfbcb17-bd72-444e-be7d-0129b6389ca1
+https://musicbrainz.org/artist/f902cd41-4389-498c-8d28-c05378603720
+https://musicbrainz.org/release/2a607423-9b2f-441c-b690-cdd117f1aa44
+https://musicbrainz.org/work/78f5cc1c-5bb1-34d4-b71f-a8a8d3c86ef1
+https://musicbrainz.org/recording/72e86525-aa89-449a-afae-55c2016f5aad
+https://acoustid.org/track/98e25902-a22b-478b-8263-fd11f3dda654
+https://musicbrainz.org/work/d4126086-8d71-3b9e-98f2-dd578f2ff4bb
+https://musicbrainz.org/recording/5e8eaa63-e708-4a70-a7f9-515a7baabab4
+https://acoustid.org/track/9fb7e046-0ea2-472b-abc8-486ca6d60228
+/Volumes/music/T/Tibbett, Lawrence/The Stanford Archive Series_ Lawrence Tibbett/1-05 Oley Speaks - On the Road To Mandalay.flac
+/Volumes/music/T/Tibbett, Lawrence/The Stanford Archive Series_ Lawrence Tibbett/1-06 De Glory Road for voice & piano.flac
+/Volumes/music/T/Tibbett, Lawrence/The Stanford Archive Series_ Lawrence Tibbett
+    1-06 De Glory Road for voice & piano.flac
+/Volumes/music/T/Tibbett, Lawrence
+    The Stanford Archive Series_ Lawrence Tibbett
+/Volumes/music/T
+    Tibbett, Lawrence
+/Volumes/music
+    T
+/Volumes
+    Musik
+    Qmultimedia
+    music
+<root>
+    Users
+    Volumes
+https://acoustid.org/track/118d9d13-2d40-4f9d-bcdc-9d0937a82d93
+https://www.amazon.de/gp/product/B0000925VN
+https://www.amazon.de/gp/product/B00009ZT7S
+https://www.amazon.de/gp/product/B000025GNY
+https://www.amazon.de/-/e/B000APXFRA
+https://www.amazon.de/gp/product/B001AXM9QO
+https://www.amazon.de/gp/product/B00832696G
+https://www.amazon.de/gp/product/B0000029EA
+https://www.amazon.de/gp/product/B000025KNL
+https://www.amazon.de/Klassik-Klassiche-Musik-CDs/b/ref=dp_bc_2?ie=UTF8&node=255966
+https://www.amazon.de/gp/product/B01MYVFQYB
+https://www.amazon.de/s/ref=dp_byline_sr_music_1?ie=UTF8&field-artist=Cappella+Mediterranea&search-alias=music-de
+https://www.amazon.de/gp/product/B07F39CVGJ
+https://www.amazon.de/gp/product/B000091VMQ
+https://www.amazon.de/gp/product/B013Q6XF10
+https://www.amazon.de/Rap-HipHop-CDs/b/ref=dp_bc_2?ie=UTF8&node=255902
+https://www.amazon.de/gp/product/B0000075DA
+https://www.amazon.de/Pop-Musik-CDs/b/ref=dp_bc_2?ie=UTF8&node=264875
+https://www.amazon.de/gp/product/B003UN58XS
+https://www.amazon.de/gp/product/B01ABAFCY2
+https://www.amazon.de/gp/product/B01N7LA27Y
+https://www.amazon.de/Alternative-Punk-CDs-Vinyl/b/ref=dp_bc_2?ie=UTF8&node=400118
+https://www.amazon.de/gp/product/B0000509TR
+https://www.amazon.de/s/ref=dp_byline_sr_music_1?ie=UTF8&field-artist=Culture+Beat&search-alias=music-de
+https://www.amazon.de/gp/product/B00004SJTK
+https://www.amazon.de/gp/product/B000008LTW
+https://www.amazon.de/gp/product/B01MFB4PNK
+https://www.amazon.de/Dance-Electronic-CDs-Vinyl/b/ref=dp_bc_2?ie=UTF8&node=255883
+https://www.amazon.de/gp/product/B000025KRN
+https://www.amazon.de/gp/product/B000092KNN
+https://www.amazon.de/gp/product/B000026S7Y
+https://www.amazon.de/gp/product/B0000CA13E
+https://www.amazon.de/-/e/B000AQ2STU
+https://www.amazon.de/gp/product/B003BMEOBK
+https://www.amazon.de/gp/product/B000092JEU
+https://www.amazon.de/gp/product/B000003RA5
+https://www.amazon.de/gp/product/B000003RA6
+https://www.amazon.de/Techno-Dance-Electronic-Musik/b/ref=dp_bc_3?ie=UTF8&node=255891
+https://www.amazon.de/gp/product/B00005M1HF
+https://www.amazon.de/gp/product/B002DM8WHG
+https://www.amazon.de/gp/product/B0000256JH
+https://www.amazon.de/gp/product/B01N43SZA0
+https://www.amazon.de/-/e/B000APYW40
+https://www.amazon.de/Rock-Musik-CDs/b/ref=dp_bc_2?ie=UTF8&node=264886
+https://www.amazon.de/gp/product/B00006RT50
+https://www.amazon.de/s/ref=dp_byline_sr_music_1?ie=UTF8&field-artist=Shaggy&search-alias=music-de
+https://www.amazon.de/gp/product/B0000074X2
+https://www.amazon.de/s/ref=dp_byline_sr_music_1?ie=UTF8&field-artist=The+Rolling+Stones&search-alias=music-de
+https://www.amazon.de/gp/product/B0000074X1
+https://www.amazon.de/s/ref=dp_byline_sr_music_1?ie=UTF8&field-artist=Erasure&search-alias=music-de
+https://www.amazon.de/gp/product/B0000074WY
+https://www.amazon.de/s/ref=dp_byline_sr_music_1?ie=UTF8&field-artist=Laura+Pausini&search-alias=music-de
+https://www.amazon.de/gp/product/B00000AUMS
+https://www.amazon.de/gp/product/B00005K8KR
+https://www.amazon.de/gp/product/B01N63EB4D
+https://www.amazon.de/s/ref=dp_byline_sr_music_1?ie=UTF8&field-artist=2+Unlimited&search-alias=music-de
+https://www.amazon.de/gp/product/B00005PLTA
+https://en.wikipedia.org/wiki/Dr._Dre
+https://en.wikipedia.org/wiki/Snoop_Dogg
+https://en.wikipedia.org/wiki/Maximum_Overdrive_(song)
+https://en.wikipedia.org/wiki/Ray_Slijngaard
+https://en.wikipedia.org/wiki/List_of_cities_in_the_Netherlands_by_province
+https://en.wikipedia.org/wiki/The_Hague
+https://en.wikipedia.org/wiki/City_Region_of_Amsterdam
+https://en.wikipedia.org/wiki/Amsterdam
+https://en.wikipedia.org/wiki/Real_Things_(2_Unlimited_album)
+https://en.wikipedia.org/wiki/Nothing_Like_the_Rain
+https://en.wikipedia.org/wiki/No_Limit_(2_Unlimited_song)
+https://en.wikipedia.org/wiki/Anita_Doth
+https://en.wikipedia.org/wiki/Compact_disc
+https://en.wikipedia.org/wiki/CD_single
+https://en.wikipedia.org/wiki/Rave_music
+https://en.wikipedia.org/wiki/United_Kingdom
+https://en.wikipedia.org/wiki/Twilight_Zone_(2_Unlimited_song)
+https://en.wikipedia.org/wiki/2_Unlimited
+https://en.wikipedia.org/wiki/Northern_Europe
+https://en.wikipedia.org/wiki/Northwestern_Europe
+https://en.wikipedia.org/wiki/Caribbean_Netherlands
+https://en.wikipedia.org/wiki/Netherlands
+https://en.wikipedia.org/wiki/Streaming_media
+https://en.wikipedia.org/wiki/UK_Albums_Chart
+https://en.wikipedia.org/wiki/Billboard_200
+https://en.wikipedia.org/wiki/Get_Ready!
+https://musicbrainz.org/release/c61f5930-effc-486c-8f34-78658d374b56
+https://musicbrainz.org/recording/4509caab-75d4-4437-90f6-a4ff59a3a7ce
+https://musicbrainz.org/recording/47e206de-c6e1-4c47-ba60-0c48664b6d6f
+https://musicbrainz.org/release/b9639aa6-e71d-4630-89b6-e4c95e51d32d
+https://musicbrainz.org/recording/bfd70f68-ba02-4550-823a-46bb60670ef0
+https://musicbrainz.org/release/92f40353-ff30-4af4-a59b-ee21d6bc35bd
+https://musicbrainz.org/label/a8d53624-cfe1-4fad-a4ba-f6e725637783
+https://musicbrainz.org/release-group/613fec41-371c-3887-954b-95f2876a025e
+http://lyrics.wikia.com/wiki/Category:Albums_released_in_2015
+http://lyrics.wikia.com/wiki/!!!:As_If_(2015)
+http://lyrics.wikia.com/wiki/Category:Page_rank_categories
+http://lyrics.wikia.com/wiki/Category:Green_Albums
+http://lyrics.wikia.com/wiki/Category:Hidden_categories
+http://lyrics.wikia.com/wiki/Category:Albums_released_in_1992
+http://lyrics.wikia.com/wiki/Category:Genre/Eurodance
+http://lyrics.wikia.com/wiki/2_Unlimited:Get_Ready!_(1992)
+https://www.allmusic.com/album/mw0000625498
+https://www.allmusic.com/album/mw0000102187
+https://www.allmusic.com/album/mw0000709767
+https://www.allmusic.com/album/mw0000073950
+https://musicbrainz.org/label/f79d7ccf-442a-4998-846e-51ec520136cd
+https://musicbrainz.org/release-group/de7dfb46-b90c-3571-b88d-6e89b54e8284
+https://musicbrainz.org/release-group/950eecef-c234-3880-b1cf-b7c65c158f2f
+https://musicbrainz.org/artist/515b236c-cce1-4dc2-aedd-50de7b1736e2
+https://en.wikipedia.org/wiki/Central_Europe
+https://en.wikipedia.org/wiki/Germany
+https://en.wikipedia.org/wiki/Disco
+https://en.wikipedia.org/wiki/ZYX_Music
+https://musicbrainz.org/artist/9517d2a3-fea6-4449-bfc2-a5debee5ec6c
+https://musicbrainz.org/release/99972233-0c24-4922-9c24-0911916a47f3
+https://musicbrainz.org/release/f119764c-3455-49fa-9bfc-f23436ebe26f
+https://musicbrainz.org/label/6844efda-a451-431e-8cc1-48ab111b4711
+https://acoustid.org/track/756ba1c6-4f23-464e-b607-59acc01b94cd
+https://musicbrainz.org/recording/47eee382-a0cd-430c-a222-b02f207d98f5
+https://acoustid.org/track/fab0c771-11b9-435c-a4d1-13e1b30de43b
+https://www.amazon.co.uk/gp/product/B00005PLTA
+https://en.wikipedia.org/wiki/Freaky_Trigger
+https://en.wikipedia.org/wiki/The_Magic_Friend
+https://www.wikidata.org/wiki/Q7749427
+https://musicbrainz.org/work/69601b3e-7dba-315b-867d-2eb51fe8169e
+https://musicbrainz.org/release-group/b1e409a0-ee1c-4c1c-85b3-011fec7f0ab1
+https://musicbrainz.org/artist/48938075-65a1-4385-aca7-8216cfe42671
+https://acoustid.org/track/c860c759-3a7f-4a08-bbc4-0a3093f49351
+https://musicbrainz.org/recording/ebadfeef-b912-46ba-9798-09adfe57313a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/2 Unlimited/Beyond Limits/04 The Magic Friend.m4a
+https://acoustid.org/track/9f6c659d-0cd1-4b3e-9c8c-ffb87b0c395d
+https://musicbrainz.org/recording/0cf1f989-6464-411c-b3f3-45aea402cdeb
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/2 Unlimited/Beyond Limits/08 The Real Thing.m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/2 Unlimited/Beyond Limits
+    04 The Magic Friend.m4a
+    08 The Real Thing.m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/2 Unlimited/The Complete History/1-07 Magic Friend.mp4
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/2 Unlimited/The Complete History/1-08 Workaholic.mp4
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/2 Unlimited/The Complete History
+    1-08 Workaholic.mp4
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/2 Unlimited/The Real Thing/04 The Real Thing (Doc Baron's 90 Proof club mix).m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/2 Unlimited/The Real Thing/04 The Real Thing (Tribal-Thing).m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/2 Unlimited/The Real Thing
+    04 The Real Thing (Tribal-Thing).m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/2 Unlimited/Tribal Dance/02 Tribal Dance (extended rap).m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/2 Unlimited/Tribal Dance/03 Tribal Dance (Automatic African remix).m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/2 Unlimited/Tribal Dance
+    03 Tribal Dance (Automatic African remix).m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/2 Unlimited
+    Beyond Limits
+    The Complete History
+    The Real Thing
+    Tribal Dance
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/2raumwohnung/36grad/1-06 Nimm sie.m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/2raumwohnung/36grad/1-07 Ja.m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/2raumwohnung/36grad
+    1-07 Ja.m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/2raumwohnung
+    36grad
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/3T/Anything/05 Anything (Misty Funk mix).m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/3T/Anything/06 Anything (Cory's R&B Smooth mix).m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/3T/Anything
+    06 Anything (Cory's R&B Smooth mix).m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/3T
+    Anything
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/ABBA/The Albums/1-04 People Need Love.m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/ABBA/The Albums/1-05 I Saw It in the Mirror.m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/ABBA/The Albums
+    1-05 I Saw It in the Mirror.m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/ABBA
+    The Albums
+https://musicbrainz.org/recording/19da093d-2bb0-4500-850f-7dcd456e7da8
+https://acoustid.org/track/419312ff-7d10-4aa1-8514-e2edecc31bdc
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/ATB/You're Not Alone/03 Rising Moon (Rising mix).m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/ATB/You're Not Alone/04 You're Not Alone (2nd Clubb mix).m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/ATB/You're Not Alone
+    04 You're Not Alone (2nd Clubb mix).m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/ATB
+    You're Not Alone
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/ATC/Around the World (La La La La La)/01 Around the World (La La La La La) (radio version).m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/ATC/Around the World (La La La La La)/02 Around the World (La La La La La) (acoustic mix).m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/ATC/Around the World (La La La La La)
+    02 Around the World (La La La La La) (acoustic mix).m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/ATC/I'm in Heaven (When You Kiss Me)/01 I'm in Heaven (When You Kiss Me) (radio edit 5_ version).m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/ATC/I'm in Heaven (When You Kiss Me)/02 I'm in Heaven (When You Kiss Me) (radio edit 12_ version).m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/ATC/I'm in Heaven (When You Kiss Me)
+    02 I'm in Heaven (When You Kiss Me) (radio edit 12_ version).m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/ATC/My Heart Beats Like a Drum (Dam Dam Dam)/01 My Heart Beats Like a Drum (Dam Dam Dam) (radio edit).m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/ATC/My Heart Beats Like a Drum (Dam Dam Dam)
+    01 My Heart Beats Like a Drum (Dam Dam Dam) (radio edit).m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/ATC
+    Around the World (La La La La La)
+    I'm in Heaven (When You Kiss Me)
+    My Heart Beats Like a Drum (Dam Dam Dam)
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/Aaron Carter/Aaron Carter/Intro.m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/Aaron Carter/Aaron Carter/02 I Will Be Yours.m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/Aaron Carter/Aaron Carter
+    02 I Will Be Yours.m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/Aaron Carter
+    Aaron Carter
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/Ace of Base/Happy Nation/01 Voulez-vous danser.m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/Ace of Base/Happy Nation
+    01 Voulez-vous danser.m4a
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/Ace of Base/The Bridge
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/Ace of Base
+    Happy Nation
+    The Bridge
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/Adiemus/Adiemus
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/Adiemus
+    Adiemus
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music/Aerosmith
+/Users/ralph.sigrist/Music/iTunes/iTunes Media/Music
+    2 Unlimited
+    2raumwohnung
+    3T
+    ABBA
+    ATB
+    ATC
+    Aaron Carter
+    Ace of Base
+    Adiemus
+    Aerosmith
+https://en.wikipedia.org/wiki/Kempyang_and_ketuk
+https://en.wikipedia.org/wiki/Musical_form
+https://en.wikipedia.org/wiki/Genre
+https://en.wikipedia.org/wiki/Music_genre
+https://en.wikipedia.org/wiki/Jazz
+https://en.wikipedia.org/wiki/Rhythm_and_blues
+https://en.wikipedia.org/wiki/Pop_music
+https://en.wikipedia.org/wiki/Contemporary_R%26B
+https://en.wikipedia.org/wiki/Frankie_Crocker
+https://en.wikipedia.org/wiki/Urban_contemporary
+https://en.wikipedia.org/wiki/Universal_Music_Group
+https://en.wikipedia.org/wiki/Def_Jam_Recordings
+https://en.wikipedia.org/wiki/Georgia_(U.S._state)
+https://en.wikipedia.org/wiki/Atlanta
+https://en.wikipedia.org/wiki/Only_You_(112_song)
+https://en.wikipedia.org/wiki/112_(band)
+https://en.wikipedia.org/wiki/Grammy_Award
+https://en.wikipedia.org/wiki/Tim_%26_Bob
+https://en.wikipedia.org/wiki/Stevie_J
+https://en.wikipedia.org/wiki/112_%28album%29
+https://musicbrainz.org/recording/f8aa3a67-5368-44c5-8d9e-4433dea9fab2
+https://musicbrainz.org/release/b5e25b33-ff80-4fa6-b4bf-34e685d873a5
+https://musicbrainz.org/release/2d1e9591-bf37-4f7d-a227-feebe30638cb
+https://musicbrainz.org/release-group/feff0874-1e66-3f19-afa7-ce43653e912b
+https://www.discogs.com/artist/113470
+https://www.discogs.com/genre/funk+%2F+soul
+https://www.discogs.com/master/230993
+https://musicbrainz.org/release/c37686c6-0642-480a-8185-49e43076d51c
+https://musicbrainz.org/release-group/e1f1dbd1-5061-30b3-8a28-f783faa1d0c6
+https://musicbrainz.org/release-group/e7cf6b26-44f9-3b52-b8f8-bf140d8e85be
+https://musicbrainz.org/artist/9132d515-dc0e-4494-85ae-20f06eed14f9
+https://en.wikipedia.org/wiki/List_of_United_States_cities_by_population
+https://en.wikipedia.org/wiki/New_York_City
+https://en.wikipedia.org/wiki/Mount_Vernon,_New_York
+https://en.wikipedia.org/wiki/Sean_Combs
+https://en.wikipedia.org/wiki/Sony_Corporation_of_America
+https://en.wikipedia.org/wiki/Epic_Records
+https://en.wikipedia.org/wiki/The_Notorious_B.I.G.
+https://en.wikipedia.org/wiki/Bad_Boy_Records
+https://musicbrainz.org/release-group/5afcfeac-118a-35e6-af0d-35ec9003354d
+https://musicbrainz.org/artist/d5d97b2b-b83b-4976-814a-056d9076c8c3
+https://musicbrainz.org/recording/1f0248a2-a264-465c-916a-b1691def86f6
+https://musicbrainz.org/release/ed2eb0db-4ef9-3658-a613-582dd359348e
+https://musicbrainz.org/artist/a8eba463-6a23-4eaf-ba67-331722cdefc2
+https://musicbrainz.org/release/c39794bb-1886-42d9-8a8e-a1be8ae8d5fa
+https://musicbrainz.org/release/809b8454-f957-4345-b5ea-6c3a8d1d07a1
+https://musicbrainz.org/label/29d43312-a8ed-4d7b-9f4e-f5650318aebb
+https://en.wikipedia.org/wiki/G%C3%BCtersloh
+https://en.wikipedia.org/wiki/Bertelsmann
+https://en.wikipedia.org/wiki/Japan
+https://en.wikipedia.org/wiki/Bertelsmann_Music_Group
+https://musicbrainz.org/artist/7b5b8b1b-414b-44e8-862f-b1f20fcef5dc
+https://musicbrainz.org/release/9b011555-ce5a-4675-a6ad-a70a56edc07e
+https://musicbrainz.org/release/ce442315-e2db-4098-8498-ed7fa7b028ea
+https://musicbrainz.org/label/29d7c88f-5200-4418-a683-5c94ea032e38
+https://en.wikipedia.org/wiki/The_Hit_Factory
+https://musicbrainz.org/place/0734af74-2945-4df1-9784-72c4e6b6d2a5
+https://musicbrainz.org/label/64a22fd5-dd6d-4b5f-8967-2264e5bf7e29
+https://musicbrainz.org/release/b0b13172-53ef-415a-916d-e592a3cf73d6
+https://musicbrainz.org/release-group/3f80494d-1f40-42ba-bb80-6c0c00e7ce1d
+https://musicbrainz.org/release/70e3a6ad-6d47-4fbb-9a67-587542260922
+https://musicbrainz.org/label/c4f2cf49-b57c-4cc1-8061-f54400704ac4
+https://musicbrainz.org/recording/9b871449-7109-42fe-835b-6957a006e25d
+https://acoustid.org/track/3b593c91-7008-4f96-a837-68dc243d82f6
+https://www.amazon.de/gp/product/B075HJ49D9
+https://www.amazon.de/gp/product/B01G4E8M0A
+https://www.amazon.de/gp/product/B001EI5OJO
+https://www.amazon.de/gp/product/B011HES3R4
+https://www.amazon.de/gp/product/B06VWGQC9L
+https://www.amazon.de/gp/product/B01G47827U
+https://www.amazon.de/gp/product/B00LQ7W2H0
+https://www.amazon.de/gp/product/B001SVGCOS
+https://www.amazon.de/Modern-RB-Soul-Musik/b/ref=dp_bc_3?ie=UTF8&node=255900
+https://www.amazon.de/gp/product/B0007X9TMU
+https://www.amazon.de/gp/product/B0007V5WFA
+https://www.amazon.de/gp/product/B077QQ22HP
+https://www.amazon.de/gp/product/B0007X9TMK
+https://www.amazon.de/gp/product/B00005AKB8
+https://www.amazon.de/gp/product/B00005IBZK
+https://www.amazon.de/gp/product/B01AXMJUGO
+https://www.amazon.de/gp/product/B00BBS5VWM
+https://www.amazon.de/gp/product/B01MYLGZTF
+https://www.amazon.de/gp/product/B00005HU30
+https://www.amazon.de/gp/product/B01KAPOPIW
+https://www.amazon.de/gp/product/B000059RWB
+https://www.amazon.de/gp/product/B01KAPIHFE
+https://www.amazon.de/gp/product/B006N78QVE
+https://www.amazon.de/gp/product/B019GRA6JW
+https://www.amazon.de/gp/product/B0000039Q7
+https://www.amazon.de/gp/product/B001SVB24S
+https://www.amazon.de/gp/product/B0000C4366
+https://www.amazon.de/gp/product/B01N8SV0B9
+https://www.amazon.de/-/e/B000AQ6LWA
+https://www.amazon.de/gp/product/B000024NIB
+https://www.amazon.de/gp/product/B01MYLH817
+https://www.amazon.de/gp/product/B00005QZ1S
+https://www.amazon.de/gp/product/B00000D9VN
+https://www.amazon.de/-/e/B000APIUCU
+https://www.amazon.de/gp/product/B01KBHRRX4
+https://www.amazon.de/gp/product/B00LK3FCTU
+https://www.amazon.de/gp/product/B004JJ5GSY
+https://www.amazon.de/gp/product/B0000039Q5
+https://www.amazon.de/gp/product/B019GRAVEW
+https://www.amazon.de/gp/product/B000024RNZ
+https://www.amazon.de/gp/product/B00FY3VU1G
+https://www.amazon.de/gp/product/B01M991Y4O
+https://www.amazon.de/gp/product/B000A0GDWY
+https://www.amazon.de/gp/product/B01LXMKN5W
+https://www.amazon.de/gp/product/B0000243W7
+https://www.amazon.de/gp/product/B0043J0CCU
+https://www.amazon.de/gp/product/B01AXLT2NQ
+https://www.amazon.de/gp/product/B00000GFLQ
+https://musicbrainz.org/isrc/USAR19800507
+https://en.wikipedia.org/wiki/Billboard_(magazine)
+https://en.wikipedia.org/wiki/Billboard_Hot_100
+https://en.wikipedia.org/wiki/Hot_Rap_Songs
+https://en.wikipedia.org/wiki/Mase
+https://en.wikipedia.org/wiki/Lakeland,_Florida
+https://en.wikipedia.org/wiki/Faith_Evans
+https://en.wikipedia.org/wiki/Lil_Zane
+https://en.wikipedia.org/wiki/Room_112
+https://www.amazon.com/gp/product/B000059RWB
+https://www.amazon.com/-/e/B000AQ6LWA
+https://www.amazon.com/RB-Music/b/ref=dp_bc_2?ie=UTF8&node=39
+https://www.amazon.com/gp/product/B00000D9VN
+https://musicbrainz.org/label/85120e90-1e30-483b-b224-6d40868c3de6
+https://musicbrainz.org/release/a7e8666b-64b2-4089-832f-f1fffdd6fbce
+https://musicbrainz.org/release/1fd7cbce-e589-48a8-923f-7d2f9f5f3c4d
+https://musicbrainz.org/release-group/a15cf6a3-c02a-316f-8e3d-15cd8ddf95f0
+https://www.discogs.com/label/308960
+https://musicbrainz.org/label/3a4224ba-2b74-4010-a42c-dde524654343
+https://musicbrainz.org/label/a789c5e2-2dc5-47f2-bb97-12c23e5805d2
+https://musicbrainz.org/work/af499b43-2556-45c6-87e9-4879f5cf7abe
+/Volumes/Musik/1/112/Room 112/01 112 - Room 112 (intro).flac
+https://en.wikipedia.org/wiki/Washington_metropolitan_area
+https://en.wikipedia.org/wiki/Washington,_D.C.
+https://en.wikipedia.org/wiki/Territories_of_the_United_States
+https://en.wikipedia.org/wiki/United_States
+https://en.wikipedia.org/wiki/Music
+https://en.wikipedia.org/wiki/Record_producer
+https://en.wikipedia.org/wiki/Mixing_console
+https://en.wikipedia.org/wiki/Michael_Patterson_%28producer%29
+https://twitter.com/popantipop
+https://www.discogs.com/artist/93925
+https://www.discogs.com/artist/62807
+https://www.discogs.com/label/340531
+https://musicbrainz.org/url/d4997e81-39f1-421d-9c86-bff8acd9ee98
+https://musicbrainz.org/place/34554cea-4ad1-4029-87f6-d4efe06578d7
+https://musicbrainz.org/area/1f40c6e1-47ba-4e35-996f-fe6ee5840e62
+https://musicbrainz.org/area/1f40c6e1-47ba-4e35-996f-fe6ee5840e62
+https://www.allmusic.com/artist/mn0000465015
+https://musicbrainz.org/artist/7b854ae0-0ca5-4061-ba69-8d0e5a1b2288
+https://en.wikipedia.org/wiki/Musician
+https://en.wikipedia.org/wiki/Singer-songwriter
+https://en.wikipedia.org/wiki/Artist
+https://en.wikipedia.org/wiki/Daron_Jones
+https://musicbrainz.org/release/967ca247-15df-4f82-bd7d-88f778828dc5
+https://musicbrainz.org/release-group/2d17e7e8-fa28-4fa0-8470-5f181791bdca
+https://musicbrainz.org/release-group/8077ccdf-2c3b-4c52-8c29-a84c82378326
+https://musicbrainz.org/artist/f2fa4da0-f1ae-410f-a074-2dc4c743b7be 
+https://musicbrainz.org/search?query=lang%3Aeng&type=work&limit=25&method=advanced
+https://musicbrainz.org/work/38f2c60b-a0d1-449d-a968-641c99c2b2c7
+https://musicbrainz.org/work/f1064e6a-955f-4031-9701-2e697c94e641
+https://musicbrainz.org/artist/3355ff68-0de2-43b7-9122-2a31c4cad8a5
+https://en.wikipedia.org/wiki/Manhattan
+https://musicbrainz.org/area/261962ea-d8c2-4eaf-a80c-f14376ffadb0
+https://musicbrainz.org/label/da261ab9-d7f9-4b26-8d3c-bdaff1ad5568
+https://musicbrainz.org/release/3724879d-07cc-473c-ac49-feef480ef757
+https://acoustid.org/track/91b4acf0-f50a-4087-9a65-48ae0034854b
+https://en.wikipedia.org/wiki/Love%27s_Crazy
+https://musicbrainz.org/release-group/41820f07-8eab-3807-bf7b-d29d441442a7
+https://musicbrainz.org/release-group/2a07f84c-649c-4549-9a8e-4d25bd016317
+https://musicbrainz.org/artist/e170e5d6-16ab-42a8-a2fc-38e8bbd908b9
+https://musicbrainz.org/area/a71b0d32-7752-49e9-8594-2247ad6ac12c
+https://musicbrainz.org/area/74e50e58-5deb-4b99-93a2-decbb365c07f
+https://musicbrainz.org/label/883fe539-a89f-4572-8072-4d1e69d4670d
+https://musicbrainz.org/release/9ce47bcf-97d1-4534-b77e-b19ba6c98511
+https://musicbrainz.org/artist/bd8c8c33-51ed-4a99-bd58-7b7260ca8e46
+https://musicbrainz.org/release-group/d4075816-3962-494a-8f74-1ad28c6b500b
+https://musicbrainz.org/release/32491f61-74e5-4469-b351-d39cfc71bf56
+https://musicbrainz.org/artist/548b9913-3898-4006-8b99-b18cff96a8d4
+https://en.wikipedia.org/wiki/New_York
+https://musicbrainz.org/area/75e398a3-5f3f-4224-9cd8-0fe44715bc95
+https://musicbrainz.org/artist/29a0469d-c426-4a25-86d0-30e95368320c
+https://musicbrainz.org/release/20144245-dd85-4184-97c7-1b0798180489
+https://musicbrainz.org/area/cffc0190-1aa2-489f-b6f9-43b9a9e01a91
+https://musicbrainz.org/area/489ce91b-6658-3307-9877-795b68554c98
+https://musicbrainz.org/artist/d6dbeadf-52e5-4017-9652-21986e7c61e0
+https://musicbrainz.org/release/ff5ff151-191c-4414-962b-c83af6a31c1f
+https://musicbrainz.org/artist/7ae1347d-b659-4f70-a5e4-66718a295a02
+https://musicbrainz.org/release/dc8af93b-2c03-45d6-a176-6cd260fb96cc
+https://musicbrainz.org/release/08efc46e-b33d-4756-ae9a-0adbe1297e3e
+https://musicbrainz.org/recording/ad772904-74e4-4eb1-9fe8-21e20835a23f
+https://acoustid.org/track/214eb9a6-7a17-41f8-9ad7-6619cfb665e7
+https://musicbrainz.org/release-group/9297c1e9-f55c-4387-a422-6e7034086ec5
+https://musicbrainz.org/artist/b4633a0a-a55d-4cab-b991-c19cfe5ecd70
+https://musicbrainz.org/label/8ede5254-a79f-4b79-a7ba-28a816883ed3
+https://musicbrainz.org/release-group/03871b01-f069-4fcd-a0e7-291582dca51b
+https://musicbrainz.org/release/a6293e93-7c23-4e61-99dc-e4dcc34d4c28
+https://musicbrainz.org/release-group/810c256f-54e4-4776-805a-10438e21faae
+https://musicbrainz.org/release-group/78fb48f9-b81c-4fce-9f6a-beb17af7e27b
+https://musicbrainz.org/artist/2bfe5611-eccc-4f55-a729-e25e40878a73
+https://www.allmusic.com/album/mw0002964366
+https://www.allmusic.com/artist/mn0000724422
+https://musicbrainz.org/url/fe7d72d8-1eb6-43d3-b1cf-717b7cee846d
+https://musicbrainz.org/artist/619a1fb6-0bdf-4c64-8363-ee71de9ff9e7
+https://www.discogs.com/label/301820
+https://musicbrainz.org/place/d782ef6e-5fd1-4150-b5d2-7f0b849520f2
+https://musicbrainz.org/artist/506642fc-0825-44e4-a55f-7c53b40de1f6
+https://musicbrainz.org/release/9ce47bcf-97d1-4534-b77e-b19ba6c98511
+https://en.wikipedia.org/wiki/Art
+https://en.wikipedia.org/wiki/Music_video
+https://en.wikipedia.org/wiki/Artists_and_repertoire
+https://en.wikipedia.org/wiki/Record_label
+https://en.wikipedia.org/wiki/Sony
+https://en.wikipedia.org/wiki/Sony_Music
+https://en.wikipedia.org/wiki/RCA_Music_Group
+https://en.wikipedia.org/wiki/Arista_Records
+https://en.wikipedia.org/wiki/The_Monkees
+https://musicbrainz.org/artist/b8549efe-f4fd-4dc0-8ef1-226e9c400233
+https://musicbrainz.org/release-group/43606d6a-048a-43e3-8f4f-5cc8ba165189
+https://musicbrainz.org/release/e03c7fc8-044f-40cf-9554-ceda6c09c1c1
+https://musicbrainz.org/artist/7e198258-7093-46ac-a71e-91075fd0f5af
+https://musicbrainz.org/release/72257ab3-92c2-4a6b-9402-3aa902c1903d
+https://musicbrainz.org/release/3de76f1f-c7a6-4b2c-bad6-25d68a83c7cf
+https://musicbrainz.org/label/c62e3985-6370-446a-bfb8-f1f6122e9c33
+https://musicbrainz.org/recording/29ebd6dd-a136-4b8e-9f5b-f36efe71ed56
+https://acoustid.org/track/c4b15e29-f987-4963-8bcb-cf11039f6f19
+https://musicbrainz.org/iswc/T-071.853.975-3
+https://musicbrainz.org/artist/4f6a2d6e-1327-4361-adbb-7fde27085a03
+https://musicbrainz.org/label/bdb972ed-c657-42b4-a3d4-0f5cf5240e26
+https://musicbrainz.org/work/4332159c-9192-46fa-8ef7-8cbc79d7bea3
+https://musicbrainz.org/iswc/T-914.804.709-0
+https://musicbrainz.org/artist/e18f683f-92c5-4e27-aad0-fa03cec3c154
+https://musicbrainz.org/work/7d58868f-babb-4d10-bec5-d94abc772de7
+https://musicbrainz.org/artist/c1d5044b-c153-4b37-a392-aeae054ca872
+https://musicbrainz.org/artist/9034f787-3e79-44fe-89c1-8a082d556eec
+https://musicbrainz.org/release-group/0419f65a-1f92-3b04-84de-5c20f3a5be67
+https://musicbrainz.org/release-group/dde217d6-8a16-3b45-8798-49c26f5193e7
+https://musicbrainz.org/artist/4002a377-5446-49a8-8116-3ed6a9ea0eef
+https://musicbrainz.org/label/d289be59-0f15-40e4-a48b-fc6eae01701b
+https://musicbrainz.org/label/324afc71-ea5e-4996-a759-18c2fd7dcbb5
+https://musicbrainz.org/search?method=advanced&type=work&query=lang%3Aeng&limit=25
+https://musicbrainz.org/work/d744f127-a899-41a0-89fe-ce13cb33969a
+https://musicbrainz.org/isrc/USAR19800508
+/Volumes/Musik/1/112/Room 112/02 112 - So Much Love (interlude).flac
+https://musicbrainz.org/release-group/4f658f3c-daab-4378-b351-ae27f186384d
+https://musicbrainz.org/recording/d2ce8a96-6215-4a8b-97eb-52e1132ac418
+https://musicbrainz.org/release/11c63a0c-d45f-4ea1-8683-39eef3e78143
+https://musicbrainz.org/artist/d67e2f50-a3c9-4ee7-b41d-2b90ebb31196
+https://musicbrainz.org/release/12f6373d-9da9-42c9-ac8b-583485e59711
+https://musicbrainz.org/release/40a6f12a-b749-41e6-bd5d-31f6ad6b5365
+https://musicbrainz.org/label/635b9d63-05c1-46ff-a577-0ce030e6e84b
+https://atluk.lnk.to/symphony
+http://atlanticrecords.co.uk/
+http://www.atlanticrecords.com/
+https://musicbrainz.org/label/50c384a2-0b44-401b-b893-8181173339c7
+https://musicbrainz.org/artist/8e899f0e-58df-4076-90dc-90f0a077fa73
+https://musicbrainz.org/release/46aad83c-02c2-46fa-a4e4-94135b149212
+https://musicbrainz.org/artist/89beab84-2ebb-4a61-b764-cc9f9c3a5843
+https://musicbrainz.org/recording/91847fac-a4ff-443b-a4cb-92cc42f2ba24
+https://musicbrainz.org/recording/9acf6547-9671-4694-8b30-b41121c31ba1
+https://acoustid.org/track/7c3fad8f-aee3-477a-9577-4a3f43d502d8
+https://musicbrainz.org/isrc/USAR19800509
+https://musicbrainz.org/release-group/47591f7d-792a-49ce-81b5-f9fd171bd4d6
+https://musicbrainz.org/artist/521b701a-40c9-493a-9866-22b91089eee5
+https://musicbrainz.org/release-group/b6929844-43d3-4cef-a96b-c575dad67153
+https://musicbrainz.org/artist/3624a475-e935-4426-be30-83b5134ef24f
+https://musicbrainz.org/artist/61ac6354-43b5-41c8-9106-5e6145be915a
+https://musicbrainz.org/work/b8b8c212-bb95-4ba8-85a3-050eafb66567
+https://musicbrainz.org/artist/0bc858a1-3573-4216-9423-c96dd8c72919
+https://musicbrainz.org/artist/9fd05d1b-04e9-42e6-a9ee-2d23bfbfcd4e
+https://musicbrainz.org/release-group/107b1fb0-8ec9-374c-8eda-e250b086b969
+https://musicbrainz.org/artist/2072f699-049a-4b78-b039-317a1c7cff94
+https://musicbrainz.org/release-group/a69218ab-71b7-4623-aad2-a0b0da2899f3
+https://musicbrainz.org/artist/cabb4fcf-4067-4ba5-908d-76ee66fcf0c6
+https://en.wikipedia.org/wiki/Younglord
+https://musicbrainz.org/artist/e61988a1-829d-4a37-b8da-20aba62a61c6
+https://musicbrainz.org/label/33beec83-8f27-47f1-8368-92789f5ccd7f
+https://musicbrainz.org/work/8b64da57-0816-4fb4-a1f5-2831dea001a1
+/Volumes/Musik/1/112/Room 112/03 112 - Be With You.flac
+https://musicbrainz.org/recording/31da8225-9f1b-4fbb-ba24-270ec9a5e8ac
+https://acoustid.org/track/25fcbd98-d609-44cd-802e-20c3808d9124
+https://en.wikipedia.org/wiki/41st_Annual_Grammy_Awards
+https://en.wikipedia.org/wiki/Harlem_World
+https://musicbrainz.org/release/8e8a352f-7734-375a-8a6f-ef51429efef2
+https://musicbrainz.org/release-group/8736aed9-d1ab-361f-ba7d-30a36201ac1d
+https://musicbrainz.org/release/efb601db-38a8-4c7e-9fe7-0deb2f70d4cd
+https://musicbrainz.org/release-group/70dd05fb-6c9a-3955-8e26-9e0892365cc3
+https://musicbrainz.org/release-group/f5997901-d0b7-32ed-83c3-39c7414d0131
+https://musicbrainz.org/artist/76716b81-e361-427e-a931-19373388387d
+https://musicbrainz.org/artist/c1672312-9367-44d7-a338-f28140d497a5
+https://musicbrainz.org/release/ab99d80c-337d-4a07-8f10-8027dd32bb6b
+https://musicbrainz.org/release/d2569833-ef3e-4061-a691-072041fe706a
+https://musicbrainz.org/recording/6cc02444-d06d-4541-bdc4-ab83192e4ae7
+https://musicbrainz.org/isrc/USBB49800303
+https://en.wikipedia.org/wiki/Hot_R%26B/Hip-Hop_Songs
+https://en.wikipedia.org/wiki/Love_Me_(112_song)
+https://musicbrainz.org/artist/b18e2aee-5599-4010-bfa1-a77cc2ca29ce
+https://musicbrainz.org/work/1556f9b1-5a5f-4b5e-9073-6d95ee859410
+/Volumes/Musik/1/112/Room 112/04 112 feat. Mase - Love Me.flac
+https://en.wikipedia.org/wiki/Brooklyn
+https://en.wikipedia.org/wiki/Lil'_Kim
+https://musicbrainz.org/release-group/1f0e58a9-4a63-3fb4-a95e-ec6feebeb571
+https://musicbrainz.org/artist/bc1b5c95-e6d6-46b5-957a-5e8908b02c1e
+https://musicbrainz.org/place/bedc715f-dcde-49d6-af73-9946044d15d2
+https://musicbrainz.org/release/6bdcbcff-e636-487f-95cd-669214b4a07e
+https://musicbrainz.org/artist/5028a04d-c3b5-428d-9c88-433224bb10ba
+https://musicbrainz.org/recording/d8e54a31-2725-4df6-8a10-10dcb69e6ecf
+https://musicbrainz.org/recording/31da8225-9f1b-4fbb-ba24-270ec9a5e8ac
+https://acoustid.org/track/36c0e9ef-ad05-4474-b9fc-7b1c329e918c
+https://musicbrainz.org/artist/eef20793-5f88-448d-aa78-5f9cb7e1ba98
+https://musicbrainz.org/recording/7001506d-45cf-491a-bf76-a4da729eff1d
+https://acoustid.org/track/b60d1ddd-1c23-4fb0-ae7d-9aafbefe8d15
+/Volumes/Musik/1/112/Room 112/06 112 - Anywhere (interlude).flac
+https://musicbrainz.org/release-group/9318df6a-5363-4d84-a5bd-16de4d5048d5
+https://musicbrainz.org/release/7869bceb-585d-4269-93a6-dba206ffc978
+https://musicbrainz.org/release/ed0d89b3-d510-43f4-8a10-47c8653ae0ec
+https://musicbrainz.org/recording/ff22df38-fe40-4487-9006-fdc6a4662fe0
+https://acoustid.org/track/af45ee74-9967-4387-b022-2b9df40f1a60
+https://musicbrainz.org/isrc/USBB49800302
+/Volumes/Musik/1/112/Room 112/07 112 - Anywhere.flac
+https://musicbrainz.org/artist/603e7399-854d-4335-a137-2a8478fe66dd
+https://musicbrainz.org/recording/1c138e0d-1262-4b2f-854a-721284061bef
+https://musicbrainz.org/recording/3fbe85ee-99b2-469a-8bf6-4de29289421f
+https://acoustid.org/track/7ef3f036-fb52-4bd4-b9e1-41a128251de7
+/Volumes/Musik/1/112/Room 112/08 112 - Love You Like I Did.flac
+https://acoustid.org/track/49384600-d0b7-44c8-b4ca-27d8532bacaf
+/Volumes/Musik/1/112/Room 112/09 112 feat. Faith Evans - For Awhile.flac
+/Volumes/Musik/1/112/Room 112/10 112 - Don't Go Away (interlude).flac
+/Volumes/Musik/1/112/Room 112/11 112 - Stay With Me.flac
+/Volumes/Musik/1/112/Room 112
+    01 112 - Room 112 (intro).flac
+    02 112 - So Much Love (interlude).flac
+    03 112 - Be With You.flac
+    04 112 feat. Mase - Love Me.flac
+    05 112 feat. Lil' Kim - The Only One.flac
+    06 112 - Anywhere (interlude).flac
+    07 112 - Anywhere.flac
+    08 112 - Love You Like I Did.flac
+    09 112 feat. Faith Evans - For Awhile.flac
+    10 112 - Don't Go Away (interlude).flac
+    11 112 - Stay With Me.flac
+/Volumes/Musik/1/112
+    Room 112
+/Volumes/Musik/1
+    112
+https://acoustid.org/track/1a0884ff-477b-41cd-91de-b61719171c93
+https://www.amazon.de/gp/product/B000005ON7
+https://www.amazon.de/gp/product/B0002BHCVC
+https://www.amazon.de/gp/product/B0000240PM
+https://www.amazon.de/gp/product/B00400Z1D2
+https://www.amazon.de/gp/product/B00XFDMWYQ
+https://www.amazon.de/gp/product/B002W24DSY
+https://www.amazon.de/gp/product/B00DNQ6IMC
+https://www.amazon.de/gp/product/B00598XIDY
+https://www.amazon.de/gp/product/B0009ZE6NS
+https://www.amazon.de/gp/product/B0009ZE6NI
+https://www.amazon.de/gp/product/B00016B8BI
+https://www.amazon.de/gp/product/B0000A1178
+https://www.amazon.de/-/e/B000AP5Q40
+https://www.amazon.de/gp/product/B00004XVPY
+https://www.amazon.de/gp/product/B000007VMF
+https://en.wikipedia.org/wiki/Musical_instrument
+https://en.wikipedia.org/wiki/Electronic_musical_instrument
+https://en.wikipedia.org/wiki/Music_technology
+https://en.wikipedia.org/wiki/Electronic_music
+https://en.wikipedia.org/wiki/Music_venue
+https://en.wikipedia.org/wiki/Nightclub
+https://en.wikipedia.org/wiki/Rave
+https://en.wikipedia.org/wiki/Electronic_dance_music
+https://en.wikipedia.org/wiki/List_of_municipalities_in_Michigan_(by_population)
+https://en.wikipedia.org/wiki/Detroit
+https://en.wikipedia.org/wiki/Michigan
+https://en.wikipedia.org/wiki/Techno
+https://en.wikipedia.org/wiki/Four_on_the_floor_(music)
+https://en.wikipedia.org/wiki/Hi-NRG
+https://en.wikipedia.org/wiki/Euro_disco
+https://en.wikipedia.org/wiki/Eurodance
+https://en.wikipedia.org/wiki/Frequency
+https://en.wikipedia.org/wiki/Pitch_(music)
+https://en.wikipedia.org/wiki/Timbre
+https://en.wikipedia.org/wiki/Melody
+https://en.wikipedia.org/wiki/George_Frideric_Handel
+https://en.wikipedia.org/wiki/Ternary_form
+https://en.wikipedia.org/wiki/Lyrics
+https://en.wikipedia.org/wiki/Song
+https://en.wikipedia.org/wiki/Album
+https://en.wikipedia.org/wiki/Record_sales
+https://en.wikipedia.org/wiki/Airplay
+https://en.wikipedia.org/wiki/Record_chart
+https://en.wikipedia.org/wiki/Official_Charts_Company
+https://en.wikipedia.org/wiki/UK_Singles_Chart
+https://en.wikipedia.org/wiki/Ambrogio_Crotti
+https://en.wikipedia.org/wiki/2_Eivissa
+https://musicbrainz.org/release/3682c343-f8b1-4401-8e60-215e624a96c9
+https://musicbrainz.org/label/8e98b1c4-b6fa-46af-8740-3cb57dd80f01
+https://musicbrainz.org/label/ffcbb274-fb09-4bff-acaa-8527b9f57b74
+https://musicbrainz.org/recording/78ae726b-ec98-4c59-a86e-a9a8ef410cef
+https://acoustid.org/track/d09c29ab-f386-40ff-a764-369948b07eba
+https://musicbrainz.org/recording/82f2e08c-cab7-4732-ac6d-e46e687ac4bd
+https://musicbrainz.org/recording/cfa7c302-d3e8-4670-91c8-07e04000d281
+https://musicbrainz.org/release/9f41e55e-fec0-4244-abce-65ad0de6f0de
+https://www.discogs.com/label/72987
+https://www.discogs.com/label/4918
+https://www.discogs.com/label/26506
+https://www.discogs.com/release/161123
+https://musicbrainz.org/recording/080a66ab-0870-4f7d-bc85-27fa69bcf991
+https://musicbrainz.org/release/4b1c1d55-c2b8-4db5-b918-59ed90a85402
+https://musicbrainz.org/tag/electronic
+https://musicbrainz.org/release-group/00b9b43c-0638-3a3f-b502-45d3e865db0a
+https://www.discogs.com/artist/96774
+https://www.discogs.com/master/16245
+https://www.discogs.com/master/8517
+https://www.discogs.com/genre/electronic
+https://www.discogs.com/master/13346
+https://www.discogs.com/style/euro+house
+https://www.discogs.com/search/?decade=1990&year=1998
+https://www.discogs.com/master/105662
+https://musicbrainz.org/recording/a77c71cb-25a3-469a-9ee2-20a26ebe3264
+https://musicbrainz.org/release/3ff8032d-4366-4c24-8155-24bdd09eac03
+https://musicbrainz.org/label/c2d40dfe-2f06-4e82-9231-22b120d822d3
+https://musicbrainz.org/release-group/50de0b5e-b40f-3a32-b6be-e012c3038f99
+https://musicbrainz.org/release/8292b9c2-6701-4b0e-9e70-e58d15dfdf20
+https://musicbrainz.org/release-group/30b8aeaa-9a6d-38a8-a3bb-4d56de92b2bc
+https://musicbrainz.org/release-group/dd333485-a6c2-3dc8-b964-e74eff7837ba
+https://musicbrainz.org/artist/8fe25609-56e3-4b17-836b-f793182f4ac3
+https://en.wikipedia.org/wiki/Compilation_album
+https://fr.wikipedia.org/wiki/Various_artists
+https://musicbrainz.org/label/abea2d3e-eabf-4480-ab24-9382dd642c73
+https://musicbrainz.org/release-group/5a14ff67-3832-4f3c-a3a8-296726041782
+https://musicbrainz.org/release-group/e2ef00c4-d1d8-4699-98f1-0441f466f997
+https://musicbrainz.org/artist/89ad4ac3-39f7-470e-963a-56509c546377
+https://musicbrainz.org/release-group/7e088b85-1343-4981-9e41-380564a852f6
+https://en.wikipedia.org/wiki/Joana_Zimmer
+https://musicbrainz.org/artist/368be566-989d-48dc-8c14-f87d33ce9c3b
+https://musicbrainz.org/release/dfbaabdb-3acf-498c-9e64-0579b27c676b
+https://musicbrainz.org/label/e7f93668-4476-45f9-bff5-02d2cecaa704
+https://musicbrainz.org/release-group/32e53e34-c92f-42e4-9965-c357a9f3d05d
+https://musicbrainz.org/recording/2742c916-4021-42d7-80e0-4a0b22290815
+https://musicbrainz.org/release/91821f6b-01eb-415e-96f6-d60fa2e3c3be
+https://musicbrainz.org/release/59aa050b-4f88-4d48-960a-4f1555ccb8bd
+https://musicbrainz.org/recording/7b3c2cec-000d-4d60-b0f9-abad849d0a10
+/Volumes/Musik/2/2 Eivissa/Oh La La La/01 Oh La La La (radio mix).flac
+https://musicbrainz.org/recording/2379af82-85a3-4a9d-b40f-1a5dda20e459
+https://musicbrainz.org/release-group/3c7bce57-d6c1-4253-8cee-af611372023f
+https://musicbrainz.org/artist/0a49a656-ce55-41ae-9bc8-4c5fe364381c
+https://musicbrainz.org/artist/28b1a3c3-b9bb-4615-9b31-c4a0c1bec85e
+https://musicbrainz.org/recording/c0b8fb0f-5540-4e2a-8552-6c2caabe91c6
+https://en.wikipedia.org/wiki/SM-Trax
+https://musicbrainz.org/artist/a3c6caa1-1b2e-4b36-bec2-d7277f32b53c
+https://musicbrainz.org/url/050f11e6-f670-4901-b737-f908f9d7b376
+https://musicbrainz.org/release/109e4f25-6da9-4b8c-96a3-19d35b03f313
+https://musicbrainz.org/recording/cfb9b9f3-1438-406a-b394-b8cd636c9e1e
+https://acoustid.org/track/fabf20ab-1895-4e10-b4d5-b76bbc417b54
+https://en.wikipedia.org/wiki/List_of_cities_in_Germany_by_population
+https://en.wikipedia.org/wiki/Hamburg
+https://en.wikipedia.org/wiki/H.P._Baxxter
+https://en.wikipedia.org/wiki/Scooter_%28band%29
+https://en.wikipedia.org/wiki/..._and_the_Beat_Goes_On%21
+https://musicbrainz.org/release-group/412d423f-9750-335c-8d68-463fe658ba55
+https://musicbrainz.org/release-group/4dd8996e-e798-3ee9-9d87-a295c030543a
+https://musicbrainz.org/artist/83e59f23-3b0b-4304-834d-5bcafd5df6d2
+https://www.discogs.com/style/trance
+https://www.discogs.com/master/2880
+https://musicbrainz.org/url/01ddc53b-b074-4a15-af3a-c18838519818
+https://musicbrainz.org/release-group/61f54d27-6628-306c-81d1-d522351b6853
+https://acoustid.org/track/99aa1180-9477-4677-a688-79341af3250e
+https://musicbrainz.org/recording/8717bb1a-53fd-46f7-9590-fd50acda0612
+https://musicbrainz.org/recording/ea4cf3d7-682d-434d-b3a0-dec75758bbfa
+https://musicbrainz.org/release/a94397a2-762c-4419-bb7d-23b3dffe4ac5
+https://www.discogs.com/artist/461566
+https://www.discogs.com/artist/657779
+https://www.discogs.com/artist/179650
+https://www.discogs.com/artist/11769
+https://www.discogs.com/master/25210
+https://www.discogs.com/style/progressive+house
+https://www.discogs.com/composition/d8cabc4a-09e7-41ac-9f32-f134fee537a7
+https://www.discogs.com/release/106531
+https://en.wikipedia.org/wiki/Hyper_Hyper
+https://musicbrainz.org/release-group/970ff814-bdc6-3a27-9e7a-314582fa882d
+https://musicbrainz.org/recording/579c4a33-41fa-43d7-ac4a-928b37b0e4b0
+https://musicbrainz.org/release/c836401a-e477-42e1-9e0f-d30b913ecb35
+https://musicbrainz.org/recording/f961c340-cb05-4f4e-8fca-a29d8e769134
+https://musicbrainz.org/release/5126666a-032f-4b4c-9ce6-a6c5e352178d
+https://musicbrainz.org/release/f5be5e0b-34f9-4254-94bd-83714cb7fedc
+https://musicbrainz.org/label/5b00c897-e64a-493d-b2e1-34bb88063c3f
+https://www.discogs.com/artist/269997
+https://www.discogs.com/artist/385787
+https://team33.es
+https://www.discogs.com/artist/69229
+https://www.discogs.com/artist/462765
+https://www.discogs.com/artist/533826
+https://www.discogs.com/artist/533827
+https://www.discogs.com/artist/73291
+https://www.discogs.com/label/64953
+https://www.discogs.com/label/197896
+https://www.discogs.com/label/265764
+https://www.discogs.com/label/1948
+https://www.discogs.com/composition/9a041f54-7b35-46c4-ac0f-b86d34a5ec89
+https://www.discogs.com/artist/95623/tracks
+https://www.discogs.com/composition/9a041f54-7b35-46c4-ac0f-b86d34a5ec89
+https://www.discogs.com/artist/62240
+https://www.discogs.com/release/145691
+https://en.wikipedia.org/wiki/Chicago
+https://en.wikipedia.org/wiki/House_music
+https://www.discogs.com/master/9593
+https://www.discogs.com/style/house
+https://www.discogs.com/artist/8121
+https://www.discogs.com/release/844267
+https://www.discogs.com/release/122969
+https://www.discogs.com/master/105661
+https://musicbrainz.org/url/12abc1e9-693f-4925-9cc2-62b2a4da25eb
+https://musicbrainz.org/release/8dfa58dc2-104e-4760-855b-abf375c54331
+https://musicbrainz.org/url/38814797-d6a7-46e2-b0cf-346c384be99a
+https://musicbrainz.org/release-group/c28be7ed-87a3-3d6e-bf84-c8d4e2b8c34f
+/Volumes/Musik/2/2 Eivissa/Oh La La La/02 Oh La La La (Cool Summer mix).flac
+https://acoustid.org/track/cf2059c2-81e3-442b-b385-9f1bae9c2814
+https://musicbrainz.org/release/bc14f9be-1443-4142-bf6a-19357bb5d632
+https://musicbrainz.org/recording/386fd171-a4b9-4ca3-ab6f-8a0191a7714c
+/Volumes/Musik/2/2 Eivissa/Oh La La La/03 Oh La La La (extended version).flac
+https://musicbrainz.org/recording/216e91e2-fd34-407d-9f1b-59dbd16bd629
+https://acoustid.org/track/21479216-a84b-4b2a-86e5-38dd49401121
+/Volumes/Musik/2/2 Eivissa/Oh La La La/04 Oh La La La (Salinas mix).flac
+https://acoustid.org/track/35529091-2baa-4b82-adf1-267d2b17785f
+/Volumes/Musik/2/2 Eivissa/Oh La La La/05 Oh La La La (Eivissa '97 club mix).flac
+https://acoustid.org/track/50e6ed17-ad44-4377-9e3b-345401b85e85
+/Volumes/Musik/2/2 Eivissa/Oh La La La/06 Oh La La La (S_M in Motion remix).flac
+/Volumes/Musik/2/2 Eivissa/Oh La La La
+    01 Oh La La La (radio mix).flac
+    02 Oh La La La (Cool Summer mix).flac
+    03 Oh La La La (extended version).flac
+    04 Oh La La La (Salinas mix).flac
+    05 Oh La La La (Eivissa '97 club mix).flac
+    06 Oh La La La (S_M in Motion remix).flac
+/Volumes/Musik/2/2 Eivissa
+    Oh La La La
+https://acoustid.org/track/f952a0f2-b320-4861-b781-c7ffc003eebb
+https://www.discogs.com/artist/493426
+https://www.discogs.com/artist/561523
+https://musicbrainz.org/url/92e8b9d1-d80a-4180-a055-b1869eaa714e
+https://musicbrainz.org/artist/0299f1ee-ca49-4ad0-9d5a-5a42fc6038dd
+https://musicbrainz.org/artist/bdcd2221-07da-45a9-9699-cf1dac91daa8
+https://musicbrainz.org/release-group/67a6fe2a-6fb5-404c-86f7-7a0a3e4489a6
+https://musicbrainz.org/release/a0fa4986-d93b-48bf-ac10-f06e46e2d327
+https://musicbrainz.org/artist/d910d74b-d3e9-48cc-96a2-4cd709d71e97
+https://musicbrainz.org/recording/ef337d4f-c550-437e-8689-357a0fd9241e
+https://musicbrainz.org/work/e16e37db-39ec-3701-95cd-f0048642e8b1
+https://musicbrainz.org/work/06010d30-10fe-4eb9-8105-3088c8976c93
+https://musicbrainz.org/label/3ed19856-5b23-4b0d-83db-2986ff020f7b
+https://musicbrainz.org/work/ceab9856-0f3e-31de-b836-0c7a5574a817
+https://musicbrainz.org/artist/577c9313-a9d7-494e-95be-b1d113b4ac44
+https://musicbrainz.org/release/2e2210b4-56be-45c3-9d54-a6a263ec8cb0
+https://en.wikipedia.org/wiki/Folk_music
+https://en.wikipedia.org/wiki/Art_music
+https://en.wikipedia.org/wiki/Religious_music
+https://en.wikipedia.org/wiki/Classical_music
+https://en.wikipedia.org/wiki/Graphophone
+https://en.wikipedia.org/wiki/Columbia_Records
+https://en.wikipedia.org/wiki/CBS
+https://en.wikipedia.org/wiki/Philips_Records
+https://nl.wikipedia.org/wiki/Willy_Derby
+https://musicbrainz.org/artist/40010e46-28bc-4254-abbc-2e525dc382d4
+https://musicbrainz.org/release-group/5a3a7042-2df1-40a9-850f-8896828e7fe9
+https://musicbrainz.org/release/adb9afc4-244e-4545-9bed-96922ddae510
+https://musicbrainz.org/artist/2e89725a-ac85-414c-b3b2-70f0a82fae9a
+https://musicbrainz.org/release/9c51d703-de16-49c0-a1a0-655d3acff787
+https://musicbrainz.org/release/77b68386-79a1-4e38-b98b-9b024a91aa6e
+https://musicbrainz.org/label/6d38d6d2-bea8-46cf-b48e-a6195fd85f12
+https://de.wikipedia.org/wiki/Westeuropa
+https://de.wikipedia.org/wiki/Belgien
+https://de.wikipedia.org/wiki/Eurodance
+https://de.wikipedia.org/wiki/Phil_Wilde
+https://musicbrainz.org/release/5eca038c-bd88-4543-8ba3-0a7530477096
+https://musicbrainz.org/release-group/ad6c9e16-2e89-44a6-b219-f7bd7a26a53f
+https://musicbrainz.org/release-group/d6db4a05-eaa3-4def-b685-7aad237e3bfe
+https://musicbrainz.org/artist/c28e637f-9f30-4e50-b722-bbc9caeef9d3
+https://musicbrainz.org/label/1dd678a1-5904-4280-bafc-162224ed3405
+https://musicbrainz.org/label/c2af0dd5-a406-481e-a415-748ee7d4e29d
+https://musicbrainz.org/label/909db57f-2d02-40e0-b808-3b773d279c57
+https://musicbrainz.org/label/49375f06-59e2-4c94-93ac-ac0c6df52151
+https://acoustid.org/track/b63c89e6-3551-4c81-9bf6-1ae9beb35c57
+https://musicbrainz.org/recording/13153c0c-5c77-4981-9471-d218b2e3e0e2
+https://musicbrainz.org/artist/67eeda90-4652-4d50-be14-b6fc801b145d
+https://musicbrainz.org/artist/62cd16fa-afc1-4f42-a65d-6c026b5164d7
+https://musicbrainz.org/recording/1db5fb23-d217-48d1-b8ec-27d89b4d6340
+https://musicbrainz.org/work/dc532546-ecfb-4063-9015-4634f81243d9
+https://musicbrainz.org/artist/089404bd-08ec-4a43-b7e2-767b707d1345
+https://musicbrainz.org/work/3c4d7586-8b90-4378-9f84-5dd66e750001
+https://musicbrainz.org/artist/4f3345fc-222f-4abb-8170-c204c4c1946a
+https://musicbrainz.org/artist/e2189769-3725-4cd2-800b-f4c096ec7599
+https://musicbrainz.org/release-group/fe653771-64d7-36ed-80dd-4aab3a3054ee
+https://musicbrainz.org/release/f9f24655-1b1a-43e4-a2a4-b799bb40a7fa
+https://musicbrainz.org/label/995428e7-81b6-41dd-bd38-5a7a0ece8ad6
+https://musicbrainz.org/recording/bf6952ca-e0e1-4f09-9028-cb4736b5b555
+https://musicbrainz.org/release-group/755e2af5-b751-30ff-aa4c-59285a8a5efc
+https://musicbrainz.org/artist/b3b3a425-604e-4ec2-892e-a9d5aa02bfe1
+https://musicbrainz.org/artist/24e36781-1f4a-40af-bd18-c5de61f10c66
+https://musicbrainz.org/release/d8b91e9d-a112-46b4-bb4c-7a97bc9616d0
+https://www.amazon.de/s/ref=dp_byline_sr_music_1?ie=UTF8&field-artist=Two+Unlimited&search-alias=music-de
+https://www.amazon.de/gp/product/B01ABAMLHS
+https://www.amazon.de/gp/product/B01KB1GBRS
+https://www.amazon.de/gp/product/B000OV0WE4
+https://www.amazon.de/s/ref=dp_byline_sr_music_1?ie=UTF8&field-artist=Various&search-alias=music-de
+https://www.amazon.de/gp/product/B0000D7ZAB
+https://www.amazon.de/s/ref=dp_byline_sr_music_2?ie=UTF8&field-artist=2+Unlimited&search-alias=music-de
+https://www.amazon.de/gp/product/B00005LJ02
+https://www.discogs.com/artist/80515
+https://www.discogs.com/artist/4057
+https://www.discogs.com/label/561
+https://www.discogs.com/release/1343122
+https://musicbrainz.org/url/2e8789a4-4bdc-441c-9cfe-e4aa33bc1f93
+https://musicbrainz.org/url/2b183c92-f79b-489c-8764-ba6591d7e1c4
+https://musicbrainz.org/release-group/0b834f2f-c230-376b-bc46-a527228d0902
+https://en.wikipedia.org/wiki/Musical_composition
+https://en.wikipedia.org/wiki/Music_industry
+https://en.wikipedia.org/wiki/Art_release
+https://en.wikipedia.org/wiki/Single_(music)
+https://en.wikipedia.org/wiki/A-side_and_B-side
+https://en.wikipedia.org/wiki/Maxi_single
+https://en.wikipedia.org/wiki/Byte_Records
+https://en.wikipedia.org/wiki/Get_Ready_for_This
+https://www.wikidata.org/wiki/Q2031291
+https://www.wikidata.org/wiki/Q134556
+https://www.wikidata.org/wiki/Q543538
+https://www.wikidata.org/wiki/Q2069271
+https://musicbrainz.org/url/76c4e47c-bcca-4d99-9822-e45da34af9b5
+http://lyrics.wikia.com/wiki/2_Unlimited:Get_Ready_For_This
+https://musicbrainz.org/work/d31cff6c-6f5e-3e3b-a39d-5e7a7169d89c
+/Volumes/Musik/2/2 Unlimited/Beyond Limits/01 Get Ready for This.flac
+https://acoustid.org/track/0dd0e9db-e433-481f-88ed-af00fb6650b9
+/Volumes/Musik/2/2 Unlimited/Beyond Limits/02 The Twilight Zone.flac
+/Volumes/Musik/2/2 Unlimited/Beyond Limits/02 The Twilight Zone.m4a
+https://acoustid.org/track/78de7469-8cc1-425d-ac54-9ce372381a37
+/Volumes/Musik/2/2 Unlimited/Beyond Limits/03 The Workaholic.flac
+/Volumes/Musik/2/2 Unlimited/Beyond Limits/04 The Magic Friend.flac
+https://acoustid.org/track/a808252f-457a-473f-992f-dd8ca8d4df7d
+/Volumes/Musik/2/2 Unlimited/Beyond Limits/05 No Limits.flac
+/Volumes/Musik/2/2 Unlimited/Beyond Limits/05 No Limits.m4a
+/Volumes/Musik/2/2 Unlimited/Beyond Limits/06 Tribal Dance.flac
+/Volumes/Musik/2/2 Unlimited/Beyond Limits
+    01 Get Ready for This.flac
+    02 The Twilight Zone.flac
+    02 The Twilight Zone.m4a
+    03 The Workaholic.flac
+    04 The Magic Friend.flac
+    05 No Limits.flac
+    05 No Limits.m4a
+    06 Tribal Dance.flac
+https://acoustid.org/track/e103fa89-4b29-4b24-848f-cf20b9147192
+https://www.amazon.co.uk/Pop-Music/b/ref=dp_bc_1?ie=UTF8&node=694208
+https://www.amazon.co.uk/gp/product/B000092J9U
+https://www.amazon.co.uk/Dance-Pop-Music/b/ref=dp_bc_2?ie=UTF8&node=694296
+https://www.amazon.co.uk/gp/product/B0018V32EG
+https://www.amazon.co.uk/gp/product/B003BMEOBK
+https://www.amazon.co.uk/gp/product/B000092JEU
+https://www.amazon.co.uk/gp/product/B000003RA5
+https://www.amazon.co.uk/gp/product/B000026ITZ
+https://www.amazon.co.uk/gp/product/B00004WSSR
+https://www.amazon.co.uk/gp/product/B000056XCR
+https://www.amazon.co.uk/gp/product/B000T7A3IS
+https://www.amazon.co.uk/gp/product/B000FBH1I8
+https://www.amazon.co.uk/gp/product/B002AHW6X0
+https://www.amazon.co.uk/gp/product/B000027074
+https://www.amazon.co.uk/gp/product/B000026S7Y
+https://www.amazon.co.uk/-/e/B000AQ2STU
+https://www.amazon.co.uk/gp/product/B00006ZWAY
+https://www.amazon.co.uk/gp/product/B01KASAPEW
+https://www.amazon.co.uk/gp/product/B00W85N9Y4
+https://www.amazon.co.uk/gp/product/B01MG6UYUP
+
+https://www.amazon.co.uk/gp/product/B00006ZWAX
+
+https://www.amazon.co.uk/gp/product/B000091PW2
+https://www.amazon.co.uk/gp/product/B003B52C9I
+https://www.amazon.co.uk/gp/product/B000056XD6
+https://musicbrainz.org/isrc/BEAA19505024
+https://en.wikipedia.org/wiki/I_Will_Always_Love_You
+https://en.wikipedia.org/wiki/No_Limits_(2_Unlimited_album)
+https://en.wikipedia.org/wiki/Spain
+https://en.wikipedia.org/wiki/Faces_(2_Unlimited_song)
+https://musicbrainz.org/recording/0529feb3-8505-4892-88e2-015ba4330120
+https://musicbrainz.org/release/62b455e1-a1c6-44c0-88f2-bfcd6cff5298
+https://musicbrainz.org/release/643f6a51-1ae1-43ce-a409-4cb8a1fc52f6
+https://musicbrainz.org/release-group/63047dec-c533-365c-b62a-6ae80c43a6c9
+https://musicbrainz.org/artist/244425ec-cfb4-4518-8b91-55cd64291a21
+https://musicbrainz.org/artist/bff7094d-5eb9-4fc6-bd0e-1081f4bdd282
+https://musicbrainz.org/artist/107e028b-c0a0-48c9-802c-f549c29e2f2b
+https://musicbrainz.org/release/de29daef-8d2a-4189-927b-184667bdbb46
+https://www.amazon.de/gp/product/B00W85N9Y4
+https://www.amazon.de/gp/product/B00FW3IGEC
+https://www.amazon.de/gp/product/B000056XD6
+https://www.amazon.de/gp/product/B003B52C9I
+https://www.amazon.de/gp/product/B00006ZWAY
+https://www.amazon.de/gp/product/B00006ZWAX
+https://www.amazon.de/gp/product/B000001RBW
+https://www.amazon.de/gp/product/B000091PW2
+https://www.wikidata.org/wiki/Q7366
+https://www.wikidata.org/wiki/Q17003799
+https://musicbrainz.org/url/49598c7a-93fb-47c5-85c0-19f87710bdae
+https://musicbrainz.org/work/8a9169a3-1e0e-4e38-8060-55b20bb58496
+https://musicbrainz.org/release/02120578-c968-459b-ad46-2577d2a3488d
+https://musicbrainz.org/recording/d57edbd0-a2ad-4a02-bd88-86848c359eef
+https://musicbrainz.org/recording/749652f7-8ad7-427f-a87b-82b546b43065
+https://musicbrainz.org/release/450417ef-37ea-46e0-aae1-130c04dcf98f
+https://en.wikipedia.org/wiki/Pete_Waterman
+https://musicbrainz.org/artist/2c985f01-0479-4439-bb60-e9c7b177b29d
+https://musicbrainz.org/release/5007c98b-7f2f-4101-92af-a23323c84557
+https://musicbrainz.org/label/b614f93a-031c-4615-808c-775fcc053ad7
+https://musicbrainz.org/recording/faeb9b4b-1cb1-4813-8870-017c4c29a054
+https://musicbrainz.org/release/ecad2c2d-42b9-4fa3-9587-1621d96993f7
+https://musicbrainz.org/release/53f7344d-fb5f-4b68-a4d6-7a5298f8e7f1
+https://musicbrainz.org/recording/599e31ff-7040-44ac-bc8f-a084206417ee
+https://acoustid.org/track/6cc15998-2dce-4c14-a6f7-2ad5ed85fe3b
+/Volumes/Musik/2/2 Unlimited/Faces/02 Faces (extended edit).flac
+https://musicbrainz.org/artist/de6ac176-1b94-4399-a614-d5a76b27b88f
+https://musicbrainz.org/artist/ca0e5399-e024-4422-98b2-9a9368a3a72b
+https://musicbrainz.org/artist/0eceed91-2563-4bda-8f92-7a5a62f996ae
+https://musicbrainz.org/release/783c0d16-95b0-444e-ab35-dda7b92fe0e7
+https://musicbrainz.org/release/f1de215a-2f4f-4018-80f6-abe4b558933f
+https://musicbrainz.org/label/139000a1-e5c0-45f4-9f9c-e61d9c4d670a
+https://musicbrainz.org/release/a87f2538-696e-4cc1-8359-43002dc93b3e
+https://musicbrainz.org/recording/de3a5752-ab46-41fd-a137-d2f58e7c7bfd
+https://acoustid.org/track/d90b3927-5f04-44d7-9a41-95a2d4bd13be
+/Volumes/Musik/2/2 Unlimited/Faces/03 Faces (X-Out remix) (1).flac
+/Volumes/Musik/2/2 Unlimited/Faces/02 Faces (extended edit) (1).flac
+/Volumes/Musik/2/2 Unlimited/Faces/03 Faces (X-Out remix).flac
+/Volumes/Musik/2/2 Unlimited/Faces
+    02 Faces (extended edit) (1).flac
+    02 Faces (extended edit).flac
+    03 Faces (X-Out remix) (1).flac
+    03 Faces (X-Out remix).flac
+https://acoustid.org/track/8eded04f-f860-4f9b-b784-6b7f110b54d9
+https://www.amazon.de/gp/product/B0002BI0ZO
+https://www.amazon.de/gp/product/B00006ZWEX
+https://musicbrainz.org/recording/60d0038b-64a6-43a7-9f51-71866a486e9c
+/Volumes/Musik/2/2 Unlimited/Let the Beat Control Your Body/01 Let the Beat Control Your Body (airplay edit).flac
+https://musicbrainz.org/recording/d5b7d310-2b20-4f04-8671-c16f3e25a57e
+https://acoustid.org/track/bf0747a4-f600-4449-9471-8f82307ea13d
+https://musicbrainz.org/release/1878a99b-76fe-4615-9fc3-ddddc8e93637
+/Volumes/Musik/2/2 Unlimited/Let the Beat Control Your Body/02 Let the Beat Control Your Body (X-Out in Trance remix).flac
+https://acoustid.org/track/045f00bf-9406-420e-b1a8-571a4f5b569c
+https://musicbrainz.org/recording/7a3fc3cc-f23f-49cf-be74-2e84eac68f3e
+/Volumes/Musik/2/2 Unlimited/Let the Beat Control Your Body/03 Let the Beat Control Your Body (extended).flac
+https://acoustid.org/track/490695e5-08e3-4bca-bde6-3457e31806d3
+https://musicbrainz.org/release/8622c0f7-0f7d-4daf-aa89-e863ee0efc88
+https://musicbrainz.org/recording/95ef05a3-3d49-4537-a95f-e4c2da30fe7d
+/Volumes/Musik/2/2 Unlimited/Let the Beat Control Your Body/04 Let the Beat Control Your Body (X-Out in Rio).flac
+https://acoustid.org/track/87d0eacd-3922-4322-ab79-9b9c0615b697
+https://musicbrainz.org/recording/1e01456f-b9f9-4ff9-bc02-897a2592ede4
+/Volumes/Musik/2/2 Unlimited/Let the Beat Control Your Body/05 Get Ready for No Limits (Murphy's megamix, Part 2 + ƒ) #1.flac
+https://acoustid.org/track/cba35de2-583f-4097-8f93-be8c9ef8f454
+/Volumes/Musik/2/2 Unlimited/Let the Beat Control Your Body/06 Get Ready for No Limits (Murphy's megamix, Part 2 + ƒ) #2.flac
+/Volumes/Musik/2/2 Unlimited/Let the Beat Control Your Body/07 Get Ready for No Limits (Murphy's megamix, Part 2 + ƒ) #3.flac
+/Volumes/Musik/2/2 Unlimited/Let the Beat Control Your Body
+    01 Let the Beat Control Your Body (airplay edit).flac
+    02 Let the Beat Control Your Body (X-Out in Trance remix).flac
+    03 Let the Beat Control Your Body (extended).flac
+    04 Let the Beat Control Your Body (X-Out in Rio).flac
+    05 Get Ready for No Limits (Murphy's megamix, Part 2 + ƒ) #1.flac
+    06 Get Ready for No Limits (Murphy's megamix, Part 2 + ƒ) #2.flac
+    07 Get Ready for No Limits (Murphy's megamix, Part 2 + ƒ) #3.flac
+https://musicbrainz.org/recording/f7f689c4-b1ec-466f-b58a-77e53d92f61d
+https://acoustid.org/track/a0af10e3-550a-4a3c-8be6-dc0ea5b617d5
+https://www.amazon.de/gp/product/B002NIARDM
+https://www.amazon.de/gp/product/B0002BHRIU
+https://www.amazon.de/gp/product/B000056UNH
+https://www.amazon.de/gp/product/B00004ZJ29
+https://musicbrainz.org/recording/4d9c2bb6-74f6-4016-b7fe-332d4bbdc101
+https://musicbrainz.org/isrc/DEA319600468
+/Volumes/Musik/2/2 Unlimited/No Limit/01 No Limit.flac
+https://acoustid.org/track/4a56c7ab-4d13-48fd-8f70-2ac525be66bf
+https://musicbrainz.org/recording/a5720f58-e310-4243-97cd-515fa8eb23f3
+https://musicbrainz.org/isrc/BRFDZ0500157
+https://musicbrainz.org/recording/a5720f58-e310-4243-97cd-515fa8eb23f3
+/Volumes/Musik/2/2 Unlimited/No Limit/02 No Limit (extended mix).flac
+https://musicbrainz.org/recording/a2a13748-216b-41c4-b5d4-3406d9fe2042
+https://acoustid.org/track/72612543-083c-4612-8757-0b4ce43556da
+https://musicbrainz.org/release/6398ae0f-7c0f-3ed7-aaf7-417664d63946
+/Volumes/Musik/2/2 Unlimited/No Limit/03 No Limit (Automatic remix).flac
+https://musicbrainz.org/recording/328dd744-454f-465f-a2cd-00f282308c9a
+/Volumes/Musik/2/2 Unlimited/No Limit/04 No Limit (Rio & Le Jean remix).flac
+/Volumes/Musik/2/2 Unlimited/No Limit/05 No Limit (Automatic Breakbeat remix).flac
+/Volumes/Musik/2/2 Unlimited/No Limit
+    01 No Limit.flac
+    02 No Limit (extended mix).flac
+    03 No Limit (Automatic remix).flac
+    04 No Limit (Rio & Le Jean remix).flac
+    05 No Limit (Automatic Breakbeat remix).flac
+https://acoustid.org/track/29824630-1c64-41de-9e0a-ac32dd537656
+https://musicbrainz.org/recording/56a8807c-8d0a-4e35-a43d-ed9d32316a6e
+/Volumes/Musik/2/2 Unlimited/No Limit 2.3/01 No Limit (Master Blaster radio edit).flac
+https://musicbrainz.org/recording/6effb804-1fa5-4501-9880-94193ea5c94e
+https://acoustid.org/track/941026ea-11b6-46a0-9871-a4e47c2fcbc9
+https://www.amazon.de/gp/product/B0000A4GMY
+https://www.amazon.de/gp/product/B0002MNN1Y
+https://musicbrainz.org/release/ff6e451b-55fb-4d8b-a6d5-8451d4b1452e
+/Volumes/Musik/2/2 Unlimited/No Limit 2.3/02 No Limit (Master Blaster remix).flac
+https://musicbrainz.org/recording/f8bd5efa-d3b1-4f79-b58d-90c597c1bf2d
+https://acoustid.org/track/e4b037a5-0dd4-4cc5-97c1-8a3ac0cb4576
+/Volumes/Musik/2/2 Unlimited/No Limit 2.3/03 No Limit (DJ Digress Hamburg Style remix).flac
+https://acoustid.org/track/c1152cd9-1b5b-45a3-bca1-048d3196e64c
+/Volumes/Musik/2/2 Unlimited/No Limit 2.3/04 No Limit (DJ Sputnik remix).flac
+/Volumes/Musik/2/2 Unlimited/No Limit 2.3/05 No Limit (extended No Rap).flac
+/Volumes/Musik/2/2 Unlimited/No Limit 2.3
+    01 No Limit (Master Blaster radio edit).flac
+    02 No Limit (Master Blaster remix).flac
+    03 No Limit (DJ Digress Hamburg Style remix).flac
+    04 No Limit (DJ Sputnik remix).flac
+    05 No Limit (extended No Rap).flac
+https://musicbrainz.org/recording/8b20d20c-d8ec-4fa5-b75c-573db714025e
+https://acoustid.org/track/304c19aa-44b2-4103-93f2-4969a85e3dfb
+https://musicbrainz.org/isrc/BEG549300090
+https://musicbrainz.org/release/016b3f44-d692-31ad-ab2f-ac1c259faede
+/Volumes/Musik/2/2 Unlimited/No Limits!/01 No Limit.flac
+https://musicbrainz.org/recording/02d10582-ebb3-47fe-acff-e12cdd924a5b
+https://acoustid.org/track/3aca09c3-5015-4f8f-9a81-5f2dfe0ce328
+/Volumes/Musik/2/2 Unlimited/No Limits!/02 Tribal Dance.flac
+https://acoustid.org/track/c2d71f35-b64a-4038-b769-adeb4849cd6e
+/Volumes/Musik/2/2 Unlimited/No Limits!/03 Mysterious.flac
+/Volumes/Musik/2/2 Unlimited/No Limits!/04 Faces (1).flac
+/Volumes/Musik/2/2 Unlimited/No Limits!
+    01 No Limit.flac
+    02 Tribal Dance.flac
+    03 Mysterious.flac
+    04 Faces (1).flac
+https://www.amazon.de/gp/bestsellers/dvd-de/9840061031/ref=pd_zg_hrsr_dvd-de_1_2_last
+https://www.amazon.de/gp/product/B0001DD8BE
+https://musicbrainz.org/release/007a28ba-bb7c-4c07-8066-40c189d530f0
+/Volumes/Musik/2/2 Unlimited/The Complete History/1-01 No Limit (1).mp4
+/Volumes/Musik/2/2 Unlimited/The Complete History/1-01 No Limit.flac
+/Volumes/Musik/2/2 Unlimited/The Complete History/1-01 No Limit.mkv
+/Volumes/Musik/2/2 Unlimited/The Complete History
+    1-01 No Limit (1).mp4
+    1-01 No Limit.flac
+    1-01 No Limit.mkv
+https://musicbrainz.org/recording/b14e15ab-93ff-4d5b-84b6-5354aca79bf0
+/Volumes/Musik/2/2 Unlimited/The Real Thing/01 The Real Thing (edit).flac
+/Volumes/Musik/2/2 Unlimited/The Real Thing/01 The Real Thing (edit).m4a
+/Volumes/Musik/2/2 Unlimited/The Real Thing
+    01 The Real Thing (edit).flac
+    01 The Real Thing (edit).m4a
+/Volumes/Musik/2/2 Unlimited
+    Beyond Limits
+    Faces
+    Let the Beat Control Your Body
+    No Limit
+    No Limit 2.3
+    No Limits!
+    The Complete History
+    The Real Thing
+https://acoustid.org/track/b17ffd9a-b15a-4fa3-9f64-2c11993d1049
+https://www.amazon.de/gp/product/B0000012OF
+https://www.amazon.de/gp/product/B07C7RWW1L
+https://www.amazon.de/gp/product/B07JHYXNVF
+https://www.amazon.de/-/e/B000AR8L22
+https://www.amazon.de/gp/product/B002DMEBQ2
+https://www.amazon.de/gp/product/B003HCZZ4O
+https://www.amazon.de/gp/product/B002DMEMVG
+https://www.amazon.de/gp/product/B000092G63
+https://en.wikipedia.org/wiki/2_in_a_Room
+https://musicbrainz.org/artist/98a62678-8db1-4bd5-add8-f24b198cdba8
+https://musicbrainz.org/recording/66a47a99-2f21-499d-b3ef-5bec1fad57ed
+/Volumes/Musik/2/2 in a Room/Wiggle It/01 Wiggle It (Radio Edit).flac
+https://acoustid.org/track/fe78b9d4-fbe5-4f21-986c-b2cbb5268c97
+https://musicbrainz.org/release/4256a74b-1645-41e4-95bc-a9ab32a43ca5
+https://musicbrainz.org/recording/ffae36b8-a5f5-439f-a7de-20b312e5ef6d
+/Volumes/Musik/2/2 in a Room/Wiggle It/02 Wiggle It (The Club Mix).flac
+https://musicbrainz.org/recording/4d0bc355-40ad-4082-a25b-fcddccc1508e
+https://acoustid.org/track/5a93b905-4e1a-4ce6-99f1-4f1e9198407b
+/Volumes/Musik/2/2 in a Room/Wiggle It/03 Wiggle It (Def Wiggle Mix).flac
+https://musicbrainz.org/recording/bb0ac97c-0bda-4638-9177-f870ff7e0fe8
+https://acoustid.org/track/3a974bfd-e37d-4adb-a8cb-a520e4306f08
+/Volumes/Musik/2/2 in a Room/Wiggle It/04 Wiggle It (The Dub Mix).flac
+/Volumes/Musik/2/2 in a Room/Wiggle It
+    01 Wiggle It (Radio Edit).flac
+    02 Wiggle It (The Club Mix).flac
+    03 Wiggle It (Def Wiggle Mix).flac
+    04 Wiggle It (The Dub Mix).flac
+/Volumes/Musik/2/2 in a Room
+    Wiggle It
+https://en.wikipedia.org/wiki/Instrumental
+https://en.wikipedia.org/wiki/Musical_ensemble
+https://en.wikipedia.org/wiki/Jo_O%27Meara
+https://en.wikipedia.org/wiki/2-4_Family
+https://en.wikipedia.org/wiki/Stay_(2-4_Family_song)
+https://musicbrainz.org/release-group/b3205ebe-ed6a-3c68-abc9-9cf4f398f171
+https://musicbrainz.org/release-group/a9425750-e340-4638-95ff-42f201b4b4d7
+https://musicbrainz.org/artist/12753fd8-ba1b-4024-9ee4-a98a13a601ee
+https://en.wikipedia.org/wiki/Bonnie_Tyler
+https://musicbrainz.org/artist/0aa8294b-6332-4b65-b677-e3a1f8591d3b
+https://musicbrainz.org/release-group/25d6069a-0834-446d-b4fa-d6b4a8dd2b02
+https://musicbrainz.org/release/5b55957f-7844-4b52-9876-f278546d98e4
+https://en.wikipedia.org/wiki/Hansa_Records
+https://musicbrainz.org/label/3cfa65af-d11c-4337-843c-0b6d4ca385d3
+https://musicbrainz.org/release/b7a8948b-26af-4694-9382-550d17e2b55e
+https://musicbrainz.org/recording/60938fb1-4f7c-4845-b43d-22d47e53907e
+https://acoustid.org/track/09b732eb-2508-493b-bda9-32fc6c5b1600
+https://www.amazon.de/s/ref=dp_byline_sr_music_1?ie=UTF8&field-artist=2-4+Family&search-alias=music-de
+https://www.amazon.de/gp/product/B00005AZRU
+https://www.amazon.de/gp/product/B014I3RXXQ
+https://www.amazon.de/s/ref=dp_byline_sr_music_1?ie=UTF8&field-artist=DJ+Bobo&search-alias=music-de
+https://www.amazon.de/gp/product/B005DM34XU
+https://www.amazon.de/gp/product/B000023XAH
+https://musicbrainz.org/isrc/DEE869801143
+https://musicbrainz.org/isrc/DEE869900165
+https://musicbrainz.org/artist/69c2107a-067e-4acf-8224-d097fbbf1d29
+https://musicbrainz.org/release/ea1cc4fc-9083-4319-9340-d189c02b7245
+/Volumes/Musik/2/2-4 Family/Family Business/01 2-4 Family - Stay.flac
+https://en.wikipedia.org/wiki/Aware_Records
+https://en.wikipedia.org/wiki/Columbia/Epic_Label_Group
+https://musicbrainz.org/release/94df2999-74ec-4a25-ac1d-80f79c591b45
+https://musicbrainz.org/label/8f638ddb-131a-4cc3-b3d4-7ebdac201b55
+https://musicbrainz.org/work/ce683d44-4c1b-455e-91e5-0009dec68724
+https://musicbrainz.org/release/82073a47-925e-4b02-94c6-76a7e76e4e6a
+https://musicbrainz.org/label/0e121ffb-f99f-446c-9aa7-e6d0bf18aa58
+https://musicbrainz.org/recording/e444b3ad-f6a7-40a2-9c1d-18c548c2b117
+https://acoustid.org/track/9708b92a-fb02-48e8-8672-3b563c223ed0
+https://musicbrainz.org/isrc/DEE869900166
+https://en.wikipedia.org/wiki/Lean_on_Me_(song)
+https://en.wikipedia.org/wiki/Family_Business_(2-4_Family_album)
+https://www.wikidata.org/wiki/Q3738995
+https://musicbrainz.org/release-group/f610b751-07c0-3f8b-a100-e4eac2674c28
+https://musicbrainz.org/work/d1d67dd7-cd06-40ec-b03e-bf39dd1dc29e
+/Volumes/Musik/2/2-4 Family/Family Business/02 2-4 Family - Jump.flac
+https://musicbrainz.org/isrc/DEE869801861
+https://musicbrainz.org/label/97ef6a28-dfed-4eda-bd24-17a45c792d29
+https://musicbrainz.org/release/a0fa76c9-67f5-46cc-9446-ec6c7a6d7fa7
+https://musicbrainz.org/release/b55160af-be4c-4308-a4a3-3a44b5f46474
+https://musicbrainz.org/recording/10167e59-6f8a-4aaf-9193-bee290c46f39
+https://secondhandsongs.com/work/2983
+https://musicbrainz.org/work/ef4afe5c-a48e-398a-83da-5a766e903f4a
+/Volumes/Musik/2/2-4 Family/Family Business/03 2-4 Family - Lean on Me (with the Family).flac
+https://musicbrainz.org/work/b91add63-52f1-495b-9935-5acde30d0a40
+https://musicbrainz.org/recording/0d170487-4d62-4375-a4f4-5e73b1c47c66
+https://acoustid.org/track/5ddb0997-95fb-4784-9a2d-ebb87d1a0757
+https://musicbrainz.org/isrc/DEE869900168
+/Volumes/Musik/2/2-4 Family/Family Business/04 2-4 Family - Brand New Toy.flac
+https://musicbrainz.org/recording/94172c79-fd67-45b5-a538-b9b0f7727d3d
+https://acoustid.org/track/b289573b-1867-4897-83a9-2541b404ccef
+/Volumes/Musik/2/2-4 Family/Family Business/05 2-4 Family - 9 Lives (_Real_-mix).flac
+https://acoustid.org/track/5177b467-166b-4ab6-8a6c-62152a335250
+/Volumes/Musik/2/2-4 Family/Family Business/06 2-4 Family featuring Benjamin Boyce - Every Time You Go Away.flac
+/Volumes/Musik/2/2-4 Family/Family Business/07 2-4 Family - Flame.flac
+/Volumes/Musik/2/2-4 Family/Family Business
+    01 2-4 Family - Stay.flac
+    02 2-4 Family - Jump.flac
+    03 2-4 Family - Lean on Me (with the Family).flac
+    04 2-4 Family - Brand New Toy.flac
+    05 2-4 Family - 9 Lives (_Real_-mix).flac
+    06 2-4 Family featuring Benjamin Boyce - Every Time You Go Away.flac
+    07 2-4 Family - Flame.flac
+https://acoustid.org/track/9881bc61-3a92-4014-a8de-a8b4635964d0
+https://musicbrainz.org/isrc/DEE869900167
+https://musicbrainz.org/artist/c4744de9-e882-4c6d-8a64-ee77e3818410
+https://musicbrainz.org/release/efceedf7-4adb-4367-bbc0-1288e71f5385
+https://musicbrainz.org/release/b2ccc8f8-7aae-4480-8fc3-bace922dd9a4
+https://musicbrainz.org/release-group/c9ccf239-4e8e-3901-ad1d-0d7dd7261199
+/Volumes/Musik/2/2-4 Family/Lean on Me (with the Family)/01 Lean on Me (radio version) (1).flac
+https://www.amazon.de/s/ref=dp_byline_sr_music_2?ie=UTF8&field-artist=Tina+Arena+2-4+Family+Benjamin+Boyce+Culture+Beat+Vengaboys&search-alias=music-de
+https://www.amazon.de/gp/product/B01FX97BHM
+https://www.amazon.de/gp/bestsellers/music/ref=pd_dp_ts_music_1
+https://www.amazon.de/gp/product/B00004ZPME
+https://www.amazon.de/s/ref=dp_byline_sr_music_2?ie=UTF8&field-artist=Scooter+Prince+Ital+Joe+Feat.+Marky+Mark+The+Kelly+Family+Blue+Barnes+DJ+BoBo&search-alias=music-de
+https://www.amazon.de/gp/product/B00HJSEDV8
+https://www.amazon.de/gp/bestsellers/music/ref=pd_zg_hrsr_music_1_1
+https://www.amazon.de/gp/product/B00004ZPMF
+https://en.wikipedia.org/wiki/Bill_Withers
+https://musicbrainz.org/artist/fd1a2d9d-9bb6-44de-83a3-41560658aba9
+https://musicbrainz.org/work/09e8b4e1-19bb-3dd2-b2ba-0c0b22187a0c
+https://musicbrainz.org/release/dc2dced2-7794-44e9-9025-7116f0bd9f04
+/Volumes/Musik/2/2-4 Family/Lean on Me (with the Family)/01 Lean on Me (radio version).flac
+https://musicbrainz.org/release/c03370ab-24a1-4a79-be1b-8a9c09e35f63
+https://musicbrainz.org/recording/079269bd-fbd9-4121-bf8e-ee0ef4d010a0
+https://acoustid.org/track/0f6b393f-a67e-4844-b1ae-790c877637c7
+https://musicbrainz.org/isrc/DEE869801862
+/Volumes/Musik/2/2-4 Family/Lean on Me (with the Family)/02 Lean on Me (DSP mix) (1).flac
+/Volumes/Musik/2/2-4 Family/Lean on Me (with the Family)/02 Lean on Me (DSP mix).flac
+https://acoustid.org/track/5f59d01c-caf0-476f-8f0a-1547b87f32f8
+/Volumes/Musik/2/2-4 Family/Lean on Me (with the Family)/03 Lean on Me (Lounge mix).flac
+/Volumes/Musik/2/2-4 Family/Lean on Me (with the Family)/01 Lean on Me (radio version) (2).flac
+/Volumes/Musik/2/2-4 Family/Lean on Me (with the Family)
+    01 Lean on Me (radio version) (1).flac
+    01 Lean on Me (radio version) (2).flac
+    01 Lean on Me (radio version).flac
+    02 Lean on Me (DSP mix) (1).flac
+    02 Lean on Me (DSP mix).flac
+    03 Lean on Me (Lounge mix).flac
+https://acoustid.org/track/47df2727-b9f1-44b8-9ea5-fae0fd08a470
+https://musicbrainz.org/recording/dc72c13c-beb6-489e-8728-49d81510ea67
+/Volumes/Musik/2/2-4 Family/Stay/01 Stay (Special X-Mas version).flac
+https://acoustid.org/track/8f38ecbe-6ca6-4efa-aa8b-1530eeb86e15
+https://musicbrainz.org/release/aff02127-3660-408e-a87f-47d15c64d1e7
+https://musicbrainz.org/recording/0a2b868a-1139-4038-8bf8-0e6bbf4a25a1
+/Volumes/Musik/2/2-4 Family/Stay/01 Stay (radio version).flac
+https://acoustid.org/track/f93aa6e6-a8e3-4c10-9386-4fa85c455197
+https://musicbrainz.org/recording/fcc205b7-50e8-43d9-840a-6873421180ad
+/Volumes/Musik/2/2-4 Family/Stay/02 Stay (Jayy's D-Style mix).flac
+https://musicbrainz.org/recording/f21d5b0a-0b76-4300-9fe6-73408b91f2ef
+/Volumes/Musik/2/2-4 Family/Stay/02 Stay (Regular mix).flac
+/Volumes/Musik/2/2-4 Family/Stay/03 Stay (radio version).flac
+/Volumes/Musik/2/2-4 Family/Stay
+    01 Stay (Special X-Mas version).flac
+    01 Stay (radio version).flac
+    02 Stay (Jayy's D-Style mix).flac
+    02 Stay (Regular mix).flac
+    03 Stay (radio version).flac
+/Volumes/Musik/2/2-4 Family/Take Me Home/01 Take Me Home (radio version).flac
+/Volumes/Musik/2/2-4 Family/Take Me Home/02 Take Me Home (Wicked C.L.U.'s Phat-B mix - 7_).flac
+/Volumes/Musik/2/2-4 Family/Take Me Home
+    01 Take Me Home (radio version).flac
+    02 Take Me Home (Wicked C.L.U.'s Phat-B mix - 7_).flac
+/Volumes/Musik/2/2-4 Family
+    Family Business
+    Lean on Me (with the Family)
+    Stay
+    Take Me Home
+https://acoustid.org/track/152176dc-cf8c-441e-be2a-cba1d71ca45b
+https://www.amazon.de/-/e/B000AQ0734
+https://www.amazon.de/gp/product/B000056XDR
+/Volumes/Musik/2/20 Fingers feat. Roula/Lick It/01 Lick It (20 Fingers radio mix).flac
+https://acoustid.org/track/d434632a-e87d-457f-8b55-85c1f816dccf
+/Volumes/Musik/2/20 Fingers feat. Roula/Lick It/02 Lick It (20 Fingers club mix).flac
+https://musicbrainz.org/artist/47e68583-0ceb-4e1e-b160-cb971d7e820e
+https://musicbrainz.org/recording/0a6ff166-f04f-40b4-9863-0321b1526f94
+https://acoustid.org/track/d8b9fb6a-6957-4837-a0f4-ed721e5b17c9
+https://en.wikipedia.org/wiki/20_Fingers
+https://musicbrainz.org/artist/1592a0a6-c7aa-40d7-aa2d-2e3026bb85fa
+/Volumes/Musik/2/20 Fingers feat. Roula/Lick It/03 Lick It (a cappella).flac
+https://musicbrainz.org/recording/436789ae-58e8-43df-8bdb-94cbce6212de
+https://acoustid.org/track/15f463ad-2b1c-432b-84c2-67a614e2355f
+/Volumes/Musik/2/20 Fingers feat. Roula/Lick It/04 Lick It (J.J.'s Underground mix).flac
+/Volumes/Musik/2/20 Fingers feat. Roula/Lick It/05 Lick It (Onofrio club mix).flac
+/Volumes/Musik/2/20 Fingers feat. Roula/Lick It/06 Lick It (J.J.'s Bass radio mix).flac
+/Volumes/Musik/2/20 Fingers feat. Roula/Lick It
+    01 Lick It (20 Fingers radio mix).flac
+    02 Lick It (20 Fingers club mix).flac
+    03 Lick It (a cappella).flac
+    04 Lick It (J.J.'s Underground mix).flac
+    05 Lick It (Onofrio club mix).flac
+    06 Lick It (J.J.'s Bass radio mix).flac
+/Volumes/Musik/2/20 Fingers feat. Roula
+    Lick It
+https://musicbrainz.org/release-group/62f81ecd-4bbc-3825-bb36-468820cf3f22
+https://musicbrainz.org/release/1e235c4d-0b9a-4ce0-9b0b-757532fd57c7
+https://musicbrainz.org/label/1dfbd6fe-dc4b-4169-b086-35abe7e87f8d
+https://musicbrainz.org/recording/1c8140f4-a2fb-4cfc-9b90-ef32b12cd573
+https://acoustid.org/track/7d3d91c6-806a-40fc-9b9f-804a78263e27
+https://www.amazon.de/gp/product/B01NB0BY8J
+https://www.amazon.de/gp/product/B06W9M8QR4
+https://www.amazon.de/s/ref=dp_byline_sr_music_1?ie=UTF8&field-artist=2Raumwohnung&search-alias=music-de
+https://www.amazon.de/gp/product/B000PFU9PG
+/Volumes/Musik/2/2raumwohnung/36grad/01 36grad (2raumremix edit).flac
+https://acoustid.org/track/aaf810db-a148-4231-a87c-77c0428266b5
+https://www.amazon.de/gp/bestsellers/music/255883/ref=pd_zg_hrsr_music_1_2_last
+https://www.amazon.de/gp/product/B000PFU9OW
+https://musicbrainz.org/recording/6ae113d9-06a8-4fe6-827f-ad3e38410c95
+/Volumes/Musik/2/2raumwohnung/36grad/01 36grad.flac
+/Volumes/Musik/2/2raumwohnung/36grad
+    01 36grad (2raumremix edit).flac
+    01 36grad.flac
+https://acoustid.org/track/6cb2c85e-8314-4cbb-9be1-f5009791c156
+https://www.amazon.de/gp/product/B000L42GVQ
+https://www.amazon.de/gp/product/B000L42GW0
+/Volumes/Musik/2/2raumwohnung/Besser gehts nicht/01 Besser gehts nicht.m4a
+/Volumes/Musik/2/2raumwohnung/Besser gehts nicht
+    01 Besser gehts nicht.m4a
+https://acoustid.org/track/82f96c1b-76af-4f55-8302-81dbb8c22183
+https://musicbrainz.org/recording/004ff42c-4101-48ac-9aa0-61c1117bef3a
+/Volumes/Musik/2/2raumwohnung/Nimm mich mit - Clubversionen/01 Nimm mich mit (Jan Driver remix) (edit).flac
+https://acoustid.org/track/01f8b3b4-68b1-475d-b594-82c65e5734b3
+/Volumes/Musik/2/2raumwohnung/Nimm mich mit - Clubversionen/02 Nimm mich mit (club version).flac
+/Volumes/Musik/2/2raumwohnung/Nimm mich mit - Clubversionen/03 Nimm mich mit (club version) (i_o_l remix).flac
+/Volumes/Musik/2/2raumwohnung/Nimm mich mit - Clubversionen
+    01 Nimm mich mit (Jan Driver remix) (edit).flac
+    02 Nimm mich mit (club version).flac
+    03 Nimm mich mit (club version) (i_o_l remix).flac
+https://acoustid.org/track/a53ddd73-5cfa-4724-8bff-9ada2335dbdc
+/Volumes/Musik/2/2raumwohnung/Nimm mich mit - Das Abenteuer Liebe usw_/01 Nimm mich mit - Das Abenteuer Liebe usw..flac
+/Volumes/Musik/2/2raumwohnung/Nimm mich mit - Das Abenteuer Liebe usw_/01 Nimm mich mit - Das Abenteuer Liebe usw..m4a
+/Volumes/Musik/2/2raumwohnung/Nimm mich mit - Das Abenteuer Liebe usw_
+    01 Nimm mich mit - Das Abenteuer Liebe usw..flac
+    01 Nimm mich mit - Das Abenteuer Liebe usw..m4a
+/Volumes/Musik/2/2raumwohnung
+    36grad
+    Besser gehts nicht
+    Nimm mich mit - Clubversionen
+    Nimm mich mit - Das Abenteuer Liebe usw_
+/Volumes/Musik/2
+    2 Eivissa
+    2 Unlimited
+    2 in a Room
+    2-4 Family
+    20 Fingers feat. Roula
+    2raumwohnung
+https://en.wikipedia.org/wiki/Dance
+https://en.wikipedia.org/wiki/Concert_dance
+https://en.wikipedia.org/wiki/Glossary_of_ballet
+https://en.wikipedia.org/wiki/Ballet
+https://en.wikipedia.org/wiki/Impromptu
+https://en.wikipedia.org/wiki/Romanticism
+https://en.wikipedia.org/wiki/Her_Majesty%27s_Theatre
+https://en.wikipedia.org/wiki/Romantic_ballet
+https://en.wikipedia.org/wiki/Louis_XIV_of_France
+https://en.wikipedia.org/wiki/Paris_Opera
+https://en.wikipedia.org/wiki/Ballet_company
+https://en.wikipedia.org/wiki/Paris_Opera_Ballet
+https://en.wikipedia.org/wiki/Th%C3%A9%C3%A2tre_National_de_la_rue_de_la_Loi
+https://en.wikipedia.org/wiki/Salle_Le_Peletier
+https://en.wikipedia.org/wiki/Paris
+https://en.wikipedia.org/wiki/Giselle
+https://en.wikipedia.org/wiki/Theatre
+https://en.wikipedia.org/wiki/Opera
+https://en.wikipedia.org/wiki/Operetta
+https://en.wikipedia.org/wiki/Libretto
+https://en.wikipedia.org/wiki/Com%C3%A9die_en_vaudevilles
+https://en.wikipedia.org/wiki/Jules-Henri_Vernoy_de_Saint-Georges
+https://en.wikipedia.org/wiki/The_Corsair
+https://en.wikipedia.org/wiki/Le_Corsaire
+https://en.wikipedia.org/wiki/Aria
+https://en.wikipedia.org/wiki/Op%C3%A9ra_comique
+https://en.wikipedia.org/wiki/Adolphe_de_Leuven
+https://en.wikipedia.org/wiki/Le_postillon_de_Lonjumeau
+https://en.wikipedia.org/wiki/Op%C3%A9ra-Comique
+https://en.wikipedia.org/wiki/Le_tor%C3%A9ador
+https://en.wikipedia.org/wiki/Si_j%27%C3%A9tais_roi
+https://en.wikipedia.org/wiki/Adolphe_Adam
+https://en.wikipedia.org/wiki/Switzerland
+https://en.wikipedia.org/wiki/Alsace
+https://en.wikipedia.org/wiki/Orchestra
+https://en.wikipedia.org/wiki/Ferdinand_Hérold
+https://musicbrainz.org/artist/0bec85d3-db59-4683-a8a1-16c6ceac1ea9
+https://musicbrainz.org/release-group/c9c67d29-c70e-454d-bf86-de464db21a42
+https://musicbrainz.org/release-group/5cb7c257-ba9b-477c-a329-450d2ff8f0a8
+https://musicbrainz.org/artist/253dc0c7-4cf1-47e8-ba63-763be2dde1d6
+https://musicbrainz.org/recording/6779060c-c7d6-4a20-983f-1928298349ce
+https://musicbrainz.org/release/91380335-c961-44ed-a9aa-dda130aa105f
+https://musicbrainz.org/label/f18f3b31-8263-4de3-966a-fda317492d3d
+https://musicbrainz.org/release-group/c9b3d20a-1824-49f7-921d-2508880d154e
+https://en.wikipedia.org/wiki/Thomas_Beecham
+https://en.wikipedia.org/wiki/London_Philharmonic_Orchestra
+https://musicbrainz.org/release-group/40434d10-2282-41a9-80a1-946d6695fe20
+https://musicbrainz.org/artist/fa37018e-3557-4cb7-973f-555003c30174
+https://en.wikipedia.org/wiki/Metropolitan_France
+https://en.wikipedia.org/wiki/France
+https://en.wikipedia.org/wiki/Rouen
+https://en.wikipedia.org/wiki/François-Adrien_Boieldieu
+https://musicbrainz.org/artist/27870d47-bb98-42d1-bf2b-c7e972e6befc
+https://musicbrainz.org/release-group/52ea4ad6-fb7e-38fa-8b20-cc089cdfc6ee
+https://musicbrainz.org/artist/68fc3352-2940-4a55-add1-57c3d31f567b
+https://musicbrainz.org/artist/1d2efe5b-3683-4b57-b9a5-44d910935141
+https://en.wikipedia.org/wiki/Conducting
+https://en.wikipedia.org/wiki/Jean_Martinon
+https://musicbrainz.org/release-group/4e2043a4-65f4-4da9-8b31-02822b6bd162
+https://musicbrainz.org/artist/89593361-7c0a-45fa-9301-d04f19d32c17
+https://musicbrainz.org/artist/07bc5b60-60b1-4559-8f4e-c4f7fa607b1f
+https://musicbrainz.org/release-group/3ca2cb88-bcb8-4102-8b11-90a3c8c241b5
+https://musicbrainz.org/artist/acfa74c8-af58-4327-bbd7-53b81d00d7c2
+https://musicbrainz.org/artist/ece590a3-ae0e-4311-bcf3-ee07cfb7b4f0
+https://en.wikipedia.org/wiki/Hearing
+https://en.wikipedia.org/wiki/Sound
+https://en.wikipedia.org/wiki/Sound_effect
+https://en.wikipedia.org/wiki/Sound_recording_and_reproduction
+https://en.wikipedia.org/wiki/Songwriter
+https://en.wikipedia.org/wiki/Music_publisher_(popular_music)
+https://en.wikipedia.org/wiki/Recording_contract
+https://en.wikipedia.org/wiki/Record_label
+https://en.wikipedia.org/wiki/Pianist
+https://en.wikipedia.org/wiki/Ludwig_van_Beethoven
+https://en.wikipedia.org/wiki/Symphony_No._7_(Beethoven)
+https://en.wikipedia.org/wiki/Columbia_Masterworks_Records
+https://en.wikipedia.org/wiki/Kremenets
+https://en.wikipedia.org/wiki/Isaac_Stern
+https://en.wikipedia.org/wiki/Pablo_Casals
+https://en.wikipedia.org/wiki/Sony_Classical_Records
+https://en.wikipedia.org/wiki/Lyric_soprano
+https://en.wikipedia.org/wiki/Kiri_Te_Kanawa
+https://musicbrainz.org/release-group/e4c4914d-6762-4208-9b06-ba3f4fe49981
+https://musicbrainz.org/artist/1a78bb97-ad86-4f89-b4b4-cc10953103c3
+https://musicbrainz.org/label/b8d33bec-92cc-40d9-bd92-4eb089b401a9
+https://musicbrainz.org/release-group/39ea011c-7689-4190-8678-85d566d79345
+https://musicbrainz.org/recording/2bc9ba5e-5dae-493d-b8bc-3bf4146df021
+https://musicbrainz.org/release/e5988431-fe6d-4956-9618-59b7586cdd64
+https://en.wikipedia.org/wiki/Ernest_Chausson
+https://musicbrainz.org/artist/dbe921e2-a7a7-4d4c-b2f8-109da1cd1e3a
+https://musicbrainz.org/artist/ac4e472f-d701-4f4b-a1b7-21f2c36fe8ea
+https://musicbrainz.org/release/972ccc80-8f49-4ab0-ba06-dfb83863769e
+https://en.wikipedia.org/wiki/Itzhak_Perlman
+https://musicbrainz.org/artist/5e85f4f1-a491-4e63-9103-6065c5e997d4
+https://musicbrainz.org/artist/8ee62ca4-6407-4564-b5b4-a8f87427be2d
+https://musicbrainz.org/label/10920823-9ed8-45d9-adb3-69fc22475ab0
+https://musicbrainz.org/artist/38712b4c-0fd4-4c65-8c7a-45676fecc973
+https://musicbrainz.org/recording/e22d63b6-c3c5-44f7-baf8-74023cd00320
+https://acoustid.org/track/d2e18316-3caa-4ce6-bd5b-597cbb8c6874
+https://www.amazon.com/Classical-Music/b/ref=dp_bc_2?ie=UTF8&node=85
+https://www.amazon.com/gp/product/B007Z0IR6W
+https://www.amazon.com/s/ref=dp_byline_sr_music_1?ie=UTF8&field-artist=Richard+Blareau&search-alias=music
+https://www.amazon.com/gp/product/B000050G55
+https://www.amazon.com/-/e/B000ARC6DW?
+https://www.amazon.com/gp/product/B000025VQW
+https://www.amazon.com/best-sellers-music-albums/zgbs/music/ref=pd_dp_ts_music_1
+https://www.amazon.com/gp/product/B00020HCO0
+https://www.amazon.com/-/e/B001LH50ME
+https://www.amazon.com/gp/product/B0011EUNHE
+https://www.amazon.com/-/e/B004I90LIU
+https://www.amazon.com/gp/product/B00FY3PHQA
+https://www.amazon.com/s/ref=dp_byline_sr_music_1?ie=UTF8&field-artist=Luciano+Pavarotti&search-alias=music
+https://www.amazon.com/gp/product/B0000042I0
+https://www.amazon.com/World-Music/b/ref=dp_bc_2?ie=UTF8&node=33
+https://www.amazon.com/gp/product/B0000042HZ
+https://www.amazon.com/s/ref=ntt_srch_drd_B01LC9CVMC?ie=UTF8&field-keywords=Proulx%2C%20Richard&index=digital-music&search-type=ss
+https://www.amazon.com/gp/product/B01LW9PRVB
+https://www.amazon.com/gp/product/B01LC8X71M
+https://www.amazon.com/gp/product/B01LVZGKLV
+https://www.amazon.com/Holiday-Music-Comedy-CDs/b/ref=dp_bc_2?ie=UTF8&node=292572
+https://www.amazon.com/gp/product/B07FY7XV8X
+https://www.amazon.com/Classical-Music-Opera-Vocal/b/ref=dp_bc_2?ie=UTF8&node=84
+https://www.amazon.com/gp/product/B0002WZSZS
+https://www.amazon.com/s/ref=ntt_srch_drd_B003Y2G2EO?ie=UTF8&field-keywords=United%20Studio%20Orchestra%20%26%20Children%27s%20Chorus&index=digital-music&search-type=ss
+https://www.amazon.com/gp/product/B009Y6WAFY
+https://www.amazon.com/Classical-Vocal-Music-Non-Opera/b/ref=dp_bc_3?ie=UTF8&node=67104
+https://www.amazon.com/gp/product/B000069KGA
+https://www.amazon.com/Classical-Music-Ballets-Dances/b/ref=dp_bc_3?ie=UTF8&node=5260
+https://www.amazon.com/gp/product/B000VPKRPW
+https://www.amazon.com/gp/product/B004U7F9LE
+https://www.amazon.com/default/e/B005HWLYQU
+http://mariecatherinegirod.fr/
+https://www.discogs.com/artist/1827473
+https://www.discogs.com/release/6992065
+https://www.discogs.com/artist/4398510
+https://www.discogs.com/release/7521189
+https://www.discogs.com/artist/1428466
+https://www.discogs.com/label/89473
+https://www.discogs.com/artist/638732
+https://www.discogs.com/label/93330
+https://www.discogs.com/label/46453
+https://www.discogs.com/label/449459
+https://www.discogs.com/label/865
+https://reference.discogslabs.com/genre/classical
+https://www.discogs.com/genre/classical
+https://www.discogs.com/composition/f2260704-58c8-4a3e-a4cd-c879d8c7da35
+https://www.discogs.com/release/7867656
+https://musicbrainz.org/artist/f6df125a-a83c-4161-8cbe-48f4a3a7cad5
+https://musicbrainz.org/release-group/17d6fe45-2813-34e1-b1bf-d4a1cdae64b1
+https://www.amazon.com/gp/product/B003IWFBJ2
+https://www.amazon.com/gp/product/B007QMB84W
+https://www.amazon.com/gp/product/B002Q85A4A
+https://www.amazon.com/gp/product/B000026FQB
+https://www.amazon.com/Classical-Music-Ballets/b/ref=dp_bc_4?ie=UTF8&node=5261
+https://www.amazon.com/gp/product/B007WB5C7G
+https://www.amazon.com/s/ref=dp_byline_sr_music_1?ie=UTF8&field-artist=Adolphe+Adam&search-alias=music
+https://www.amazon.com/gp/product/B0000026GQ
+/Volumes/Musik/A/Adam, Adolphe/Adolphe Adam_ Music from Giselle/01 1. Act - No.01. Introduction.flac
+https://musicbrainz.org/recording/4c27af34-9277-419a-a251-494fa4596286
+https://musicbrainz.org/recording/dc7ddb1f-daa1-4e65-b009-c29c51cab29f
+https://musicbrainz.org/release/5ca063ec-86bf-439a-ac8e-1b9b975181a1    
+https://musicbrainz.org/recording/bdfb1e30-0607-4be9-a28f-7b7dc61c2a35
+https://acoustid.org/track/f2576e6c-9d30-41c6-b5ff-a1492aa12431
+https://acoustid.org/track/a75520ec-127a-42ec-9e45-7d169bdf3af8
+https://musicbrainz.org/recording/9fd09d59-e17d-4c63-978f-f10e663ab060
+https://musicbrainz.org/recording/a78065da-ef0d-48f4-83cb-f7c5ef10768c
+https://musicbrainz.org/recording/2fdfe221-5cbd-497f-88af-3d40e9f686cc
+https://acoustid.org/track/4a12d0f1-268b-418d-ab20-e01f0e3c83b0
+https://acoustid.org/track/ba3b3312-f0f7-4d5a-8b52-2eb23f5f4e34
+https://musicbrainz.org/recording/c0cdbbfc-131b-4286-aea4-5f5401356451
+https://musicbrainz.org/recording/a9be336e-c6af-4055-96a0-f85c513012d0
+https://musicbrainz.org/release/984d77cf-c854-4548-88db-980d6f0d624b
+/Volumes/Musik/A/Adam, Adolphe/Adolphe Adam_ Music from Giselle/02 1. Act - No.02. Joyful entrance of the grape-pickers.flac
+https://acoustid.org/track/8416b5de-913b-4bfb-b85c-48652a9bb6f1
+/Volumes/Musik/A/Adam, Adolphe/Adolphe Adam_ Music from Giselle/03 1. Act - No.03. Albrecht enters, accompanied by his squire Wilfried.flac
+https://acoustid.org/track/90b89465-3a7c-49f3-96e8-88291d0adb84
+/Volumes/Musik/A/Adam, Adolphe/Adolphe Adam_ Music from Giselle/04 1. Act - No.04. Albrecht is left alone, Gisele enters.flac
+https://acoustid.org/track/7a52ab20-5ecc-417b-88fb-e03a82b70c5c
+/Volumes/Musik/A/Adam, Adolphe/Adolphe Adam_ Music from Giselle/05 1. Act - No.05. Love scene.flac
+https://musicbrainz.org/recording/4638129c-34ad-4014-8963-cd7718da1b7c
+/Volumes/Musik/A/Adam, Adolphe/Adolphe Adam_ Music from Giselle/06 1. Act - No.06. The grape-pickers return.flac
+https://acoustid.org/track/884b0129-cf70-424a-94e9-7ff253251dfd
+/Volumes/Musik/A/Adam, Adolphe/Adolphe Adam_ Music from Giselle/07 1. Act - No.07. Valse.flac
+/Volumes/Musik/A/Adam, Adolphe/Adolphe Adam_ Music from Giselle/08 1. Act - No.08. Pas de deux, Giselle and Albrecht.flac
+/Volumes/Musik/A/Adam, Adolphe/Adolphe Adam_ Music from Giselle/09 1. Act - No.09. The hunt.flac
+/Volumes/Musik/A/Adam, Adolphe/Adolphe Adam_ Music from Giselle/10 1. Act - No.10. The wine-pickers' march.flac
+/Volumes/Musik/A/Adam, Adolphe/Adolphe Adam_ Music from Giselle
+    10 1. Act - No.10. The wine-pickers' march.flac
+/Volumes/Musik/A/Adam, Adolphe
+    Adolphe Adam_ Music from Giselle
+https://en.wikipedia.org/wiki/States_of_Germany
+https://en.wikipedia.org/wiki/Baden-Württemberg
+https://en.wikipedia.org/wiki/Schlossberg_(Freiburg)
+https://en.wikipedia.org/wiki/Freiburg_im_Breisgau
+https://en.wikipedia.org/wiki/Cantons_of_Switzerland
+https://en.wikipedia.org/wiki/Canton_of_Fribourg
+https://en.wikipedia.org/wiki/Sarine_District
+https://en.wikipedia.org/wiki/Fribourg
+https://en.wikipedia.org/wiki/Northern_Hemisphere
+https://en.wikipedia.org/wiki/Europe
+https://en.wikipedia.org/wiki/Bern
+https://en.wikipedia.org/wiki/Switzerland
+https://en.wikipedia.org/wiki/North_America
+https://en.wikipedia.org/wiki/Americas
+https://en.wikipedia.org/wiki/Munich
+https://en.wikipedia.org/wiki/Mia_Aegerter
+https://musicbrainz.org/release/d9e3ecb3-9dd5-43a7-9b23-90d9abb30e40
+https://musicbrainz.org/recording/ff6cfee3-4539-4c43-813b-ec8b5d78e09a
+https://musicbrainz.org/recording/9053b4cc-7cba-4d66-9cd1-22c5646687ba
+https://musicbrainz.org/release/85ed0bef-37b6-4eb9-aa59-503196dcdc4c
+https://musicbrainz.org/recording/cbbe9bb8-e04a-491e-bdd5-31a21d3bc08d
+https://musicbrainz.org/release/35fee275-7232-4491-870d-bfc49484bdc1
+https://musicbrainz.org/release-group/dc21835a-312d-3b08-864d-3e59fa9d6a09
+https://musicbrainz.org/release/e3a85199-a63b-46b5-b395-39f08634eb99
+https://musicbrainz.org/release-group/75207948-582a-49da-9bac-00f1e3689e57
+https://musicbrainz.org/release-group/00859fc7-0956-3b48-a04c-6f2925199bea
+https://musicbrainz.org/artist/64f46512-94be-4b05-beef-b651742b1d18
+https://www.youtube.com/watch?v=5f9k9FxFeWE
+https://musicbrainz.org/recording/f2187109-b9e7-4198-a305-6578c04face5
+https://musicbrainz.org/isrc/CH4971700041
+https://musicbrainz.org/recording/8c536a7b-ea43-4339-b267-219717716acb
+https://musicbrainz.org/isrc/CH4971700042
+https://musicbrainz.org/release/7c8b9f88-647c-424d-833d-0a8d62c102fa
+https://en.wikipedia.org/wiki/Lunik
+https://musicbrainz.org/artist/9dd236dc-473f-41c3-89d9-111316b212b7
+https://musicbrainz.org/release-group/2e9de6e5-0221-3168-9a73-45f907ea031e
+https://musicbrainz.org/release/7040c5fa-bfd7-4325-ac04-5bee243bd9fe
+https://musicbrainz.org/artist/a5e6f3fb-55dd-45dc-9f72-0d9449fa2205
+https://musicbrainz.org/release/848bd945-8f17-411c-86a2-2dadcb9c000c
+https://musicbrainz.org/release/fc6269ef-4b19-4f28-adb4-534040d50fca
+https://musicbrainz.org/label/2457318d-b421-4b7f-b48a-1c723eb60f09
+https://musicbrainz.org/recording/c259bf61-ed89-4a90-9863-90087a7ffac8
+https://acoustid.org/track/6dcbe1cc-48af-4099-884f-99bc787fffc4
+https://musicbrainz.org/isrc/CH4971700039
+https://itunes.apple.com/de/album/nichts-f%C3%BCr-feiglinge/id1220873239
+https://www.youtube.com/watch?v=5f9k9FxFeWE
+https://www.youtube.com/watch?v=U6RebJJW4t4
+http://www.miaaegerter.de/
+https://www.discogs.com/genre/rock
+https://www.discogs.com/master/886144
+https://www.discogs.com/label/93019
+https://www.discogs.com/artist/375917
+http://sophie.ch/portfolio_page/transistor-girl/
+http://sophie.ch/
+https://myspace.com/sophierecords
+https://www.discogs.com/label/71307
+https://www.discogs.com/release/12716521
+https://www.discogs.com/search/?format_exact=CD
+https://www.discogs.com/search/?country=Switzerland
+https://www.discogs.com/release/10415085
+https://musicbrainz.org/release/937eba85-2dc0-42c4-b851-bd3df3f52e78
+https://musicbrainz.org/release-group/cabf3f16-a62a-44c7-a40e-e25c4d3bc8fd
+https://acoustid.org/track/b7e8119f-a285-477e-bedb-98fff062b4a6
+https://musicbrainz.org/isrc/CH4971700040
+/Volumes/Musik/A/Aegerter, Mia/Nichts für Feiglinge/01 Superwoman.flac
+/Volumes/Musik/A/Aegerter, Mia/Nichts für Feiglinge/02 Nichts für Feiglinge.flac
+/Volumes/Musik/A/Aegerter, Mia/Nichts für Feiglinge
+    01 Superwoman.flac
+    02 Nichts für Feiglinge.flac
+    03 Schwarzer Fleck (1).flac
+    04 Liebe linear.flac
+/Volumes/Musik/A/Aegerter, Mia
+    Nichts für Feiglinge
+https://en.wikipedia.org/wiki/Don_Henley
+https://en.wikipedia.org/wiki/Get_a_Grip
+https://musicbrainz.org/release/c7e793b4-fb8c-4357-bae3-0e63bdd95e8f
+https://musicbrainz.org/release-group/73c6a7b0-1dc2-3ddc-a720-c29505271711
+https://musicbrainz.org/label/0b6073f1-78a5-4078-bc01-22d7b05d0b7a
+https://musicbrainz.org/recording/dc2b0ca2-ff9c-41ec-9672-58a96f5e58bd
+https://musicbrainz.org/instrument/12092505-6ee1-46af-a15a-b5b468b6b155
+https://musicbrainz.org/release/05cbf593-1d17-4d53-9f50-b96de15005f2
+https://en.wikipedia.org/wiki/Interscope_Geffen_A%26M_Records
+https://en.wikipedia.org/wiki/Geffen_Records
+https://musicbrainz.org/release/5af7ef4e-685c-49e2-bc26-6c84827a67ad
+https://musicbrainz.org/label/0fadc2ce-f7de-4e27-bbe6-612b317e716b
+https://musicbrainz.org/artist/4b289467-0bc9-4e6a-aea6-b42247c89756
+https://musicbrainz.org/release/cac0a0dc-88a7-4ae4-9390-417069fedee3
+https://musicbrainz.org/release/312d7683-0c2c-4c13-8992-f3b3c4773c95
+https://musicbrainz.org/recording/f27a903c-f5cc-465f-91c4-5c67d8b3d6d6
+https://acoustid.org/track/61d87d88-8525-433c-ac2f-40b408ecc1a1
+https://www.amazon.de/Heavy-Metal-Hardrock/b/ref=dp_bc_2?ie=UTF8&node=264898
+https://www.amazon.de/gp/product/B00GDTICCA
+https://www.amazon.de/gp/product/B0043BYLIY
+https://www.amazon.de/gp/product/B005I735Z2
+https://www.amazon.de/Hardrock-Rock-Musik/b/ref=dp_bc_3?ie=UTF8&node=264895
+https://www.amazon.de/gp/proxduct/B004VSAJ6C
+https://www.amazon.de/gp/product/B01MRIVK26
+https://www.amazon.de/-/e/B000AQ0F4K
+https://www.amazon.de/Heavy-Metal-Alben-CDs/b/ref=dp_bc_3?ie=UTF8&node=344786031
+https://www.amazon.de/gp/product/B000056Y3W
+https://musicbrainz.org/artist/6a539597-5e1c-4dd5-af21-d67b89fc5109
+https://musicbrainz.org/instrument/0b9d87fa-93fa-4956-8b6a-a419566cc915
+https://musicbrainz.org/instrument/8e9abdf1-0afc-4544-b201-c6fa768d01f4
+https://musicbrainz.org/release/792dc139-b37f-4d28-8785-4ee8f45d1a4d
+https://en.wikipedia.org/wiki/Sentimental_ballad
+https://en.wikipedia.org/wiki/Amazing_%28Aerosmith_song%29
+https://musicbrainz.org/release/a9581769-eaee-467b-9cf5-ca19fac38260
+https://musicbrainz.org/release-group/10a1a692-67e5-3700-8d5a-6db85af06dba
+https://musicbrainz.org/isrc/USIR10000426
+https://musicbrainz.org/isrc/USIR10000446
+/Volumes/Musik/A/Aerosmith/Amazing/01 Amazing (LP version).flac
+https://musicbrainz.org/release-group/1cf0821a-def5-35f7-bca0-943c606fdd4c
+https://musicbrainz.org/recording/6c70820b-3791-462e-a4d0-ca361bcbaf0a
+https://musicbrainz.org/release/0fd5d213-07fa-4833-aec2-84d94192e806
+https://en.wikipedia.org/wiki/Richard_Supa
+https://musicbrainz.org/artist/67cfe95d-691f-4d8c-bf4c-3f8b5c930548
+https://musicbrainz.org/label/2aa8e26d-af39-492f-99ae-8953df3076b6
+https://musicbrainz.org/recording/e7376a0d-4846-424f-ad76-fa5cb144d06b
+https://acoustid.org/track/727ff0cd-0ba5-48ef-81fa-067cc3283721
+https://en.wikipedia.org/wiki/Music_education
+https://en.wikipedia.org/wiki/Popular_music
+https://en.wikipedia.org/wiki/Rock_and_roll
+https://en.wikipedia.org/wiki/Rock_music
+https://en.wikipedia.org/wiki/Deep_South
+https://en.wikipedia.org/wiki/Blues
+https://en.wikipedia.org/wiki/Hard_rock
+https://en.wikipedia.org/wiki/Aerosmith
+https://en.wikipedia.org/wiki/Walking_the_Dog
+https://en.wikipedia.org/wiki/Aerosmith_%28album%29
+https://musicbrainz.org/release/f2d67952-2461-4ce4-82ae-7a545952d96e
+https://musicbrainz.org/release-group/8a58cc1a-be0d-3b1b-8d0d-aa8f467a59da
+https://en.wikipedia.org/wiki/Get_Your_Wings
+https://musicbrainz.org/release-group/29346fb6-69c8-3f12-90c3-9d6cbce18259
+https://musicbrainz.org/release-group/d03bb6b1-d7b4-38ea-974e-847cbb31dca4
+https://musicbrainz.org/artist/3d2b98e5-556f-4451-a3ff-c50ea18d57cb
+https://en.wikipedia.org/wiki/Crazy_%28Aerosmith_song%29
+https://musicbrainz.org/release-group/4646d3f8-4c47-3ba9-8765-e514cd93de52
+https://musicbrainz.org/recording/48ade205-8866-49ab-aeee-1de90b25e688
+https://musicbrainz.org/release/3eade17d-c508-4b15-bd89-221a60cf6096
+https://en.wikipedia.org/wiki/Steven_Tyler
+https://musicbrainz.org/artist/7d3f7aed-fb9c-4e80-b198-64cd6ae31cb8
+https://musicbrainz.org/release/32f68dfc-3be3-406b-966c-a6e29285079b
+https://musicbrainz.org/recording/eb58ad57-7be6-40a7-a24e-2eaf186c1ae6
+https://musicbrainz.org/work/b83a5cc0-88a0-49b2-84f4-5672bd33b115
+https://musicbrainz.org/label/df57eef0-b9da-4909-8aa3-97187d777d9a
+https://musicbrainz.org/label/ea70f213-b931-4abd-bcc9-f33949fc76b4
+https://musicbrainz.org/work/417ff441-2f22-37bc-b72a-15112b55e7dc
+/Volumes/Musik/A/Aerosmith/Amazing/02 Amazing (orchestral).flac
+https://musicbrainz.org/recording/3bf0ab14-e331-4cf8-a3d5-62e7ad683c5c
+https://acoustid.org/track/8be8bb33-eabe-4735-9cdc-72450c04a6c8
+https://acoustid.org/track/6e358a93-9700-4466-96d9-a9bd34e7e558
+https://en.wikipedia.org/wiki/Tom_Hamilton_%28musician%29
+https://musicbrainz.org/artist/9fc37bbf-c2a4-4ac9-95de-255e93fc6758
+https://musicbrainz.org/instrument/1c8f9780-2f16-4891-b66d-bb7aa0820dbd
+https://musicbrainz.org/release/2a3d5f96-a996-4ec4-ab57-94653c746956
+/Volumes/Musik/A/Aerosmith/Amazing/04 Amazing (acoustic version).flac
+https://acoustid.org/track/e5148d76-cf2b-437b-9119-e0d2e9063786
+https://musicbrainz.org/release/124980e2-04ba-4746-8320-b7d7b9514cf5
+https://musicbrainz.org/recording/0608638a-f116-4ad0-a008-e434228b3b83
+https://musicbrainz.org/isrc/USIR10000443
+/Volumes/Musik/A/Aerosmith/Amazing/03 Amazing (orchestral version).flac
+/Volumes/Musik/A/Aerosmith/Amazing
+    03 Amazing (orchestral version).flac
+    04 Amazing (acoustic version).flac
+/Volumes/Musik/A/Aerosmith
+    Amazing
+https://en.wikipedia.org/wiki/High_Green
+https://en.wikipedia.org/wiki/Arctic_Monkeys
+https://musicbrainz.org/release-group/6c9c4985-3628-3070-b956-b538f30c9bea
+https://musicbrainz.org/artist/ada7a83c-e3e1-40f1-93f9-3e73dbc9298a
+https://musicbrainz.org/release-group/97ee3a0f-183b-4830-aa5c-45507a084d37
+https://musicbrainz.org/release/d6c64ae3-df73-4784-a9d8-2fc819f8a5f2
+https://musicbrainz.org/label/bfe26801-a86f-49b9-8502-05ae80b02594
+https://musicbrainz.org/recording/c4540caa-9f07-4a2f-a95f-c4a9e7356fd1
+https://acoustid.org/track/a2b467f3-c525-442d-9190-0e273de9a398
+/Volumes/Musik/A/Arctic Monkeys/Tranquility Base Hotel + Casino/01 Star Treatment.flac
+https://acoustid.org/track/312e8a3f-13d9-4a7e-9f22-a929172f8a54
+/Volumes/Musik/A/Arctic Monkeys/Tranquility Base Hotel + Casino/02 One Point Perspective.flac
+https://acoustid.org/track/c1f110f5-24fb-44c9-b637-f7b312d9feb4
+/Volumes/Musik/A/Arctic Monkeys/Tranquility Base Hotel + Casino/03 American Sports.flac
+https://acoustid.org/track/d1186774-81f2-4283-a340-1b17e4cc3c1d
+/Volumes/Musik/A/Arctic Monkeys/Tranquility Base Hotel + Casino/04 Tranquility Base Hotel + Casino.flac
+https://acoustid.org/track/209dde40-3f1f-4a7a-be62-8d0606b7f0b4
+/Volumes/Musik/A/Arctic Monkeys/Tranquility Base Hotel + Casino/05 Golden Trunks.flac
+/Volumes/Musik/A/Arctic Monkeys/Tranquility Base Hotel + Casino/06 Four Out of Five.flac
+/Volumes/Musik/A/Arctic Monkeys/Tranquility Base Hotel + Casino/07 The World's First Ever Monster Truck Front Flip.flac
+/Volumes/Musik/A/Arctic Monkeys/Tranquility Base Hotel + Casino
+    01 Star Treatment.flac
+    02 One Point Perspective.flac
+    03 American Sports.flac
+    04 Tranquility Base Hotel + Casino.flac
+    05 Golden Trunks.flac
+    06 Four Out of Five.flac
+    07 The World's First Ever Monster Truck Front Flip.flac
+/Volumes/Musik/A/Arctic Monkeys
+    Tranquility Base Hotel + Casino
+https://musicbrainz.org/label/99a24d71-54c1-4d3f-88cc-00fbcc4fce83
+https://musicbrainz.org/recording/51d422ee-4fd0-4ec0-8112-b4fd7c7e1883
+https://acoustid.org/track/adecff29-4add-4988-84a2-cddc94c89ed1
+https://www.amazon.com/Jazz-Music/b/ref=dp_bc_2?ie=UTF8&node=34
+https://www.amazon.com/gp/product/B00IWUL7RA
+https://www.amazon.com/gp/product/B00CYA5TE6
+https://www.amazon.com/-/e/B000APRB6G
+https://www.amazon.com/gp/product/B00FY3FCTC
+https://www.amazon.com/gp/product/B07GC8R58W
+https://www.amazon.com/Pop-Music/b/ref=dp_bc_2?ie=UTF8&node=37
+https://www.amazon.com/gp/product/B0000046V0
+https://musicbrainz.org/isrc/USPR35200040
+https://musicbrainz.org/release-group/e7dc49ad-6d59-3263-a6a3-8bfa9afea1ed
+https://musicbrainz.org/release/1471ebae-5c08-4dac-998e-3f61b1e4825a
+/Volumes/Musik/A/Astaire, Fred/Steppin' Out_ Astaire Sings/01 Steppin' Out With My Baby.flac
+https://en.wikipedia.org/wiki/Fred_Astaire
+https://musicbrainz.org/artist/3ae3fa20-d295-467c-b59f-969376a28470
+https://musicbrainz.org/release/13bbcac8-0ec3-49ba-88c1-22a3eed796d5
+https://musicbrainz.org/recording/89ea737a-00fe-414a-a61b-7c4f8daf3644
+https://acoustid.org/track/33a4e030-a510-4b8d-877a-3dfd97d3148f
+https://musicbrainz.org/isrc/USPR35200041
+/Volumes/Musik/A/Astaire, Fred/Steppin' Out_ Astaire Sings/02 Let's Call the Whole Thing Off.flac
+https://acoustid.org/track/bbd7b22f-c9e2-4443-8fa3-10866ccf6c32
+https://musicbrainz.org/release/bb375646-c3b9-48af-b7d7-23ab6cbff1f3
+https://musicbrainz.org/recording/68492331-f7c4-4fd6-8a08-8fac4af24619
+/Volumes/Musik/A/Astaire, Fred/Steppin' Out_ Astaire Sings/03 Top Hat, White Tie, and Tails.flac
+https://musicbrainz.org/label/4efbd6ce-b9db-4512-b919-2cb0c4de98a7
+https://musicbrainz.org/recording/cd49f87b-5aef-4411-ad55-62654a0c3c40
+https://acoustid.org/track/13115e0c-8ba4-4c26-9401-fd1bd7e39ca3
+/Volumes/Musik/A/Astaire, Fred/Steppin' Out_ Astaire Sings/04 They Can't Take That Away From Me.flac
+https://acoustid.org/track/61d96467-b7e6-48e6-9fd0-fa5576ea349a
+/Volumes/Musik/A/Astaire, Fred/Steppin' Out_ Astaire Sings/05 Dancing in the Dark.flac
+/Volumes/Musik/A/Astaire, Fred/Steppin' Out_ Astaire Sings/06 'S Wonderful.flac
+/Volumes/Musik/A/Astaire, Fred/Steppin' Out_ Astaire Sings
+    01 Steppin' Out With My Baby.flac
+    02 Let's Call the Whole Thing Off.flac
+    03 Top Hat, White Tie, and Tails.flac
+    04 They Can't Take That Away From Me.flac
+    05 Dancing in the Dark.flac
+    06 'S Wonderful.flac
+/Volumes/Musik/A/Astaire, Fred
+    Steppin' Out_ Astaire Sings
+https://en.wikipedia.org/wiki/Asaf_Avidan
+https://musicbrainz.org/artist/5b9890b9-a2e8-4768-ad70-9f28bb81fc00
+https://musicbrainz.org/release/71532cdc-8219-4bc9-a2a9-ac93d17f68f3
+https://musicbrainz.org/recording/90d609e6-a9dd-4fac-b2ad-1219f323148c
+https://acoustid.org/track/4f40f5d9-3a84-4e40-a0f9-25b4a66e9456
+https://www.amazon.de/gp/product/B075TSCK1R
+https://www.amazon.de/-/e/B00A9RU518
+https://www.amazon.de/gp/product/B0776ZLLR8
+https://www.amazon.de/gp/product/B0794SDR3W
+https://musicbrainz.org/release/fe4e685e-3f49-4505-a584-8c94219ffc3a
+/Volumes/Musik/A/Avidan, Asaf/The Study on Falling/01 To Love Another.flac
+https://musicbrainz.org/recording/ae426703-096c-485c-a9be-bbcb7350b741
+https://acoustid.org/track/484f2d2d-7937-4315-9182-893777060ab1
+/Volumes/Musik/A/Avidan, Asaf/The Study on Falling/02 My Old Pain.flac
+https://acoustid.org/track/e5486e6c-eb2d-4285-bf82-91d52286050f
+/Volumes/Musik/A/Avidan, Asaf/The Study on Falling/03 Sweet Babylon.flac
+/Volumes/Musik/A/Avidan, Asaf/The Study on Falling/04 Good Girls Are Falling Apart.flac
+/Volumes/Musik/A/Avidan, Asaf/The Study on Falling/05 A Man Without a Name.flac
+/Volumes/Musik/A/Avidan, Asaf/The Study on Falling
+    01 To Love Another.flac
+    02 My Old Pain.flac
+    03 Sweet Babylon.flac
+    04 Good Girls Are Falling Apart.flac
+    05 A Man Without a Name.flac
+/Volumes/Musik/A/Avidan, Asaf
+    The Study on Falling
+https://acoustid.org/track/816ccf95-1061-4204-8a89-0054179cc924
+/Volumes/Musik/A/ABBA/The Albums/1-01 Ring Ring.m4a
+/Volumes/Musik/A/ABBA/The Albums/1-02 Another Town, Another Train.m4a
+/Volumes/Musik/A/ABBA/The Albums
+    1-01 Ring Ring.m4a
+    1-02 Another Town, Another Train.m4a
+/Volumes/Musik/A/ABBA
+    The Albums
+/Volumes/Musik/A/A Kay BJ/Sleeping in My Car
+/Volumes/Musik/A/A Kay BJ
+    Sleeping in My Car
+/Volumes/Musik/A/A-Teens
+/Volumes/Musik/A
+    A Kay BJ
+    A-Teens
+    ABBA
+    Adam, Adolphe
+    Aegerter, Mia
+    Aerosmith
+    Arctic Monkeys
+    Astaire, Fred
+    Avidan, Asaf
+https://musicbrainz.org/label/3d6e7500-494d-4e02-a72e-765da9d1496e
+https://musicbrainz.org/recording/d57c1541-0916-456b-b34b-1d6ec2fa1e3c
+https://acoustid.org/track/61335896-2a81-4cd6-8068-6168766d74e9
+https://www.amazon.de/Diverses-Musik/b/ref=dp_bc_2?ie=UTF8&node=255952
+https://www.amazon.de/gp/product/B000G8PAG0
+https://www.amazon.de/gp/product/B00HIURLNO
+https://www.amazon.de/-/e/B001LICKBW
+https://www.amazon.de/gp/product/B00HIURG20
+https://www.amazon.de/gp/product/B00HIURFJY
+https://www.amazon.de/gp/product/B01GKA9324
+https://www.amazon.de/gp/product/B07HCDT2RK
+https://www.amazon.de/s/ref=dp_byline_sr_music_1?ie=UTF8&field-artist=unknown&search-alias=music-de
+https://www.amazon.de/gp/product/B013GVMCBO
+https://www.amazon.de/gp/product/B00FY3VUKW
+https://www.amazon.de/gp/product/B07GRMDFYJ
+https://www.amazon.de/s/ref=dp_byline_sr_music_1?ie=UTF8&field-artist=Ost&search-alias=music-de
+https://www.amazon.de/gp/product/B000000WB9
+https://www.amazon.de/gp/product/B000001EBY
+https://www.amazon.de/gp/product/B0000U6JYG
+https://www.amazon.de/-/e/B000APTFHE
+https://www.amazon.de/Soundtracks-Filmmusik/b/ref=dp_bc_2?ie=UTF8&node=5695936031
+https://www.amazon.de/gp/product/B00003J6IL
+https://www.amazon.de/gp/product/B01KB1R8WA
+https://www.amazon.de/s/ref=dp_byline_sr_music_1?ie=UTF8&field-artist=Monstars&search-alias=music-de
+https://www.amazon.de/gp/product/B001SO69IY
+https://www.amazon.de/gp/product/B00000AP93
+https://en.wikipedia.org/wiki/Repetition_(music)
+https://en.wikipedia.org/wiki/Rhythm
+https://en.wikipedia.org/wiki/Rhyme
+https://en.wikipedia.org/wiki/Rapping
+https://en.wikipedia.org/wiki/Public_Enemy_(band)
+https://en.wikipedia.org/wiki/Chuck_D
+https://en.wikipedia.org/wiki/Internal_rhyme
+https://en.wikipedia.org/wiki/Busta_Rhymes
+https://en.wikipedia.org/wiki/Elektra_Records
+https://en.wikipedia.org/wiki/The_Coming
+https://musicbrainz.org/label/873f9f75-af68-4872-98e2-431058e4c9a9
+https://musicbrainz.org/release-group/fd3633d9-5c56-3016-97cd-b232a4a6d576
+https://en.wikipedia.org/wiki/When_Disaster_Strikes...
+https://musicbrainz.org/release-group/8e1da0a6-3c81-3889-b20c-641079942cf5
+https://musicbrainz.org/release-group/ab86867b-33a8-3e54-93ec-aaf6470cf340
+https://musicbrainz.org/artist/10a9ff92-9637-4498-afea-7044b2ab0dc0
+https://musicbrainz.org/artist/e864aa1b-5dc6-4f76-9425-c5d98e289d3e
+https://musicbrainz.org/release-group/7b887d76-3ca7-315e-acee-c5ea961286c3
+https://musicbrainz.org/release-group/3b97af03-e2d5-3847-b1fd-6718619f90e6
+https://musicbrainz.org/artist/817f3417-0669-47f2-81ff-399851fb66ee
+https://musicbrainz.org/recording/0e81b752-1c68-482c-a8ca-813586074f38
+https://musicbrainz.org/release/545ca669-b83c-4e23-8c5a-9974b5f70dc3
+https://musicbrainz.org/label/2dc83e8b-d8fa-44a5-9db7-89a4a0abcf2c
+https://musicbrainz.org/recording/f4d96e26-4d02-4494-b9f8-49f498cee0e4
+/Volumes/Musik/B/B-Real, Busta Rhymes, Coolio, LL Cool J & Method Man/Hit 'em High (The Monstars' Anthem)/01 Hit 'em High (The Monstars' Anthem) (radio edit).flac
+https://acoustid.org/track/641c8d94-9153-4bec-9093-e3b88aa003c2
+https://musicbrainz.org/recording/6b03144b-b0e4-4263-b45b-cd7c06cdf77f
+https://musicbrainz.org/recording/e742ffbf-c649-4e26-8d08-a12bc3785773
+https://musicbrainz.org/release/4c28a55c-ce2d-439c-9d1f-aba24cf739f0
+https://musicbrainz.org/release/af0dd672-8bf8-443c-a0fa-a4664ae7f443
+https://musicbrainz.org/label/395af594-6ed2-44c8-b3d8-cd32fad1ce52
+https://musicbrainz.org/release-group/8a82f68a-8483-4fbe-b660-c2e4ce93d17a
+https://en.wikipedia.org/wiki/Warner_Bros._Records
+https://en.wikipedia.org/wiki/It_Takes_a_Thief_(album)
+https://en.wikipedia.org/wiki/Gangsta%27s_Paradise_(album)
+https://en.wikipedia.org/wiki/Coolio
+https://musicbrainz.org/release/bd4b7a7b-2cf5-36b4-8e49-ccc59c5eae48
+https://musicbrainz.org/release-group/de8d13e3-eb1b-326f-a56c-822dac4bb628
+https://musicbrainz.org/release-group/80ed9eb8-e223-3234-b216-05808e0cd6cf
+https://musicbrainz.org/artist/cc30e630-8c75-4d78-b205-8e2edc6bdaa7
+https://musicbrainz.org/release-group/fed1308c-8132-4f84-b741-a61bc0f740b9
+https://musicbrainz.org/artist/5ce6812f-2eba-453d-b747-e32f6aaa455f
+https://musicbrainz.org/release-group/44754b62-5ec9-3b91-b600-3b72d60b29c5
+https://musicbrainz.org/artist/29dcc450-72bb-4465-963c-dc044d6d60e5
+https://www.allmusic.com/artist/mn0000354731
+https://musicbrainz.org/artist/87f93962-b422-467e-9c85-08186cd76482
+https://musicbrainz.org/label/fd74a8ad-ab4c-41d8-8998-2915dcad7f09
+https://musicbrainz.org/release/d4de072c-4b32-414b-bb85-38da6e41d615
+https://musicbrainz.org/artist/9a0038da-314c-4cfa-a320-9a620d20cf34
+https://musicbrainz.org/work/042300ca-6477-4ed9-8865-a16abb05429a
+https://musicbrainz.org/artist/a2361c7d-ddb6-41c1-a9a0-be09fbbb8d21
+https://musicbrainz.org/artist/d62a5d3c-aff0-49f6-8ec9-ae3ce61a358f
+https://musicbrainz.org/work/88fbecaa-0c42-356f-b719-b39082781ac9
+https://musicbrainz.org/label/603d31c8-4be5-4516-9192-e9ced85d12f3
+https://musicbrainz.org/label/756dbff2-7951-4cb4-beba-8fbbaebc25d3
+https://musicbrainz.org/recording/e885dea0-6bf2-4907-95ed-cbd34b4ae645
+https://acoustid.org/track/78035fa5-7f9c-4d67-89fd-7095ea2f0fd9
+https://musicbrainz.org/recording/360f83ce-84ae-4b11-8614-fdb67a7ec231
+https://musicbrainz.org/release/b9d8754a-1b7f-47e7-8d38-76bcf4e51aa1
+https://musicbrainz.org/label/157afde4-4bf5-4039-8ad2-5a15acc85176
+https://musicbrainz.org/release-group/9ad15759-b85a-4f37-b0e2-6fb9ee186010
+https://musicbrainz.org/artist/c71abd83-9d66-4c7b-9f0d-c9c36e85a955
+https://musicbrainz.org/release-group/3cd453f1-9591-3a76-bbd0-02a1e0eaa325
+https://musicbrainz.org/recording/5a0588b9-1fb5-4b37-b0ff-cfba596f293c
+https://musicbrainz.org/artist/42aae7e5-87cd-461f-a0e4-36eaedc69906
+https://musicbrainz.org/artist/d9c25451-bec6-4273-abe2-15ce0f0e0621
+https://musicbrainz.org/artist/f486166d-0e58-4767-b4fa-bbb226db68f8
+https://musicbrainz.org/work/b9c73327-bd6c-3c3a-a94d-495fcb77ad2b
+https://musicbrainz.org/work/40e7d0cd-1e41-338d-9ec2-66f9f9576296
+https://musicbrainz.org/release-group/763b913e-e9b1-3a58-9725-291239e88d79
+https://musicbrainz.org/artist/51508c1f-8d07-4a00-9cf1-26c570fe7b78
+https://musicbrainz.org/artist/eb37b2c4-94bd-4d8f-8b73-8efdcec51013
+https://musicbrainz.org/artist/c1e4a400-5761-4904-9ccb-38974ad6a388
+https://en.wikipedia.org/wiki/Performance
+https://en.wikipedia.org/wiki/Performing_arts
+https://en.wikipedia.org/wiki/List_of_entertainer_occupations
+https://en.wikipedia.org/wiki/Stage_name
+https://en.wikipedia.org/wiki/South_Gate,_California
+https://en.wikipedia.org/wiki/Cypress_Hill
+https://en.wikipedia.org/wiki/Rap_rock
+https://en.wikipedia.org/wiki/B-Real
+https://en.wikipedia.org/wiki/Fredwreck
+https://en.wikipedia.org/wiki/Smoke_n_Mirrors
+https://musicbrainz.org/release/ee4cd2c9-0a48-4362-926b-b95c96c0f2d6
+https://musicbrainz.org/release-group/47f0ce7d-5864-317b-9f9c-04051c727b46
+https://musicbrainz.org/artist/9e839dc3-55f3-4492-ad0e-a1a2e84275e2
+https://musicbrainz.org/release-group/e24fcb0c-a97e-4a9e-962f-122d83caf37e
+https://musicbrainz.org/artist/e20f2448-8e4e-4625-8881-9da8dbe9df24
+https://musicbrainz.org/artist/9c8b5123-d994-4c0c-85c0-465636ae241e
+https://en.wikipedia.org/wiki/The_Bronx
+https://en.wikipedia.org/wiki/Hip_hop
+https://en.wikipedia.org/wiki/Scratching
+https://en.wikipedia.org/wiki/Hip_hop_music
+https://en.wikipedia.org/wiki/Boroughs_of_New_York_City
+https://en.wikipedia.org/wiki/Queens
+https://en.wikipedia.org/wiki/Going_Back_to_Cali_(LL_Cool_J_song)
+https://en.wikipedia.org/wiki/LL_Cool_J
+https://en.wikipedia.org/wiki/Chung_King_Studios
+https://en.wikipedia.org/wiki/Radio_(LL_Cool_J_album)
+https://musicbrainz.org/release/b59e9da8-776f-31dd-9499-c795bd615ed9
+https://musicbrainz.org/release-group/32511a9b-a392-35ce-8173-b4b262229fc4
+https://en.wikipedia.org/wiki/Bigger_and_Deffer
+https://musicbrainz.org/release-group/c1952092-24a2-3a1e-8597-0dad68d7ab51
+https://musicbrainz.org/release-group/e16023f3-4c69-38b7-9988-047a8b96dfcf
+https://musicbrainz.org/artist/a4dd0e77-83b8-4e92-89b7-effb0e47fd8c
+https://musicbrainz.org/label/768149bc-115c-4049-86a5-ee401409b458
+https://musicbrainz.org/recording/2969d388-3e6f-49b2-9557-ba237e60eb2d
+https://musicbrainz.org/label/86b80283-ca7a-4e8b-ac23-0dd0413f6790
+https://musicbrainz.org/release/4546fe5d-0357-49f5-9ff0-7b583dc599a9
+https://en.wikipedia.org/wiki/Space_Jam_%28soundtrack%29
+https://musicbrainz.org/release-group/1f89240e-f941-3f71-a53c-8c2b346521e2
+https://www.discogs.com/master/25535
+https://musicbrainz.org/release-group/dfead125-5b30-32a4-b8d5-f7a5d4acfc08
+/Volumes/Musik/B/B-Real, Busta Rhymes, Coolio, LL Cool J & Method Man/Hit 'em High (The Monstars' Anthem)/02 Hit 'em High (The Monstars' Anthem) (extended mix).flac
+https://en.wikipedia.org/wiki/Entertainment
+https://en.wikipedia.org/wiki/Warner_Music_Group
+https://en.wikipedia.org/wiki/Soundtrack_album
+https://en.wikipedia.org/wiki/Warner_Sunset_Records
+https://musicbrainz.org/artist/c2d25856-a09a-4d15-b404-77dd19c19e63
+https://musicbrainz.org/release/9dce2854-f3e6-4ae3-b017-bc5be11c761f
+https://musicbrainz.org/release/83a2fe37-fbf3-47e4-a4a4-10ea281e8beb
+https://musicbrainz.org/label/d4fb4c01-c1b1-41fd-a0ca-98013fcb34e3
+https://en.wikipedia.org/wiki/Hip_hop_production
+https://en.wikipedia.org/wiki/Trackmasters
+https://musicbrainz.org/release-group/9a0094d4-50f9-43a4-980e-8dbcf130e877
+https://musicbrainz.org/artist/7a21dc33-11b7-43e2-846c-cc9933632194
+https://musicbrainz.org/label/733b81ca-41cb-4e1a-a9ba-d1c56a606bec
+https://musicbrainz.org/label/10bc0b73-192b-4971-80a7-6fadefeed758
+https://musicbrainz.org/label/71ba01da-8628-4ef7-8e62-c64198fcf18a
+https://musicbrainz.org/recording/de4d8f6d-3506-40e3-af56-98aae2281366
+https://acoustid.org/track/39df8b86-5058-4e85-ab00-8ed82cc8ff4c
+https://en.wikipedia.org/wiki/Radio_personality
+https://en.wikipedia.org/wiki/Disc_jockey
+https://en.wikipedia.org/wiki/Breakdancing
+https://en.wikipedia.org/wiki/East_Coast_hip_hop
+https://en.wikipedia.org/wiki/Staten_Island
+https://en.wikipedia.org/wiki/Wu-Tang_Clan
+https://en.wikipedia.org/wiki/Method_Man_%26_Redman
+https://en.wikipedia.org/wiki/Method_Man
+https://en.wikipedia.org/wiki/Enter_the_Wu-Tang_(36_Chambers)
+https://en.wikipedia.org/wiki/Tical_(album)
+https://musicbrainz.org/release/911192ef-6b58-427f-9d84-437a0d34de70
+https://musicbrainz.org/release-group/85af95fb-f93d-30e9-b60e-9ee6eb00d42b
+https://en.wikipedia.org/wiki/Tical_2000%3A_Judgement_Day
+https://musicbrainz.org/release-group/ca9bdb76-78b9-303c-a4ec-19dca4d0b648
+https://musicbrainz.org/release-group/9fa51922-4612-38fa-b757-0f9f5653d5f9
+https://musicbrainz.org/artist/94dbfe2e-ca48-4e08-a5a8-e1e74136c63d
+https://musicbrainz.org/artist/e9f2c808-cf43-4d52-be4d-ea3311f0a4d9
+https://musicbrainz.org/work/12a82c45-15d2-47f8-95d2-90c471b5a830
+https://musicbrainz.org/work/7acdb066-56c4-4c8d-b293-51c5b213d3d5
+https://musicbrainz.org/label/4d6ef58f-ce71-4b74-b0b1-922b7336936d
+https://musicbrainz.org/release/f883fc5d-eed0-4820-8e12-d9c96ad5ef60
+https://musicbrainz.org/label/eca8bedd-c438-4369-a420-4fb6779e952d
+https://musicbrainz.org/label/a053a99d-1662-4f90-9ded-8f95e2ec7877
+https://musicbrainz.org/work/3b6ef8ef-0ad2-43e6-bdcb-819242b11b5e
+/Volumes/Musik/B/B-Real, Busta Rhymes, Coolio, LL Cool J & Method Man/Hit 'em High (The Monstars' Anthem)/03 Hit 'em High (The Monstars' Anthem) (extended Track Masters remix).flac
+https://musicbrainz.org/artist/d75d1f08-bbb8-4eae-9877-399ca9121197
+https://musicbrainz.org/label/f2618ab5-f72d-4925-af92-a1a9b5049362
+https://www.discogs.com/label/195498
+https://musicbrainz.org/label/0d292083-11f9-4b8e-a750-1cdd400f1db7
+https://musicbrainz.org/work/3ebde540-e2c6-4281-82d5-2d83b9a1cfb8
+https://musicbrainz.org/label/838e5bf2-341c-440c-b363-896d81ff5792
+https://acoustid.org/track/195bcfed-b41a-48a4-9e68-bc56961d8a7f
+https://musicbrainz.org/recording/160e7fee-af7a-45bf-a67a-7da70c8be185
+https://acoustid.org/track/b0de93e6-5968-4c29-acbc-d8ea4dbb862f
+/Volumes/Musik/B/B-Real, Busta Rhymes, Coolio, LL Cool J & Method Man/Hit 'em High (The Monstars' Anthem)/04 Hit 'em High (The Monstars' Anthem) (original instrumental).flac
+/Volumes/Musik/B/B-Real, Busta Rhymes, Coolio, LL Cool J & Method Man/Hit 'em High (The Monstars' Anthem)
+    02 Hit 'em High (The Monstars' Anthem) (extended mix).flac
+    03 Hit 'em High (The Monstars' Anthem) (extended Track Masters remix).flac
+    04 Hit 'em High (The Monstars' Anthem) (original instrumental).flac
+/Volumes/Musik/B/B-Real, Busta Rhymes, Coolio, LL Cool J & Method Man
+    Hit 'em High (The Monstars' Anthem)
+https://acoustid.org/track/5d9911ff-0f70-4282-9099-1ff0ced516fd
+https://www.amazon.de/gp/product/B00008CLO5
+https://www.amazon.de/gp/product/B00005QW3D
+https://www.amazon.de/gp/product/B000089CG5
+https://www.amazon.de/-/e/B000APOHPY
+https://www.amazon.de/gp/product/B00006HMBB
+https://www.amazon.de/gp/product/B000067CSN
+https://www.amazon.de/gp/bestsellers/music/ref=pd_dp_ts_music_1
+https://www.amazon.de/gp/product/B000065824
+https://musicbrainz.org/release/e917a3f0-2dda-4242-9a88-a02518a52985
+https://musicbrainz.org/recording/ae71a52a-aaed-4904-afb1-d0df250d5c41
+https://musicbrainz.org/release/d96b5b48-2e00-4f15-bc94-bfa8f982a50a
+/Volumes/Musik/B/B3/I.O.I.O_/01 I.O.I.O. (radio edit).flac
+https://musicbrainz.org/recording/70465a8b-eb2d-4988-8953-60588842cf91
+https://acoustid.org/track/339128f8-46e1-4941-9ecb-97735e640c48
+/Volumes/Musik/B/B3/I.O.I.O_/02 I.O.I.O. (extended edit).flac
+https://acoustid.org/track/e3a13e48-7c87-488e-b271-8a79e9f28267
+/Volumes/Musik/B/B3/I.O.I.O_/03 I.O.I.O. (instrumental).flac
+https://musicbrainz.org/recording/8d88b97f-d9e7-46d7-a03e-d4ddb03c1f53
+/Volumes/Musik/B/B3/I.O.I.O_/04 Memory Star.flac
+/Volumes/Musik/B/B3/I.O.I.O_
+    01 I.O.I.O. (radio edit).flac
+    02 I.O.I.O. (extended edit).flac
+    03 I.O.I.O. (instrumental).flac
+    04 Memory Star.flac
+https://acoustid.org/track/eb704ed4-3b51-42e7-b900-dd304c8e5db4
+https://www.amazon.de/gp/bestsellers/music/264875/ref=pd_zg_hrsr_music_1_2_last
+https://www.amazon.de/gp/product/B00005UW0T 
+https://musicbrainz.org/artist/e26cbb66-82dc-474a-9cdd-70490ac1e266
+https://musicbrainz.org/recording/5899c5b5-c1b3-4027-9f49-e435b19e0f4a
+/Volumes/Musik/B/B3/Nightfever/01 Nightfever (radio edit).flac
+https://musicbrainz.org/recording/11e18b77-01d7-484e-93f5-bc0e8ad50ffa
+https://acoustid.org/track/e5d29c81-e191-4c37-9ba5-cb29a77cf151
+https://musicbrainz.org/release-group/c7e2969e-efa7-3838-a395-cd973f5737ae
+https://musicbrainz.org/release/b850699f-71a8-4de1-8b53-63d1b69e760a
+/Volumes/Musik/B/B3/Nightfever/02 Nightfever (Blue PM remix).flac
+https://musicbrainz.org/recording/1fe9bee0-1381-47d9-a2ca-46d675ab5dc4
+https://acoustid.org/track/89133431-af58-4ff5-84ee-98347e39a0d9
+/Volumes/Musik/B/B3/Nightfever/03 Nightfever (extended disco mix).flac
+https://acoustid.org/track/9025a142-4627-48ce-9503-c8fdac473e39
+/Volumes/Musik/B/B3/Nightfever/04 Where I'll Be.flac
+/Volumes/Musik/B/B3/Nightfever
+    01 Nightfever (radio edit).flac
+    02 Nightfever (Blue PM remix).flac
+    03 Nightfever (extended disco mix).flac
+    04 Where I'll Be.flac
+https://acoustid.org/track/00c293f3-727c-42ab-b213-d035a7b292ca
+https://www.amazon.de/gp/product/B0049OKJGS
+https://www.amazon.de/gp/product/B00006LJAQ
+https://musicbrainz.org/release/585d9bdc-9cd5-40aa-958b-c97a6e628802
+https://musicbrainz.org/recording/46b47f18-d5fc-49b9-b442-2464751549ea
+/Volumes/Musik/B/B3/Tonight & Forever/01 Tonight & Forever (radio edit).flac
+https://musicbrainz.org/recording/58d74306-4564-4aed-b78d-756426cd379c
+https://acoustid.org/track/d7f26593-9d4b-46b4-9b66-e2e6c8fb1690
+https://musicbrainz.org/label/7b8506ec-ceff-4aba-b89e-4af1d39ef8df
+https://musicbrainz.org/recording/008310fa-9119-4624-aac8-b1e6e57b112e
+/Volumes/Musik/B/B3/Tonight & Forever/02 Tonight & Forever (extended version).flac
+https://musicbrainz.org/recording/af4c400d-2b76-4051-8bef-e9083e60d7ec
+https://acoustid.org/track/b26ad8ef-f839-445e-b9d4-f73e7557acc1
+https://musicbrainz.org/label/69c1af41-dc48-4104-9828-bb776185f01c
+https://musicbrainz.org/recording/5f84a5c4-2cd2-4f5f-a373-3ab4a1304880
+/Volumes/Musik/B/B3/Tonight & Forever/03 Tonight & Forever (Casino club mix).flac
+https://acoustid.org/track/5f773bb3-5f91-4b6b-9a0a-68c310d11e7c
+/Volumes/Musik/B/B3/Tonight & Forever/04 Do What You Like.flac
+/Volumes/Musik/B/B3/Tonight & Forever
+    01 Tonight & Forever (radio edit).flac
+    02 Tonight & Forever (extended version).flac
+    03 Tonight & Forever (Casino club mix).flac
+    04 Do What You Like.flac
+/Volumes/Musik/B/B3
+    I.O.I.O_
+    Nightfever
+    Tonight & Forever
+https://acoustid.org/track/78aad976-4147-41b5-8890-3aac27a74a59
+https://en.wikipedia.org/wiki/Babylon_Zoo
+https://musicbrainz.org/artist/22459cde-5212-4d97-aa8f-30f0b83eaff0
+https://musicbrainz.org/label/d5a60c75-26e2-4363-a5db-58c12b578cd5
+https://musicbrainz.org/recording/1d202514-c688-43f5-b7ca-5eebd25510f0
+https://musicbrainz.org/isrc/GBAYE9801177
+https://www.amazon.de/gp/product/B000002U3R
+https://www.amazon.de/-/e/B000AQ1JJK
+https://www.amazon.de/gp/product/B0130Q7FC6
+https://www.amazon.de/gp/product/B00000JAIT
+https://musicbrainz.org/release-group/87f12954-9148-3163-b1d5-ddd1c5151a83
+https://musicbrainz.org/release/ec0296b1-476f-4009-bde3-f8baab9cd5f9
+/Volumes/Musik/B/Babylon Zoo/King Kong Groover/01 All the Money's Gone.flac
+https://musicbrainz.org/work/c295e733-7273-4b2a-bdaa-b9048bad03b2
+https://musicbrainz.org/release/0a5c6b89-75dc-47f9-b738-43e8ede6a681
+https://musicbrainz.org/artist/22459cde-5212-4d97-aa8f-30f0b83eaff0
+https://musicbrainz.org/recording/945a4240-5de8-4971-8455-cca8f9d46c20
+https://acoustid.org/track/b7fa8517-b340-4fda-8928-6bb0af2fc5ae
+https://musicbrainz.org/isrc/GBAYE9801338
+/Volumes/Musik/B/Babylon Zoo/King Kong Groover/02 Manhattan Martian.flac
+https://musicbrainz.org/label/c029628b-6633-439e-bcee-ed02e8a338f7
+https://musicbrainz.org/recording/5d2bbd84-52f3-4d7a-a81d-b7705259a1c2
+https://acoustid.org/track/cb1c7785-4d96-4614-8088-c731e66ef340
+/Volumes/Musik/B/Babylon Zoo/King Kong Groover/03 Honaloochie Boogie.flac
+https://acoustid.org/track/ff01128a-2640-494c-bbad-ba2f3e3f6c53
+/Volumes/Musik/B/Babylon Zoo/King Kong Groover/04 Honeymoon in Space.flac
+https://acoustid.org/track/bc4eeb6e-3688-4ccf-a1f2-64c07b810958
+/Volumes/Musik/B/Babylon Zoo/King Kong Groover/05 Stereo Superstar.flac
+/Volumes/Musik/B/Babylon Zoo/King Kong Groover/06 Chrome Invader.flac
+/Volumes/Musik/B/Babylon Zoo/King Kong Groover/07 Bikini Machine.flac
+/Volumes/Musik/B/Babylon Zoo/King Kong Groover
+    01 All the Money's Gone.flac
+    02 Manhattan Martian.flac
+    03 Honaloochie Boogie.flac
+    04 Honeymoon in Space.flac
+    05 Stereo Superstar.flac
+    06 Chrome Invader.flac
+    07 Bikini Machine.flac
+https://acoustid.org/track/af43065b-ac0a-486a-9545-9b56f409e9d3
+/Volumes/Musik/B/Babylon Zoo/Spaceman/01 Spaceman (radio edit).flac
+https://musicbrainz.org/recording/1a718633-dbd4-4e01-8ac2-87f331c3bad0
+https://acoustid.org/track/330055b1-6096-4f99-84a2-33cccc46be6a
+https://musicbrainz.org/release/a988ad98-c801-4889-a059-42b20efe1e2b
+/Volumes/Musik/B/Babylon Zoo/Spaceman/02 Metal Vision.flac
+https://musicbrainz.org/recording/4673c53b-db4c-4d13-9231-77db71ef220c
+https://acoustid.org/track/9e8314c8-20f7-4671-905f-dedb1e62fc3e
+/Volumes/Musik/B/Babylon Zoo/Spaceman/03 Blue Nude.flac
+https://acoustid.org/track/7013f615-c520-403b-a735-d2a7e9267c18
+/Volumes/Musik/B/Babylon Zoo/Spaceman/04 Spaceman (The 5th Dimension).flac
+/Volumes/Musik/B/Babylon Zoo/Spaceman
+    01 Spaceman (radio edit).flac
+    02 Metal Vision.flac
+    03 Blue Nude.flac
+    04 Spaceman (The 5th Dimension).flac
+/Volumes/Musik/B/Babylon Zoo
+    King Kong Groover
+    Spaceman
+https://en.wikipedia.org/wiki/%C3%8Dslensku_t%C3%B3nlistarver%C3%B0launin
+https://en.wikipedia.org/wiki/V%C3%ADkingur_%C3%93lafsson
+https://musicbrainz.org/release-group/0a963adf-44e5-4b3c-a8b7-2917c0c52ff3
+https://musicbrainz.org/artist/cea4a3b8-c26c-4b61-a243-cf72555e2c71
+https://musicbrainz.org/release-group/b4cc02db-44ab-4733-8fab-acefa1cb6dba
+https://musicbrainz.org/release/a1b7a78e-ff6f-472a-a3d0-2c95d299fbb0
+https://musicbrainz.org/release/7baafb46-7b7f-472f-a7e4-1b1dd621df2d
+https://musicbrainz.org/recording/ba55072d-d012-4260-aaa2-e4df30163908
+https://acoustid.org/track/29e56dae-939c-43e8-aac2-8684bb54c8c3
+https://musicbrainz.org/place/8447cc88-cee1-4891-aa65-c168c70ac408
+https://musicbrainz.org/recording/ba55072d-d012-4260-aaa2-e4df30163908
+https://musicbrainz.org/isrc/DEN961830301
+https://en.wikipedia.org/wiki/Bach-Werke-Verzeichnis
+https://musicbrainz.org/series/d977f7fd-96c9-4e3e-83b5-eb484a9e6582
+https://wiki.musicbrainz.org/User:HumHumXX/Bach_on_TELDEC
+https://musicbrainz.org/artist/24f1766e-9635-4d58-a4d4-9413f9f98a4c
+https://en.wikipedia.org/wiki/Deutsche_Grammophon
+https://musicbrainz.org/label/5a584032-dcef-41bb-9f8b-19540116fb1c
+/Volumes/Musik/B/Bach, Johann Sebastian; Víkingur Ólafsson/Solo Piano Works/01 Prelude & Fughetta in G major, BWV 902, Prelude and Fughetta in G Major, BWV 902_ I. Prelude.flac
+https://en.wikipedia.org/wiki/Piano
+https://musicbrainz.org/instrument/b3eac5f9-7859-4416-ac39-7154e2e8d348
+https://musicbrainz.org/area/e498a3ef-704c-462e-b144-6e6fc108a6f2
+https://musicbrainz.org/recording/b8cba333-4885-44a9-b13c-8f607352f00a
+https://musicbrainz.org/isrc/DEN961830302
+https://acoustid.org/track/9012416e-c562-4713-bca2-8bbf000b7138
+/Volumes/Musik/B/Bach, Johann Sebastian; Víkingur Ólafsson/Solo Piano Works/02 Nun freut euch, lieben Christen g'mein, Chorale Prelude, BWV 734 (transcr. Wilhelm Kempff).flac
+https://musicbrainz.org/area/70d81d56-533f-4444-82d0-2453f7ec2aa8
+https://musicbrainz.org/recording/5365b31e-5f07-4270-8b85-b6efc269b8b1
+https://acoustid.org/track/844da102-c24a-4dcb-927e-f9f4b2bf8278
+https://musicbrainz.org/work/1dd2abc4-2c79-4be5-a5fe-005899bbf648
+https://musicbrainz.org/artist/51799f13-42ec-44e8-8d67-1421058be0bf
+/Volumes/Musik/B/Bach, Johann Sebastian; Víkingur Ólafsson/Solo Piano Works/03 Prelude & Fugue in E minor (Well-Tempered Clavier, Book I, no. 10), BWV 855_ I. Prelude.flac
+https://musicbrainz.org/recording/0f5ce929-3447-42fa-a041-77ae63c41189
+https://acoustid.org/track/87a9a7c6-e76e-47a1-821d-aac94f30b8f2
+/Volumes/Musik/B/Bach, Johann Sebastian; Víkingur Ólafsson/Solo Piano Works/04 Prelude & Fugue in E minor (Well-Tempered Clavier, Book I, no. 10), BWV 855_ II. Fugue.flac
+https://acoustid.org/track/b85e1a05-910e-4793-928f-d25ebad17094
+https://musicbrainz.org/recording/1e105fc0-c7c3-42a4-8954-765af8dcaefe
+/Volumes/Musik/B/Bach, Johann Sebastian; Víkingur Ólafsson/Solo Piano Works/05 Organ Sonata no. 4, BWV 528 (transcr. by August Stradal), Organ Sonata no. 4 in E minor, BWV 528 (transcr.by August Stradal)_ II. Andante (Adagio).flac
+/Volumes/Musik/B/Bach, Johann Sebastian; Víkingur Ólafsson/Solo Piano Works/06 Prelude & Fugue in D major (Well-Tempered Clavier, Book I, no. 5), BWV 850_ I. Prelude.flac
+/Volumes/Musik/B/Bach, Johann Sebastian; Víkingur Ólafsson/Solo Piano Works
+    01 Prelude & Fughetta in G major, BWV 902, Prelude and Fughetta in G Major, BWV 902_ I. Prelude.flac
+    02 Nun freut euch, lieben Christen g'mein, Chorale Prelude, BWV 734 (transcr. Wilhelm Kempff).flac
+    03 Prelude & Fugue in E minor (Well-Tempered Clavier, Book I, no. 10), BWV 855_ I. Prelude.flac
+    04 Prelude & Fugue in E minor (Well-Tempered Clavier, Book I, no. 10), BWV 855_ II. Fugue.flac
+    05 Organ Sonata no. 4, BWV 528 (transcr. by August Stradal), Organ Sonata no. 4 in E minor, BWV 528 (transcr.by August Stradal)_ II. Andante (Adagio).flac
+    06 Prelude & Fugue in D major (Well-Tempered Clavier, Book I, no. 5), BWV 850_ I. Prelude.flac
+/Volumes/Musik/B/Bach, Johann Sebastian; Víkingur Ólafsson
+    Solo Piano Works
+https://acoustid.org/track/e5d756af-d60c-4448-940d-e20c10168285
+https://musicbrainz.org/recording/5ab040c1-810c-4bd2-a732-cc51f7b88f36
+/Volumes/Musik/B/Bad Boys Blue/The Best of the Ballads/01 A World Without You (Michelle).flac
+https://acoustid.org/track/7cacde37-a2d8-45fd-9b1e-05b6657b34f8
+https://musicbrainz.org/artist/ae32393f-b7db-479b-8728-8ea28c1edb16
+https://musicbrainz.org/recording/30f7ad10-9a50-47d8-bdfd-59b3cc750cd2
+https://musicbrainz.org/release/7b26e8a6-d6d2-4774-bb62-53b66aa086c4
+/Volumes/Musik/B/Bad Boys Blue/The Best of the Ballads/02 Don't Walk Away, Suzanne.flac
+https://acoustid.org/track/7092aa9b-2de6-4768-8eb6-62d7f261139a
+https://musicbrainz.org/recording/977770e8-6a77-4357-9a3e-dd3de3b8c93a
+/Volumes/Musik/B/Bad Boys Blue/The Best of the Ballads/03 Fly Away.flac
+https://acoustid.org/track/a8d08c41-1855-450f-9238-d638ff6495a2
+/Volumes/Musik/B/Bad Boys Blue/The Best of the Ballads/04 Love Don't Come Easy.flac
+/Volumes/Musik/B/Bad Boys Blue/The Best of the Ballads/05 Save You Love.flac
+/Volumes/Musik/B/Bad Boys Blue/The Best of the Ballads
+    01 A World Without You (Michelle).flac
+    02 Don't Walk Away, Suzanne.flac
+    03 Fly Away.flac
+    04 Love Don't Come Easy.flac
+    05 Save You Love.flac
+/Volumes/Musik/B/Bad Boys Blue
+    The Best of the Ballads
+https://acoustid.org/track/909fa053-0901-49e1-8868-f49aa795513c
+https://musicbrainz.org/recording/b6e1849e-ba42-4c3a-ad93-53ed85900649
+/Volumes/Musik/B/Bad Company/10 From 6/01 Can't Get Enough.wma
+https://acoustid.org/track/3e76bc2c-ee27-4cbc-9478-bf92488ef7f8
+/Volumes/Musik/B/Bad Company/10 From 6/02 Feel Like Makin' Love.wma
+/Volumes/Musik/B/Bad Company/10 From 6/03 Run With the Pack.wma
+/Volumes/Musik/B/Bad Company/10 From 6/04 Shooting Star.wma
+/Volumes/Musik/B/Bad Company/10 From 6
+    01 Can't Get Enough.wma
+    02 Feel Like Makin' Love.wma
+    03 Run With the Pack.wma
+    04 Shooting Star.wma
+https://acoustid.org/track/c4d735cf-8183-484f-ad05-9f10a74a1bff
+https://musicbrainz.org/recording/ec27a859-8780-4a39-bb1b-f9dea2d98f83
+/Volumes/Musik/B/Bad Company/Burnin' Sky/01 Burnin' Sky.flac
+https://acoustid.org/track/a76fbc9e-ca80-4c31-81c4-287d2add0405
+/Volumes/Musik/B/Bad Company/Burnin' Sky/02 Morning Sun.flac
+/Volumes/Musik/B/Bad Company/Burnin' Sky/03 Leaving You.flac
+/Volumes/Musik/B/Bad Company/Burnin' Sky
+    01 Burnin' Sky.flac
+    02 Morning Sun.flac
+    03 Leaving You.flac
+https://acoustid.org/track/202aea74-a95b-4f1a-a0e6-2c92508fa6a9
+/Volumes/Musik/B/Bad Company/Rough Diamonds/01 Electricland.flac
+/Volumes/Musik/B/Bad Company/Rough Diamonds/02 Untie the Knot.flac
+/Volumes/Musik/B/Bad Company/Rough Diamonds
+    01 Electricland.flac
+    02 Untie the Knot.flac
+/Volumes/Musik/B/Bad Company/Straight Shooter/01 Good Lovin' Gone Bad.flac
+/Volumes/Musik/B/Bad Company/Straight Shooter
+    01 Good Lovin' Gone Bad.flac
+/Volumes/Musik/B/Bad Company
+    10 From 6
+    Burnin' Sky
+    Rough Diamonds
+    Straight Shooter
+https://acoustid.org/track/4eefa09f-7338-4143-a5b0-802cc44a3349
+/Volumes/Musik/B/Baglioni, Claudio/A-Live/1-01 Signora Lia.flac
+https://acoustid.org/track/c9e82238-52eb-4c8e-8693-8b9c291680fb
+/Volumes/Musik/B/Baglioni, Claudio/A-Live/1-02 E tu come stai_.flac
+/Volumes/Musik/B/Baglioni, Claudio/A-Live/1-03 Io me ne andrei.flac
+/Volumes/Musik/B/Baglioni, Claudio/A-Live
+    1-01 Signora Lia.flac
+    1-02 E tu come stai_.flac
+    1-03 Io me ne andrei.flac
+https://acoustid.org/track/8be02734-095c-4575-b4a8-58360501ac0a
+/Volumes/Musik/B/Baglioni, Claudio/Questo piccolo grande amore/01 Piazza del popolo.flac
+/Volumes/Musik/B/Baglioni, Claudio/Questo piccolo grande amore/02 Una faccia pulita.flac
+/Volumes/Musik/B/Baglioni, Claudio/Questo piccolo grande amore
+    01 Piazza del popolo.flac
+    02 Una faccia pulita.flac
+/Volumes/Musik/B/Baglioni, Claudio
+    A-Live
+    Questo piccolo grande amore
+/Volumes/Musik/B/Balogh, Kálmán & Gipsy Cimbalom Band, The/The Art of the Gipsy Cimbalom/01 In Memory of Balogh Elemér.wma
+/Volumes/Musik/B/Balogh, Kálmán & Gipsy Cimbalom Band, The/The Art of the Gipsy Cimbalom/01 In Memory of Balogh Elemér (1).wma
+/Volumes/Musik/B/Balogh, Kálmán & Gipsy Cimbalom Band, The/The Art of the Gipsy Cimbalom
+    01 In Memory of Balogh Elemér (1).wma
+/Volumes/Musik/B/Balogh, Kálmán & Gipsy Cimbalom Band, The
+    The Art of the Gipsy Cimbalom
+/Volumes/Musik/B
+    B-Real, Busta Rhymes, Coolio, LL Cool J & Method Man
+    B3
+    Babylon Zoo
+    Bach, Johann Sebastian; Víkingur Ólafsson
+    Bad Boys Blue
+    Bad Company
+    Baglioni, Claudio
+    Balogh, Kálmán & Gipsy Cimbalom Band, The
+https://en.wikipedia.org/wiki/Singing
+https://en.wikipedia.org/wiki/Mezzo-soprano
+https://en.wikipedia.org/wiki/Buenos_Aires
+https://en.wikipedia.org/wiki/Bernarda_Fink
+https://musicbrainz.org/artist/846be3c9-5f94-46ab-97b9-531335dd3658
+https://musicbrainz.org/release-group/8ed33e6c-54cc-4bc4-8438-d5726e4f49a6
+https://musicbrainz.org/artist/3f91da2b-129d-47ea-a099-476e836e2a76
+https://musicbrainz.org/artist/8113f437-ff42-4540-9250-43f763aa16ba
+https://musicbrainz.org/recording/bc39066c-d5dd-42e2-8c32-5cb0c183665e  
+https://musicbrainz.org/recording/50a199cd-890f-4a11-a633-8499b755851a
+https://musicbrainz.org/recording/24ad4d5c-8248-43a7-9de7-1ce661b1b133
+https://musicbrainz.org/release/fe04392f-2e6c-40c4-9188-ba1d49cff306
+https://en.wikipedia.org/wiki/Human_voice
+https://en.wikipedia.org/wiki/Countertenor
+https://en.wikipedia.org/wiki/Alto
+https://en.wikipedia.org/wiki/Andreas_Scholl
+https://musicbrainz.org/artist/c0be6440-597e-4a17-9133-cb4fdba1be78
+https://musicbrainz.org/release-group/e1f822af-2021-3d74-8842-0cc7e044f360
+https://musicbrainz.org/artist/7f40b65c-eb1d-4d78-9722-59efa2fb4bca
+https://musicbrainz.org/artist/aa79e742-195b-413d-bf03-9562e9c39519
+https://en.wikipedia.org/wiki/World_music
+https://en.wikipedia.org/wiki/Harmonia_Mundi
+https://musicbrainz.org/release/baf66fd3-c558-4285-b731-a9ac905ea302
+https://musicbrainz.org/label/49809122-8421-40b9-acff-d7400b45c747
+https://musicbrainz.org/recording/a1d7e942-2cb4-46d2-b673-405754dcd74f
+https://acoustid.org/track/02b938d6-3324-4eb9-bd05-974f6da17868
+https://en.wikipedia.org/wiki/Lazio
+https://en.wikipedia.org/wiki/Rome
+https://en.wikipedia.org/wiki/Pompeii
+https://en.wikipedia.org/wiki/Neoclassicism
+https://en.wikipedia.org/wiki/Music_theory
+https://en.wikipedia.org/wiki/Jean-Philippe_Rameau
+https://en.wikipedia.org/wiki/Hippolyte_et_Aricie
+https://en.wikipedia.org/wiki/Baroque
+https://en.wikipedia.org/wiki/Mediterranean_Sea
+https://en.wikipedia.org/wiki/Italy
+https://en.wikipedia.org/wiki/Veneto
+https://en.wikipedia.org/wiki/Venice
+https://en.wikipedia.org/wiki/Piazza_San_Marco
+https://en.wikipedia.org/wiki/St_Mark%27s_Basilica
+https://en.wikipedia.org/wiki/Giovanni_Legrenzi
+https://en.wikipedia.org/wiki/Antonio_Caldara
+https://musicbrainz.org/recording/daefd8a5-2603-4173-8997-e8e7542b20d4
