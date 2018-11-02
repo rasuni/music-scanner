@@ -896,9 +896,15 @@ interface ArtistCredit {
     readonly artist: Artist;
 }
 
+interface Relation {
+    artist?: Entity;
+    work?: Entity;
+}
 interface Recording {
     readonly id: string;
     readonly "artist-credit": ArtistCredit[];
+    relations: Relation[];
+    //readonly isrcs: any[];
 }
 
 interface Track {
@@ -973,9 +979,9 @@ function processCurrent(): boolean {
         return enqueueTask(name, type, namePredicate, parentPredicate, undefined, true, alreadyAdded);
     }
 
-    function enqueueNextTask<T, R>(items: T[], name: (item: T) => string, type: string, predicate: string, parentPredicate: string | undefined, foundResult: R, completed: () => R): R {
+    function enqueueNextTask<T, R>(items: T[], name: (item: T) => string, type: (item: T) => string, predicate: string, parentPredicate: string | undefined, foundResult: R, completed: () => R): R {
         for (const item of items) {
-            if (enqueueUnlinkedTask(name(item), type, predicate, parentPredicate, FALSE)) {
+            if (enqueueUnlinkedTask(name(item), type(item), predicate, parentPredicate, FALSE)) {
                 return foundResult;
             }
         }
@@ -1220,8 +1226,8 @@ function processCurrent(): boolean {
         return metaData as any;
     }
 
-    function enqueueNextEntityTask<T>(items: T[], entity: (item: T) => Entity, type: string, completed: () => boolean): boolean {
-        return enqueueNextTask(items, item => entity(item).id, `mb:${type}`, 'mb:mbid', undefined, true, completed);
+    function enqueueNextEntityTask<T>(items: T[], entity: (item: T) => Entity, type: (item: T) => string, completed: () => boolean): boolean {
+        return enqueueNextTask(items, item => entity(item).id, item => `mb:${type(item)}`, 'mb:mbid', undefined, true, completed);
     }
 
 
@@ -1493,17 +1499,43 @@ function processCurrent(): boolean {
         case 'mb:recording':
 
             const recording: Recording = getMBEntity('recording', {
-                inc: 'artists'
+                inc: 'artists+artist-rels+work-rels'
             }, 'mb:mbid');
+            //assert(recording.isrcs.length === 0);
             return enqueueNextEntityTask(recording["artist-credit"], artistCredit => artistCredit.artist, 'artist', () => {
-                const mbid = getStringProperty('mb:mbid');
-                const releaseList: ReleaseList = mbGet('release', {
-                    recording: mbid
+                return enqueueNextEntityTask(recording.relations, relation => {
+                    const artist = relation.artist;
+                    if (isDefined(artist)) {
+                        return artist;
+                    }
+                    else {
+                        const work = relation.work;
+                        assertDefined(work);
+                        return work as Entity;
+                    }
+                }, relation => {
+                    const artist = relation.artist;
+                    if (isDefined(artist)) {
+                        return 'artist';
+                    }
+                    else {
+                        const work = relation.work;
+                        assertDefined(work);
+                        return 'work';
+                    }
+                    'artist'
+                }, () => {
+                    const mbid = recording.id;
+                    const releaseList: ReleaseList = mbGet('release', {
+                        recording: mbid
+                    });
+                    const releases = releaseList.releases;
+                    assertEquals(releaseList["release-count"], releases.length);
+                    return enqueueNextEntityTask(releaseList.releases, release => release, 'release', () => {
+                        fail();
+                        return false;
+                    });
                 });
-                //console.log(releaseList);
-                const releases = releaseList.releases;
-                assertEquals(releaseList["release-count"], releases.length);
-                return enqueueNextEntityTask(releaseList.releases, release => release, 'release', fail);
 
             });
         case 'mb:label':
@@ -1547,7 +1579,13 @@ function processCurrent(): boolean {
             assertEquals(firstResult.id, acoustid);
             return enqueueNextEntityTask(firstResult.recordings, recording => recording, 'recording', () => {
                 console.log("  completed: please check acoustid resource");
-                opn(url('acoustid.org', 'track', acoustid));
+                const promise = opn(url('acoustid.org', 'track', acoustid), { wait: false });
+                // const run = getRunner();
+                promise.then(childProcess => {
+                    childProcess.disconnect();
+                })
+                //const childProcess = yieldValue();
+                //childProcess.disconnect();
                 moveToNext();
                 return false;
             });
@@ -1607,7 +1645,6 @@ defineCommand("next", "process current task", [], processCurrent);
 defineCommand("run", "continously process all tasks until manual intervention is required", [], () => {
     while (processCurrent()) {
     }
-    process.exit();
 });
 
 function getAll(subject: string | undefined, predicate: string | undefined, object: string | undefined, cb: (line: string) => void): void {
