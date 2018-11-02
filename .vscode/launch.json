@@ -10,7 +10,7 @@
             "name": "Programm starten",
             "program": "${workspaceFolder}/music-scanner.js",
             "args": [
-                "dump"
+                "run"
             ],
             "outFiles": [
                 "${workspaceFolder}/**/*.js"

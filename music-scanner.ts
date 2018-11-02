@@ -903,6 +903,8 @@ interface Recording {
 
 interface Track {
     readonly id: string;
+    readonly recording: Recording;
+    readonly title: string;
 }
 
 interface Medium {
@@ -1208,8 +1210,8 @@ function processCurrent(): boolean {
         }, 'musicbrainz.org')
     }
 
-    function getMBEntity<T>(type: string, params: Dictionary<string>): T {
-        const mbid = getStringProperty('mb:mbid');
+    function getMBEntity<T>(type: string, params: Dictionary<string>, idPredicate: string): T {
+        const mbid = getStringProperty(idPredicate/*'mb:mbid'*/);
         console.log(url('musicbrainz.org', type, mbid));
 
         const metaData: Entity = mbGet(`${type}/${mbid}`, params);
@@ -1220,6 +1222,15 @@ function processCurrent(): boolean {
 
     function enqueueNextEntityTask<T>(items: T[], entity: (item: T) => Entity, type: string, completed: () => boolean): boolean {
         return enqueueNextTask(items, item => entity(item).id, `mb:${type}`, 'mb:mbid', undefined, true, completed);
+    }
+
+
+    function enqueueMBEntityId(mbid: string, type: string, alreadyAdded: () => boolean): boolean {
+        return enqueueTopLevelTask(mbid, `mb:${type}`, 'mb:mbid', alreadyAdded);
+    }
+
+    function enqueueMBEntity(entity: Entity, type: string, alreadyAdded: () => boolean): boolean {
+        return enqueueMBEntityId(entity.id, type, alreadyAdded);
     }
 
 
@@ -1288,11 +1299,23 @@ function processCurrent(): boolean {
                                     const trackId = common.musicbrainz_trackid;
                                     assertDefined(trackId);
                                     return enqueueMBResourceTask(trackId as string, 'track', taskId => {
-                                        return getObject(taskId, 'mb:title', () => {
-                                            console.log('  Please check tagging in picard');
-                                            moveToNext();
-                                            return false;
-                                        }, fail);
+                                        for (const key of ['title', 'artist']) {
+                                            if (getObject(taskId, `mb:${key}`, FALSE, value => {
+                                                if ((common as any)[key] === decodeStringLiteral(value)) {
+                                                    return false;
+                                                }
+                                                else {
+                                                    fail();
+                                                    return true;
+                                                }
+
+                                            })) {
+                                                return false;
+                                            }
+                                        }
+                                        console.log('  Please check tagging in picard');
+                                        moveToNext();
+                                        return false;
                                     })
                                 });
                             }
@@ -1334,15 +1357,15 @@ function processCurrent(): boolean {
                     assertMissing({ subject: currentTask });
                     return true;
                 }, () => {
-                    fail();
+                    //fail();
                     volumeNotMounted();
                     return false;
                 }));
         case 'mb:artist':
 
-            const artist: Artist = getMBEntity('artist', {});
+            const artist: Artist = getMBEntity('artist', {}, 'mb:mbid');
 
-            return enqueueTopLevelTask(artist.area.id, 'mb:area', 'mb:mbid', fail);
+            return enqueueMBEntity(artist.area, 'area', fail);
         case 'mb:area':
             fail();
             processMBNamedResource('area',
@@ -1471,7 +1494,7 @@ function processCurrent(): boolean {
 
             const recording: Recording = getMBEntity('recording', {
                 inc: 'artists'
-            });
+            }, 'mb:mbid');
             return enqueueNextEntityTask(recording["artist-credit"], artistCredit => artistCredit.artist, 'artist', () => {
                 const mbid = getStringProperty('mb:mbid');
                 const releaseList: ReleaseList = mbGet('release', {
@@ -1536,11 +1559,16 @@ function processCurrent(): boolean {
             const metaData: ReleaseList = mbGet('release', {
                 track: mbid
             });
-            console.log(metaData);
+            //console.log(metaData);
             assertEquals(metaData["release-count"], 1);
             const release = metaData.releases[0];
             const releaseId = release.id;
-            const medium = release.media.find(media => isDefined(media.tracks.find(track => track.id === mbid)));
+
+            function findTrack(media: Medium): Track | undefined {
+                return media.tracks.find(track => track.id === mbid)
+            }
+
+            const medium = release.media.find(media => isDefined(findTrack(media)));
             const position = (medium as Medium).position;
             return tryAddKeyedTask('mb:medium', {
                 "mb:release-id": encodeString(releaseId),
@@ -1548,9 +1576,24 @@ function processCurrent(): boolean {
             }, `${releaseId}/${position}`, '  ', undefined, () => {
                 moveToNext();
                 return true;
-            }, fail);
-        // TODO: update mb:title on track task
+            }, () => {
+                const track = findTrack(medium as Medium) as Track;
+                return enqueueMBEntity(track.recording, 'recording', () => {
+                    return updateLiteralPropertyOnCurrentTask('mb:title', track.title, 's', fail);
 
+                    // TODO: update mb:artist on track task
+
+                });
+            });
+
+
+        case 'mb:medium':
+            const rel: Release = getMBEntity('release', {
+                inc: 'media'
+            }, 'mb:release-id');
+            assertDefined(rel.media.find(m => m.position == Number(decodeLiteral(getPropertyFromCurrent('mb:position'), 'n'))));
+            //console.log(rel);
+            return enqueueMBEntityId(getStringProperty('mb:release-id'), 'release', fail);
 
         default:
             fail();
@@ -1564,6 +1607,7 @@ defineCommand("next", "process current task", [], processCurrent);
 defineCommand("run", "continously process all tasks until manual intervention is required", [], () => {
     while (processCurrent()) {
     }
+    process.exit();
 });
 
 function getAll(subject: string | undefined, predicate: string | undefined, object: string | undefined, cb: (line: string) => void): void {
