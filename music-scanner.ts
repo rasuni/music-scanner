@@ -729,36 +729,6 @@ function expectRelease(id: string, title: string, official: Sequence<Predicate<S
 const expectOfficial = expectNamedEntity('status', '4e304316-386d-3409-af2e-78857eec5cfe', 'Official');
 
 
-
-function expectTagTagWithCount(count: string, name: string): Sequence<Predicate<SaxEvent>> {
-    return expectTag('tag', { count: count }, expectPlainTextTag('name', name));
-}
-
-function expectTagTag(name: string): Sequence<Predicate<SaxEvent>> {
-    return expectTagTagWithCount('0', name);
-}
-
-function expectPartOfRaw(mbid: string, name: string, iso1List: Sequence<Predicate<SaxEvent>>, code: string): Sequence<Predicate<SaxEvent>> {
-    return expectTag('relation', {
-        'type-id': "de7cc874-8b1b-3a05-8272-f3834c968fb7",
-        type: "part of"
-    }, concat(
-        expectPlainTextTag('target', mbid),
-        expectArea(mbid, name, concat(
-            iso1List,
-            expectIsoList('2', code)
-        ))
-    ))
-}
-
-function expectPartOf(mbid: string, name: string, code: string): Sequence<Predicate<SaxEvent>> {
-    return expectPartOfRaw(mbid, name, undefined, code);
-}
-
-function expectPartOf2(mbid: string, name: string, code1: string, code2: string): Sequence<Predicate<SaxEvent>> {
-    return expectPartOfRaw(mbid, name, expectIsoList('1', code1), code2);
-}
-
 function localExpectTextAndEnum(name: string, value: string, enumName: string, mbid: string, enumValue: string): Sequence<Predicate<SaxEvent>> {
     return concat(
         expectPlainTextTag(name, value),
@@ -885,6 +855,7 @@ interface Entity {
 }
 interface Area {
     id: string;
+    type: string;
 }
 
 interface Artist {
@@ -993,7 +964,7 @@ function processCurrent(): boolean {
     }
 
     function enqueueTasks(items: string[], type: string, predicate: string, parentPredicate: string | undefined): void {
-        enqueueNextTask(items, item => item, type, predicate, parentPredicate, undefined, () => {
+        enqueueNextTask(items, item => item, () => type, predicate, parentPredicate, undefined, () => {
             console.log('  completed');
             moveToNext();
         })
@@ -1168,11 +1139,6 @@ function processCurrent(): boolean {
 
 
 
-
-    function adjustLiteralProperty(nameSpace: string, name: string, literalTag: string): (actualValue: any) => boolean {
-        return actualValue => updateLiteralPropertyOnCurrentTask(`${nameSpace}:${name}`, `${actualValue}`, literalTag, FALSE);
-    }
-
     function url(hostName: string, type: string, id: string): string {
         return `https://${hostName}/${type}/${id}`;
     }
@@ -1224,6 +1190,10 @@ function processCurrent(): boolean {
         assertEquals(metaData.id, mbid);
         //console.log(metaData.area.id);
         return metaData as any;
+    }
+
+    function getMBCoreEntity<T>(type: string): T {
+        return getMBEntity(type, {}, 'mb:mbid');
     }
 
     function enqueueNextEntityTask<T>(items: T[], entity: (item: T) => Entity, type: (item: T) => string, completed: () => boolean): boolean {
@@ -1369,96 +1339,14 @@ function processCurrent(): boolean {
                 }));
         case 'mb:artist':
 
-            const artist: Artist = getMBEntity('artist', {}, 'mb:mbid');
+            const artist: Artist = getMBCoreEntity('artist');
 
             return enqueueMBEntity(artist.area, 'area', fail);
+
         case 'mb:area':
-            fail();
-            processMBNamedResource('area',
-                subType => getObject(currentTask, 'mb:type', FALSE, areaTypeTask => updateLiteralProperty(areaTypeTask, 'mb:name', 'mb:type/mb:name', subType, 's', fail)),
-                areaTypeId => enqueueMBTask(areaTypeId, 'area-type', 'mb:type', true, (id: string) => updateProperty(currentTask, 'mb:type', 'mb:type', areaTypeId, id, fail)),
-                adjustLiteralProperty('mb', 'name', 's'),
-                'United States',
-                concat(
-                    expectUSIsoList,
-                    expectTag('alias-list', {
-                        count: "1"
-                    }, expectTextTag('alias', {
-                        'sort-name': "USA",
-                        type: "Search hint",
-                        'type-id': "7090dd35-e32e-3422-8a48-224821c2468b"
-                    }, 'USA')),
-                    expectTag('relation-list', {
-                        'target-type': 'area'
-                    }, concat(
-                        expectPartOf('02e01cf9-b0ed-4286-ac6d-16989f92ced6', 'Virginia', 'US-VA'),
-                        expectPartOf('0573177b-9ff9-4643-80bc-ed2513419267', 'Ohio', 'US-OH'),
-                        expectPartOf('05f68b4c-10f3-49b5-b28c-260a1b707043', 'Massachusetts', 'US-MA'),
-                        expectPartOf('0c693f90-d889-4abe-a0e6-6aac212388e3', 'New Mexico', 'US-NM'),
-                        expectPartOf('10cb2ebd-1bc7-4c11-b10d-54f60c421d20', 'Wisconsin', 'US-WI'),
-                        expectPartOf('1462269e-911b-4db3-be41-434393484e34', 'Missouri', 'US-MO'),
-                        expectPartOf('1b420c08-51a5-4bdd-9b0e-cd601703d20b', 'Hawaii', 'US-HI'),
-                        expectPartOf('1ed51cbe-4272-4df9-9b18-44b0d4714086', 'Maryland', 'US-MD'),
-                        expectPartOf('2066f663-1055-4383-aaa6-08d09ec81e57', 'South Dakota', 'US-SD'),
-                        expectPartOf('29fa065f-a568-418c-98b9-5023f64d9312', 'Michigan', 'US-MI'),
-                        expectPartOf('373183af-56db-44d7-b06a-5877c02c5f01', 'Colorado', 'US-CO'),
-                        expectPartOf('376ea713-8f27-4ab1-818b-9cca72023382', 'Oregon', 'US-OR'),
-                        expectPartOf2('3906cf32-00a7-32df-93cc-4710c5f5a542', 'Puerto Rico', 'PR', 'US-PR'),
-                        expectPartOf('39383cce-6f78-4afe-b19a-8377995ce702', 'Washington', 'US-WA'),
-                        expectPartOf2('43dd540a-78cd-319f-bab9-214b5430f3f2', 'Guam', 'GU', 'US-GU'),
-                        expectPartOf('4ca644d9-18a6-4605-9d71-3eae8b3ab2ee', 'New Hampshire', 'US-NH'),
-                        expectPartOf2('4e8596fe-cbee-34ce-8b35-1f3c9bc094d6', 'United States Minor Outlying Islands', 'UM', 'US-UM'),
-                        expectPartOf('6fddb177-f3fc-4c30-9d49-9c7e949fe0bc', 'Mississippi', 'US-MS'),
-                        expectPartOf('75d8fdcf-03e9-43d9-9399-131b8e118b0b', 'Pennsylvania', 'US-PA'),
-                        expectPartOf('75e398a3-5f3f-4224-9cd8-0fe44715bc95', 'New York', 'US-NY'),
-                        expectPartOf('7a0e4090-2ab5-4a28-acef-6173e3885fa7', 'Delaware', 'US-DE'),
-                        expectPartOf('7deb769c-1eaa-4b7a-aecf-c395d82a1e73', 'Utah', 'US-UT'),
-                        expectPartOf('821b0738-e1a2-4636-82e0-b5ca8b331679', 'Alaska', 'US-AK'),
-                        expectPartOf('85255cb8-edb9-4a66-b23a-a5261d42c116', 'Kentucky', 'US-KY'),
-                        expectPartOf('8788d6c2-c779-4be5-ad47-cf0a95e0f2a0', 'Arkansas', 'US-AR'),
-                        expectPartOf('88772016-5866-496a-8de7-4340e922d663', 'Connecticut', 'US-CT'),
-                        expectPartOf('8c2196d9-b7be-4051-90d1-ac81895355f1', 'Illinois', 'US-IL'),
-                        expectPartOf('8c3615bc-bd11-4bf0-b237-405161aac8b7', 'Iowa', 'US-IA'),
-                        expectPartOf2('9a84fea2-1c1f-3908-a44a-6fa2b6fa7b26', 'Northern Mariana Islands', 'MP', 'US-MP'),
-                        expectPartOf('a3435b4a-f42c-404e-beee-f290f62a5e1c', 'Vermont', 'US-VT'),
-                        expectPartOf('a36544c1-cb40-4f44-9e0e-7a5a69e403a8', 'New Jersey', 'US-NJ'),
-                        expectPartOf('a5ff428a-ad62-4752-8f8d-14107c574117', 'Nebraska', 'US-NE'),
-                        expectPartOf('ab47b3b2-838d-463c-9907-30dcd3438d65', 'Nevada', 'US-NV'),
-                        expectPartOf('ae0110b6-13d4-4998-9116-5b926287aa23', 'California', 'US-CA'),
-                        expectPartOf('aec173a2-0f12-489e-812b-7d2c252e4b62', 'South Carolina', 'US-SC'),
-                        expectPartOf('af4758fa-92d7-4f49-ac74-f58d3113c7c5', 'North Dakota', 'US-ND'),
-                        expectPartOf('af59135f-38b5-4ea4-b4e2-dd28c5f0bad7', 'Washington, D.C.', 'US-DC'),
-                        expectPartOf('b8c5f945-678b-43eb-a77a-f237d7f01493', 'Rhode Island', 'US-RI'),
-                        expectPartOf('bb32d812-8161-44e1-8a73-7a0d4a6d3f96', 'West Virginia', 'US-WV'),
-                        expectPartOf('bf9353d8-da52-4fd9-8645-52b2349b4914', 'Arizona', 'US-AZ'),
-                        expectPartOf('c2dca60c-5a5f-43b9-8591-3d4e454cac4e', 'Wyoming', 'US-WY'),
-                        expectPartOf('c45232cf-5848-45d7-84ae-94755f8fe37e', 'Maine', 'US-ME'),
-                        expectPartOf('c747e5a9-3ac7-4dfb-888f-193ff598c62f', 'Kansas', 'US-KS'),
-                        expectPartOf('cc55c78b-15c9-45dd-8ff4-4a212c54eff3', 'Indiana', 'US-IN'),
-                        expectPartOf('cffc0190-1aa2-489f-b6f9-43b9a9e01a91', 'Alabama', 'US-AL'),
-                        expectPartOf('d10ba752-c9ce-4804-afc0-7ff94aa5d8d6', 'Georgia', 'US-GA'),
-                        expectPartOf('d2083d84-09e2-4d45-8fc0-45eed33748b5', 'Oklahoma', 'US-OK'),
-                        expectPartOf('d2918f1a-c51e-4a4a-ad7f-cdd88877b25f', 'Florida', 'US-FL'),
-                        expectPartOf('d4ab49e7-1d25-45e2-8659-b147e0ea3684', 'North Carolina', 'US-NC'),
-                        expectPartOf2('e228a3c1-53c0-3ec9-842b-ec1b2138e387', 'American Samoa', 'AS', 'US-AS'),
-                        expectPartOf('f2532a8e-276c-457a-b3d9-0a7706535178', 'Idaho', 'US-ID'),
-                        expectPartOf('f5ffcc03-ebf2-466a-bb11-b38c6c0c84f5', 'Minnesota', 'US-MN'),
-                        expectPartOf('f934c8da-e40e-4056-8f8c-212e68fdcaec', 'Texas', 'US-TX'),
-                        expectPartOf('f9caf2d8-9638-4b96-bc49-8462339d4b2e', 'Tennessee', 'US-TN'),
-                        expectPartOf('fb8840b9-ff2f-4484-8540-7112ee426ea7', 'Montana', 'US-MT'),
-                        expectPartOf('fc68ecf5-507e-4012-b60b-d93747a3cfa7', 'Louisiana', 'US-LA')
-                    )),
-                    expectTag('tag-list', {}, concat(
-                        expectTagTag('fail'),
-                        expectTagTag('place'),
-                        expectTagTagWithCount('-1', 'the tag voters have no sense of humour. vote either fail or whatever as an answer!'),
-                        expectTagTag('un member state'),
-                        expectTagTag('united states of what?'),
-                        expectTagTag('vote either fail or whatever as an answer! united states of what??'),
-                        expectTagTag('whatever')
-                    ))
-                ), ['aliases', 'annotation', 'tags', 'ratings', 'area-rels'], () => enqueueArea('02e01cf9-b0ed-4286-ac6d-16989f92ced6', fail));
-            return true;
+            const area: Area = getMBCoreEntity('area');
+            //console.log(area);
+            return enqueueTopLevelTask(area.type, 'mb:area-type', 'mb:area-type', fail);
         case 'mb:release':
             fail();
 
@@ -1502,7 +1390,7 @@ function processCurrent(): boolean {
                 inc: 'artists+artist-rels+work-rels'
             }, 'mb:mbid');
             //assert(recording.isrcs.length === 0);
-            return enqueueNextEntityTask(recording["artist-credit"], artistCredit => artistCredit.artist, 'artist', () => {
+            return enqueueNextEntityTask(recording["artist-credit"], artistCredit => artistCredit.artist, () => 'artist', () => {
                 return enqueueNextEntityTask(recording.relations, relation => {
                     const artist = relation.artist;
                     if (isDefined(artist)) {
@@ -1523,7 +1411,6 @@ function processCurrent(): boolean {
                         assertDefined(work);
                         return 'work';
                     }
-                    'artist'
                 }, () => {
                     const mbid = recording.id;
                     const releaseList: ReleaseList = mbGet('release', {
@@ -1531,7 +1418,7 @@ function processCurrent(): boolean {
                     });
                     const releases = releaseList.releases;
                     assertEquals(releaseList["release-count"], releases.length);
-                    return enqueueNextEntityTask(releaseList.releases, release => release, 'release', () => {
+                    return enqueueNextEntityTask(releaseList.releases, release => release, () => 'release', () => {
                         fail();
                         return false;
                     });
@@ -1577,12 +1464,15 @@ function processCurrent(): boolean {
             assertEquals(results.length, 1);
             const firstResult = results[0];
             assertEquals(firstResult.id, acoustid);
-            return enqueueNextEntityTask(firstResult.recordings, recording => recording, 'recording', () => {
+            return enqueueNextEntityTask(firstResult.recordings, recording => recording, () => 'recording', () => {
                 console.log("  completed: please check acoustid resource");
                 const promise = opn(url('acoustid.org', 'track', acoustid), { wait: false });
                 // const run = getRunner();
                 promise.then(childProcess => {
                     childProcess.disconnect();
+                }, err => {
+                    console.log(err);
+                    fail();
                 })
                 //const childProcess = yieldValue();
                 //childProcess.disconnect();
@@ -1879,8 +1769,10 @@ defineCommand('dump', 'dump database to text format', [], () => {
             case 'mb:release':
                 mbResource('release');
                 break;
+            case 'mb:work':
+                mbResource('work');
+                break;
             default:
-
                 fail();
                 break;
         }
