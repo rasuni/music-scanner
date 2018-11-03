@@ -819,12 +819,15 @@ interface Track {
 interface Medium {
     readonly tracks: Track[];
     readonly position: number;
+    readonly format: string;
 }
 
 interface Release {
     readonly id: string;
+    readonly title: string;
     readonly media: Medium[];
     readonly status: string;
+    readonly quality: string;
 }
 
 interface ReleaseList {
@@ -840,9 +843,32 @@ interface AcoustIdTrack {
     readonly id: string;
     readonly recordings: AcoustIdRecording[];
 }
-interface AcoustIdMetaData {
+
+interface AcoustIdResult {
     readonly status: string;
+}
+
+interface AcoustIdMetaData extends AcoustIdResult {
     readonly results: AcoustIdTrack[];
+}
+
+interface AcoustIdTracks extends AcoustIdResult {
+    readonly tracks: AcoustIdRecording[];
+}
+
+interface AcoustIdResult {
+    readonly status: string;
+}
+
+function processHandlers(handlers: (() => undefined | boolean)[]): boolean {
+    for (const handler of handlers) {
+        const res = handler();
+        if (isDefined(res)) {
+            return res;
+        }
+    }
+    fail();
+    return false;
 }
 
 function processCurrent(): boolean {
@@ -879,8 +905,8 @@ function processCurrent(): boolean {
         }, (found: any) => alreadyAdded(found.s))
     }
 
-    function enqueueUnlinkedTask(name: string, type: string, namePredicate: string, parentPredicate: string | undefined, alreadyAdded: (id: string) => boolean): boolean {
-        return enqueueTask(name, type, namePredicate, parentPredicate, undefined, true, alreadyAdded);
+    function enqueueUnlinkedTask<T>(name: string, type: string, namePredicate: string, parentPredicate: string | undefined, alreadyAdded: (id: string) => T): boolean | T {
+        return enqueueTask<boolean | T>(name, type, namePredicate, parentPredicate, undefined, true, alreadyAdded);
     }
 
     function enqueueNextTask<T, R>(items: T[], name: (item: T) => string, type: (item: T) => string, predicate: string, parentPredicate: string | undefined, foundResult: R, completed: () => R): R {
@@ -892,11 +918,11 @@ function processCurrent(): boolean {
         return completed();
     }
 
-    function enqueueTopLevelTask(name: string, type: string, namePredicate: string, alreadyAdded: (id: string) => boolean): boolean {
+    function enqueueTopLevelTask<T>(name: string, type: string, namePredicate: string, alreadyAdded: (id: string) => T): boolean | T {
         return enqueueUnlinkedTask(name, type, namePredicate, undefined, alreadyAdded);
     }
 
-    function enqueueTypedTopLevelTask(name: string, type: string, alreadyAdded: (id: string) => boolean): boolean {
+    function enqueueTypedTopLevelTask<T>(name: string, type: string, alreadyAdded: (id: string) => T): boolean | T {
         return enqueueTopLevelTask(name, type, type, alreadyAdded);
     }
 
@@ -1112,9 +1138,9 @@ function processCurrent(): boolean {
         }, 'musicbrainz.org')
     }
 
-    function getMBEntity<T>(type: string, params: Dictionary<string>, idPredicate: string): T {
-        const mbid = getStringProperty(idPredicate/*'mb:mbid'*/);
-        console.log(url('musicbrainz.org', type, mbid));
+    function getMBEntity<T>(type: string, params: Dictionary<string>, idPredicate: string, path: (mbid: string) => string): T {
+        const mbid = getStringProperty(idPredicate);
+        console.log(url('musicbrainz.org', type, path(mbid)));
 
         const metaData: Entity = mbGet(`${type}/${mbid}`, params);
         assertEquals(metaData.id, mbid);
@@ -1123,21 +1149,32 @@ function processCurrent(): boolean {
     }
 
     function getMBCoreEntity<T>(type: string): T {
-        return getMBEntity(type, {}, 'mb:mbid');
+        return getMBEntity(type, {}, 'mb:mbid', path => path);
     }
 
-    function enqueueNextEntityTask<T>(items: T[], entity: (item: T) => Entity, type: (item: T) => string, completed: () => boolean): boolean {
-        return enqueueNextTask(items, item => entity(item).id, item => `mb:${type(item)}`, 'mb:mbid', undefined, true, completed);
+    function enqueueNextEntityTask<T, R>(items: T[], entity: (item: T) => Entity, type: (item: T) => string, completed: () => R): boolean | R {
+        return enqueueNextTask<T, boolean | R>(items, item => entity(item).id, item => `mb:${type(item)}`, 'mb:mbid', undefined, true, completed);
     }
 
 
-    function enqueueMBEntityId(mbid: string, type: string, alreadyAdded: () => boolean): boolean {
+    function enqueueMBEntityId<T>(mbid: string, type: string, alreadyAdded: () => T): boolean | T {
         return enqueueTopLevelTask(mbid, `mb:${type}`, 'mb:mbid', alreadyAdded);
     }
 
     function enqueueMBEntity(entity: Entity, type: string, alreadyAdded: () => boolean): boolean {
         return enqueueMBEntityId(entity.id, type, alreadyAdded);
     }
+
+
+    function acoustIdGet<T extends AcoustIdResult>(path: string, params: Dictionary<string>): T {
+        const result: AcoustIdResult = wsGet(334, `/v2/${path}`, {
+            client: '0mgRxc969N',
+            ...params
+        }, 'api.acoustid.org');
+        assertEquals(result.status, "ok");
+        return result as T;
+    }
+
 
 
     switch (type) {
@@ -1272,7 +1309,7 @@ function processCurrent(): boolean {
             const artist: Artist = getMBCoreEntity('artist');
             return enqueueTypedTopLevelTask(artist.type, 'mb:artist-type', () => enqueueMBEntity(artist.area, 'area', fail));
 
-            return enqueueMBEntity(artist.area, 'area', () => enqueueTypedTopLevelTask(type, 'mb:artist-type', fail));
+        //return enqueueMBEntity(artist.area, 'area', () => enqueueTypedTopLevelTask(type, 'mb:artist-type', fail));
 
         case 'mb:area':
             const area: Area = getMBCoreEntity('area');
@@ -1280,16 +1317,24 @@ function processCurrent(): boolean {
             return enqueueTypedTopLevelTask(area.type, 'mb:area-type', fail);
         case 'mb:release':
             const release: Release = getMBCoreEntity('release');
-            console.log(release);
-            return enqueueTypedTopLevelTask(release.status, 'mb:release-status', fail);
+            return processHandlers([
+                () => enqueueTypedTopLevelTask(release.title, 'mb:release-title', () => undefined),
+                () => enqueueTypedTopLevelTask(release.status, 'mb:release-status', () => undefined),
+            ]);
+
+        //return enqueueTypedTopLevelTask(release.status, 'mb:release-status', fail);
         case 'mb:recording':
 
             const recording: Recording = getMBEntity('recording', {
                 inc: 'artists+artist-rels+work-rels'
-            }, 'mb:mbid');
-            //assert(recording.isrcs.length === 0);
-            return enqueueNextEntityTask(recording["artist-credit"], artistCredit => artistCredit.artist, () => 'artist', () => {
-                return enqueueNextEntityTask(recording.relations, relation => {
+            }, 'mb:mbid', path => path);
+
+            function processList<T>(items: T[], entity: (item: T) => Entity, type: (item: T) => string): () => undefined | boolean {
+                return () => enqueueNextEntityTask(items, entity, type, () => undefined);
+            }
+            return processHandlers([
+                processList(recording['artist-credit'], artistCredit => artistCredit.artist, () => 'artist'),
+                processList(recording.relations, relation => {
                     const artist = relation.artist;
                     if (isDefined(artist)) {
                         return artist;
@@ -1300,6 +1345,7 @@ function processCurrent(): boolean {
                         return work as Entity;
                     }
                 }, relation => {
+
                     const artist = relation.artist;
                     if (isDefined(artist)) {
                         return 'artist';
@@ -1309,20 +1355,24 @@ function processCurrent(): boolean {
                         assertDefined(work);
                         return 'work';
                     }
-                }, () => {
-                    const mbid = recording.id;
+
+                }),
+                () => {
                     const releaseList: ReleaseList = mbGet('release', {
-                        recording: mbid
+                        recording: recording.id
                     });
                     const releases = releaseList.releases;
                     assertEquals(releaseList["release-count"], releases.length);
-                    return enqueueNextEntityTask(releaseList.releases, release => release, () => 'release', () => {
-                        fail();
-                        return false;
+                    return enqueueNextEntityTask(releaseList.releases, release => release, () => 'release', () => undefined);
+                },
+                () => {
+                    const result: AcoustIdTracks = acoustIdGet(`track/list_by_mbid`, {
+                        mbid: recording.id
                     });
-                });
-
-            });
+                    return enqueueNextTask(result.tracks, rec => rec.id, () => 'acoustid', 'acoustid', undefined, true, () => undefined)
+                    //fail();
+                }
+            ]);
         case 'mb:label':
             fail();
 
@@ -1352,12 +1402,10 @@ function processCurrent(): boolean {
         case 'acoustid':
             const acoustid = getStringProperty('acoustid');
             console.log(url('acoustid.org', 'track', acoustid));
-            const result: AcoustIdMetaData = wsGet(334, '/v2/lookup', {
-                client: '0mgRxc969N',
+            const result: AcoustIdMetaData = acoustIdGet('lookup', {
                 meta: 'recordingids',
                 trackid: acoustid
-            }, 'api.acoustid.org');
-            assertEquals(result.status, "ok");
+            });
             const results = result.results;
             assertEquals(results.length, 1);
             const firstResult = results[0];
@@ -1414,12 +1462,17 @@ function processCurrent(): boolean {
 
 
         case 'mb:medium':
+            const mposition = Number(decodeLiteral(getPropertyFromCurrent('mb:position'), 'n'));
             const rel: Release = getMBEntity('release', {
                 inc: 'media'
-            }, 'mb:release-id');
-            assertDefined(rel.media.find(m => m.position == Number(decodeLiteral(getPropertyFromCurrent('mb:position'), 'n'))));
-            //console.log(rel);
-            return enqueueMBEntityId(getStringProperty('mb:release-id'), 'release', fail);
+            }, 'mb:release-id', mbid => `${mbid}/disc/${mposition}`);
+            const media = rel.media.find(m => m.position == mposition);
+            assertDefined(media);
+            return processHandlers([
+                () => enqueueMBEntityId(getStringProperty('mb:release-id'), 'release', () => undefined),
+                () => enqueueTypedTopLevelTask((media as Medium).format, 'mb:release-quality', () => undefined)
+            ]);
+        //return enqueueMBEntityId(getStringProperty('mb:release-id'), 'release', fail);
 
         default:
             fail();
@@ -1617,8 +1670,14 @@ defineCommand('dump', 'dump database to text format', [], () => {
         resource('musicbrainz.org', type, 'mb:mbid');
     }
 
+
+    function search(field: string, type: string) {
+        url('musicbrainz.org', `search?query=${field}%3A${getStringProperty(`mb:${type}-${field}`)}&type=${type}&method=advanced`);
+    }
+
     function searchType(type: string) {
-        url('musicbrainz.org', `search?query=type%3A${getStringProperty(`mb:${type}-type`)}&type=${type}&method=advanced`);
+        search('type', type);
+        //        url('musicbrainz.org', `search?query=type%3A${getStringProperty(`mb:${type}-type`)}&type=${type}&method=advanced`);
     }
 
     for (; ;) {
@@ -1683,6 +1742,12 @@ defineCommand('dump', 'dump database to text format', [], () => {
                 break;
             case 'mb:artist-type':
                 searchType('artist');
+                break;
+            case 'mb:release-status':
+                search('status', 'release');
+                break;
+            case 'mb:release-quality':
+                search('quality', 'release');
                 break;
             default:
                 fail();
