@@ -565,10 +565,6 @@ function matchTextTag(name: string, attributes: Attributes, value: Predicate<str
     return expectTag(name, attributes, expectTextEvent(value));
 }
 
-function expectTextTag(name: string, attributes: Attributes, value: string): Sequence<Predicate<SaxEvent>> {
-    return matchTextTag(name, attributes, expectEquals(value));
-}
-
 
 function matchPlainTextTag(name: string, value: Predicate<string>): Sequence<Predicate<SaxEvent>> {
     return matchTextTag(name, {}, value);
@@ -622,49 +618,12 @@ function expectArea(mbid: string, name: string, additionalTags: Sequence<Predica
     return expectAreaRaw('area', mbid, name, additionalTags);
 }
 
-function id(mbid: string): Attributes {
-    return {
-        id: mbid
-    }
-}
-
 type Provider<T> = () => T;
 
 function getStream(pattern: StatementPattern): Provider<Statement<string>> {
     return prepareDBStream(db.getStream(pattern));
 }
 
-interface NameCredit {
-    readonly attributes: Attributes;
-    readonly mbid: string;
-    readonly name: string;
-    readonly additionalTags: Sequence<Predicate<SaxEvent>>
-}
-
-function nameCredit(attributes: Attributes, mbid: string, name: string, additionalTags: Sequence<Predicate<SaxEvent>>): NameCredit {
-    return {
-        attributes: attributes,
-        mbid: mbid,
-        name: name,
-        additionalTags: additionalTags
-    }
-}
-
-function expectArtistCredit(nameCredits: Sequence<NameCredit>): Sequence<Predicate<SaxEvent>> {
-    return expectSimpleTag(
-        'artist-credit',
-        map(
-            nameCredits,
-            nameCredit => expectTag(
-                'name-credit',
-                nameCredit.attributes,
-                expectNamed('artist', nameCredit.mbid, nameCredit.name, nameCredit.additionalTags)
-            )
-        )
-    );
-};
-
-const ARTIST_112 = nameCredit({}, '9132d515-dc0e-4494-85ae-20f06eed14f9', '112', undefined);
 
 function expectCountry(countryCode: string): Sequence<Predicate<SaxEvent>> {
     return expectPlainTextTag('country', countryCode);
@@ -728,34 +687,6 @@ function expectRelease(id: string, title: string, official: Sequence<Predicate<S
 
 const expectOfficial = expectNamedEntity('status', '4e304316-386d-3409-af2e-78857eec5cfe', 'Official');
 
-
-function localExpectTextAndEnum(name: string, value: string, enumName: string, mbid: string, enumValue: string): Sequence<Predicate<SaxEvent>> {
-    return concat(
-        expectPlainTextTag(name, value),
-        expectTextTag(enumName, id(mbid), enumValue)
-    )
-}
-
-const expectDate1998 = expectDate('1998-11-16');
-
-
-function expectTrue(name: string): Sequence<Predicate<SaxEvent>> {
-    return expectPlainTextTag(name, 'true');
-}
-
-function expectLabel(mbid: string, name: string, additionalTags: Sequence<Predicate<SaxEvent>>): Sequence<Predicate<SaxEvent>> {
-    return concat(
-        expectPlainTextTag('catalog-number', '78612-73021-2'),
-        expectNamed('label', mbid, name, additionalTags)
-    )
-}
-
-function expectLabelAdd(mbid: string, name: string, tagName: string, tagValue: string): Sequence<Predicate<SaxEvent>> {
-    return concat(
-        expectPlainTextTag('catalog-number', '78612-73021-2'),
-        expectNamed('label', mbid, name, expectPlainTextTag(tagName, tagValue))
-    )
-}
 
 const expectBarcode = matchTagAndAttributes('barcode', {}, undefined);
 
@@ -861,6 +792,7 @@ interface Area {
 interface Artist {
     id: string;
     area: Area;
+    type: string;
 }
 
 interface ArtistCredit {
@@ -892,6 +824,7 @@ interface Medium {
 interface Release {
     readonly id: string;
     readonly media: Medium[];
+    readonly status: string;
 }
 
 interface ReleaseList {
@@ -961,6 +894,10 @@ function processCurrent(): boolean {
 
     function enqueueTopLevelTask(name: string, type: string, namePredicate: string, alreadyAdded: (id: string) => boolean): boolean {
         return enqueueUnlinkedTask(name, type, namePredicate, undefined, alreadyAdded);
+    }
+
+    function enqueueTypedTopLevelTask(name: string, type: string, alreadyAdded: (id: string) => boolean): boolean {
+        return enqueueTopLevelTask(name, type, type, alreadyAdded);
     }
 
     function enqueueTasks(items: string[], type: string, predicate: string, parentPredicate: string | undefined): void {
@@ -1130,13 +1067,6 @@ function processCurrent(): boolean {
         });
     }
 
-    function enqueueArtist(mbid: string, found: () => void): void {
-        enqueueMBResourceTask(mbid, 'artist', () => {
-            found();
-            return true;
-        });
-    }
-
 
 
     function url(hostName: string, type: string, id: string): string {
@@ -1271,7 +1201,7 @@ function processCurrent(): boolean {
                             const common = metaData.common;
                             const acoustid = common.acoustid_id;
                             if (isDefined(acoustid)) {
-                                return enqueueTopLevelTask(acoustid, 'acoustid', 'acoustid', () => {
+                                return enqueueTypedTopLevelTask(acoustid, 'acoustid', () => {
                                     const trackId = common.musicbrainz_trackid;
                                     assertDefined(trackId);
                                     return enqueueMBResourceTask(trackId as string, 'track', taskId => {
@@ -1340,50 +1270,18 @@ function processCurrent(): boolean {
         case 'mb:artist':
 
             const artist: Artist = getMBCoreEntity('artist');
+            return enqueueTypedTopLevelTask(artist.type, 'mb:artist-type', () => enqueueMBEntity(artist.area, 'area', fail));
 
-            return enqueueMBEntity(artist.area, 'area', fail);
+            return enqueueMBEntity(artist.area, 'area', () => enqueueTypedTopLevelTask(type, 'mb:artist-type', fail));
 
         case 'mb:area':
             const area: Area = getMBCoreEntity('area');
             //console.log(area);
-            return enqueueTopLevelTask(area.type, 'mb:area-type', 'mb:area-type', fail);
+            return enqueueTypedTopLevelTask(area.type, 'mb:area-type', fail);
         case 'mb:release':
-            fail();
-
-            processMBResource('release', concat(
-
-                localExpectTextAndEnum('title', 'Room 112', 'status', "4e304316-386d-3409-af2e-78857eec5cfe", 'Official'),
-                localExpectTextAndEnum('quality', 'normal', 'packaging', "ec27701a-4a22-37f4-bfac-6616e0f9750a", 'Jewel Case'),
-                expectTextRepresentation,
-
-                expectArtistCredit(sequence(ARTIST_112)),
-
-
-                expectDate1998,
-                expectCountry('DE'),
-
-                expectReleaseEventList([concat(
-                    expectDate1998,
-                    expectArea('85752fda-13c4-31a3-bee5-0e5cb1f51dad', 'Germany', expectIsoList1('DE'))
-                )]),
-
-
-                expectPlainTextTag('barcode', '786127302127'),
-                expectPlainTextTag('asin', 'B00000D9VN'),
-                expectSimpleTag('cover-art-archive', concat(
-                    expectTrue('artwork'),
-                    expectPlainTextTag('count', '19'),
-                    expectTrue('front'),
-                    expectTrue('back')
-                )),
-
-                expectList('label-info', [
-                    expectLabelAdd('c62e3985-6370-446a-bfb8-f1f6122e9c33', 'Arista', 'label-code', '3484'),
-                    expectLabel('29d43312-a8ed-4d7b-9f4e-f5650318aebb', 'Bad Boy Records', undefined),
-                    expectLabelAdd('29d7c88f-5200-4418-a683-5c94ea032e38', 'BMG', 'disambiguation', 'the former Bertelsmann Music Group, defunct since 2004-08-05; for releases dated 2008 and later, use "BMG Rights Management"')
-                ])
-            ), ['artists', 'collections', 'labels'], {}, () => enqueueArtist('9132d515-dc0e-4494-85ae-20f06eed14f9', () => enqueueArea('85752fda-13c4-31a3-bee5-0e5cb1f51dad', () => enqueueMBResourceTask('c62e3985-6370-446a-bfb8-f1f6122e9c33', 'label', fail))));
-            return true;
+            const release: Release = getMBCoreEntity('release');
+            console.log(release);
+            return enqueueTypedTopLevelTask(release.status, 'mb:release-status', fail);
         case 'mb:recording':
 
             const recording: Recording = getMBEntity('recording', {
@@ -1489,14 +1387,14 @@ function processCurrent(): boolean {
             });
             //console.log(metaData);
             assertEquals(metaData["release-count"], 1);
-            const release = metaData.releases[0];
-            const releaseId = release.id;
+            const rels = metaData.releases[0];
+            const releaseId = rels.id;
 
             function findTrack(media: Medium): Track | undefined {
                 return media.tracks.find(track => track.id === mbid)
             }
 
-            const medium = release.media.find(media => isDefined(findTrack(media)));
+            const medium = rels.media.find(media => isDefined(findTrack(media)));
             const position = (medium as Medium).position;
             return tryAddKeyedTask('mb:medium', {
                 "mb:release-id": encodeString(releaseId),
@@ -1707,12 +1605,20 @@ defineCommand('dump', 'dump database to text format', [], () => {
         return decodeStringLiteral(getPropertyFromCurrent(name));
     }
 
+    function url(domain: string, path: string) {
+        console.log(`https://${domain}/${path}`);
+    }
+
     function resource(domain: string, type: string, predicate: string): void {
-        console.log(`https://${domain}/${type}/${getStringProperty(predicate)}`);
+        url(domain, `${type}/${getStringProperty(predicate)}`);
     }
 
     function mbResource(type: string): void {
         resource('musicbrainz.org', type, 'mb:mbid');
+    }
+
+    function searchType(type: string) {
+        url('musicbrainz.org', `search?query=type%3A${getStringProperty(`mb:${type}-type`)}&type=${type}&method=advanced`);
     }
 
     for (; ;) {
@@ -1772,8 +1678,16 @@ defineCommand('dump', 'dump database to text format', [], () => {
             case 'mb:work':
                 mbResource('work');
                 break;
+            case 'mb:area-type':
+                searchType('area');
+                break;
+            case 'mb:artist-type':
+                searchType('artist');
+                break;
             default:
                 fail();
+                //console.log(`https://musicbrainz.org/search?query=type%3A${getStringProperty('mb:area-type')}&type=area&method=advanced`);
+                //console.log(`https://musicbrainz.org/release/${getStringProperty('mb:release-id')}/disc/${decodeLiteral(getPropertyFromCurrent('mb:position'), 'n')}`);
                 break;
         }
         const next = getPropertyFromCurrent('next');
