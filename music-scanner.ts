@@ -113,7 +113,6 @@ function* compareObjects<T>(actual: Dictionary<any>, expected: Dictionary<T>): I
 }
 
 function assertEquals(actual: any, expected: any): void {
-    //console.log(`assertEquals (${actual}, ${expected})`)
     if (actual !== expected) {
         assertObject(actual);
         assertObject(expected);
@@ -179,16 +178,27 @@ function del(subject: string, predicate: string, object: string): UpdateStatemen
     return updateStatement('del', subject, predicate, object);
 }
 
-function decodeLiteral(literal: string, prefix: string) {
+function decodeLiteral(literal: string): string | number {
     const segments = literal.split('/');
     assertEquals(segments.length, 2);
-    assertEquals(segments[0], prefix);
-    return decodeURIComponent(segments[1]);
+    const value = decodeURIComponent(segments[1]);
+    switch (segments[0]) {
+        case 's':
+            return value;
+        case 'n':
+            return Number(value);
+        default:
+            return fail();
+    }
+    //assertEquals(segments[0], prefix);
+    //return decodeURIComponent(segments[1]);
 }
 
 
-function decodeStringLiteral(stringLiteral: string) {
-    return decodeLiteral(stringLiteral, 's')
+function decodeStringLiteral(stringLiteral: string): string {
+    const result = decodeLiteral(stringLiteral);
+    assertType(result, "string");
+    return result as string;
 }
 
 function makeBlockingQueue<T>(assignProducers: Consumer<Consumer<T>>): Provider<T> {
@@ -695,9 +705,11 @@ const expectCardboard = concat(
     expectTextRepresentation,
 )
 
+const log = console.log;
+
 function getCurrentTask(): string {
     return getObject('root', 'current', () => {
-        console.log('initializing database');
+        log('initializing database');
 
         function link(predicate: string): Statement<string> {
             return statement('root', predicate, 'root');
@@ -745,7 +757,7 @@ function tryAddKeyedTask<T>(type: string, keys: Dictionary<string>, path: string
     }
 
     return streamOpt(db.searchStream(mapAttributeValues(statement, db.v('s'))), () => {
-        console.log(`${prefix}adding ${type} ${path}`);
+        log(`${prefix}adding ${type} ${path}`);
         const taskId = `task/${uuid()}`;
         update([
             ...mapAttributeValues(put, taskId),
@@ -765,16 +777,20 @@ function encodeString(value: string): string {
     return encodeLiteral('s', value)
 }
 
-function tryAdd<T>(name: string, type: string, namePredicate: string, parentPredicate: string | undefined, prefix: string, linkPredicate: string | undefined, enqueued: () => T, alreadyAdded: (found: any) => T): T {
+function encodeNumber(value: number): string {
+    return encodeLiteral('n', `${value}`);
+}
+
+function tryAdd<T>(key: string | number, type: string, namePredicate: string, parentPredicate: string | undefined, prefix: string, linkPredicate: string | undefined, enqueued: () => T, alreadyAdded: (found: any) => T): T {
 
 
     let keys: any = {
     };
-    keys[namePredicate] = encodeString(name);
+    keys[namePredicate] = typeof key === "string" ? encodeString(key) : encodeNumber(key);
     if (isDefined(parentPredicate)) {
         keys[parentPredicate] = getCurrentTask();
     }
-    return tryAddKeyedTask(type, keys, name, prefix, linkPredicate, enqueued, alreadyAdded);
+    return tryAddKeyedTask(type, keys, `${key}`, prefix, linkPredicate, enqueued, alreadyAdded);
 
 }
 
@@ -784,36 +800,46 @@ function assertDefined(value: any): void {
 interface Entity {
     readonly id: string;
 }
+
+interface EntityList {
+    readonly count: 0;
+}
+
 interface Area {
-    id: string;
-    type: string;
+    readonly id: string;
+    readonly type: string;
+    readonly name: string;
 }
 
 interface Artist {
-    id: string;
-    area: Area;
-    type: string;
+    readonly id: string;
+    readonly area: Area;
+    readonly type: string;
+    readonly name: string;
 }
 
 interface ArtistCredit {
     readonly artist: Artist;
+    readonly joinphrase: string;
 }
 
 interface Relation {
-    artist?: Entity;
-    work?: Entity;
+    readonly artist?: Entity;
+    readonly work?: Entity;
 }
 interface Recording {
     readonly id: string;
+    readonly title: string;
+    readonly length: number;
     readonly "artist-credit": ArtistCredit[];
-    relations: Relation[];
-    //readonly isrcs: any[];
+    readonly relations: Relation[];
 }
 
 interface Track {
     readonly id: string;
     readonly recording: Recording;
     readonly title: string;
+    readonly "artist-credit": ArtistCredit[];
 }
 
 interface Medium {
@@ -822,17 +848,36 @@ interface Medium {
     readonly format: string;
 }
 
+interface TextRepresentation {
+    readonly language: string;
+    readonly script: string;
+}
+
 interface Release {
     readonly id: string;
     readonly title: string;
     readonly media: Medium[];
     readonly status: string;
     readonly quality: string;
+    readonly "text-representation": TextRepresentation;
 }
 
-interface ReleaseList {
+interface ReleaseList extends EntityList {
     readonly "release-count": number;
     readonly releases: Release[];
+}
+
+interface Work {
+    readonly id: string;
+    readonly title: string;
+}
+
+interface AreaList extends EntityList {
+    readonly areas: Entity[];
+}
+
+interface ArtistList extends EntityList {
+    readonly artists: Entity[];
 }
 
 interface AcoustIdRecording {
@@ -856,10 +901,6 @@ interface AcoustIdTracks extends AcoustIdResult {
     readonly tracks: AcoustIdRecording[];
 }
 
-interface AcoustIdResult {
-    readonly status: string;
-}
-
 function processHandlers(handlers: (() => undefined | boolean)[]): boolean {
     for (const handler of handlers) {
         const res = handler();
@@ -870,6 +911,9 @@ function processHandlers(handlers: (() => undefined | boolean)[]): boolean {
     fail();
     return false;
 }
+
+type LiteralPropertyNames<T> = { [K in keyof T]: T[K] extends (string | number) ? K : never }[keyof T];
+
 
 function processCurrent(): boolean {
     const currentTask = getCurrentTask();
@@ -890,23 +934,27 @@ function processCurrent(): boolean {
         update(moveToNextStatements());
     }
 
+    function fsOp(removeMethod: 'unlink' | 'rmdir', path: string) {
+        assertSame(waitFor(cb => fs[removeMethod](path, cb)), null);
+    }
 
     function remove(message: string, removeMethod: 'unlink' | 'rmdir', path: string): void {
-        console.log(`  ${message}`);
-        assertSame(waitFor(cb => fs[removeMethod](path, cb)), null);
+        log(`  ${message}`);
+        fsOp(removeMethod, path);
+        //assertSame(waitFor(cb => fs[removeMethod](path, cb)), null);
         moveToNext();
     }
 
 
-    function enqueueTask<T>(name: string, type: string, namePredicate: string, parentPredicate: string | undefined, linkPredicate: string | undefined, enqueued: T, alreadyAdded: (id: string) => T): T {
-        return tryAdd(name, type, namePredicate, parentPredicate, '  ', linkPredicate, () => {
+    function enqueueTask<T>(key: string | number, type: string, namePredicate: string, parentPredicate: string | undefined, linkPredicate: string | undefined, enqueued: T, alreadyAdded: (id: string) => T): T {
+        return tryAdd(key, type, namePredicate, parentPredicate, '  ', linkPredicate, () => {
             moveToNext();
             return enqueued;
         }, (found: any) => alreadyAdded(found.s))
     }
 
-    function enqueueUnlinkedTask<T>(name: string, type: string, namePredicate: string, parentPredicate: string | undefined, alreadyAdded: (id: string) => T): boolean | T {
-        return enqueueTask<boolean | T>(name, type, namePredicate, parentPredicate, undefined, true, alreadyAdded);
+    function enqueueUnlinkedTask<T>(key: string | number, type: string, namePredicate: string, parentPredicate: string | undefined, alreadyAdded: (id: string) => T): boolean | T {
+        return enqueueTask<boolean | T>(key, type, namePredicate, parentPredicate, undefined, true, alreadyAdded);
     }
 
     function enqueueNextTask<T, R>(items: T[], name: (item: T) => string, type: (item: T) => string, predicate: string, parentPredicate: string | undefined, foundResult: R, completed: () => R): R {
@@ -918,17 +966,17 @@ function processCurrent(): boolean {
         return completed();
     }
 
-    function enqueueTopLevelTask<T>(name: string, type: string, namePredicate: string, alreadyAdded: (id: string) => T): boolean | T {
-        return enqueueUnlinkedTask(name, type, namePredicate, undefined, alreadyAdded);
+    function enqueueTopLevelTask<T>(key: string | number, type: string, namePredicate: string, alreadyAdded: (id: string) => T): boolean | T {
+        return enqueueUnlinkedTask(key, type, namePredicate, undefined, alreadyAdded);
     }
 
-    function enqueueTypedTopLevelTask<T>(name: string, type: string, alreadyAdded: (id: string) => T): boolean | T {
-        return enqueueTopLevelTask(name, type, type, alreadyAdded);
+    function enqueueTypedTopLevelTask<T>(key: string | number, type: string, alreadyAdded: (id: string) => T): boolean | T {
+        return enqueueTopLevelTask(key, type, type, alreadyAdded);
     }
 
     function enqueueTasks(items: string[], type: string, predicate: string, parentPredicate: string | undefined): void {
         enqueueNextTask(items, item => item, () => type, predicate, parentPredicate, undefined, () => {
-            console.log('  completed');
+            log('  completed');
             moveToNext();
         })
     }
@@ -954,10 +1002,14 @@ function processCurrent(): boolean {
     function processDirectory(path: string): boolean {
         const result: Pair<object, string[]> = waitFor2(consumer => fs.readdir(path, consumer));
         assertEquals(result.first, null);
-        const files = result.second.filter(name => !name.startsWith('.'));
+        const allFiles = result.second;
+        const files = allFiles.filter(name => !name.startsWith('.'));
 
         if (isEmpty(files)) {
-            fail();
+            //fail();
+            for (const hiddenFile of allFiles) {
+                fsOp('unlink', join(path, hiddenFile));
+            }
             remove('delete empty directory', 'rmdir', path);
         }
         else {
@@ -966,9 +1018,9 @@ function processCurrent(): boolean {
         return true;
     }
 
-    function updateProperty(subject: string, predicate: string, predicatePath: string, value: string, objectValue: string, alreadyUpdated: () => boolean): boolean {
-        return getObject(subject, predicate, () => {
-            console.log(`  ${predicatePath}: undefined-- > ${value} `);
+    function updateProperty<T>(subject: string, predicate: string, predicatePath: string, value: string, objectValue: string, alreadyUpdated: () => T): boolean | T {
+        return getObject<boolean | T>(subject, predicate, () => {
+            log(`  ${predicatePath}: undefined --> ${value} `);
             update([
                 put(subject, predicate, objectValue),
                 ...moveToNextStatements(),
@@ -980,11 +1032,11 @@ function processCurrent(): boolean {
         })
     }
 
-    function updateLiteralProperty(subject: string, predicate: string, predicatePath: string, value: string, literalTag: string, alreadyUpdated: () => boolean): boolean {
+    function updateLiteralProperty<T>(subject: string, predicate: string, predicatePath: string, value: string, literalTag: string, alreadyUpdated: () => T): boolean | T {
         return updateProperty(subject, predicate, predicatePath, value, encodeLiteral(literalTag, value), alreadyUpdated);
     }
 
-    function updateLiteralPropertyOnCurrentTask(predicate: string, value: string, literalTag: string, alreadyUpdated: () => boolean): boolean {
+    function updateLiteralPropertyOnCurrentTask<T>(predicate: string, value: string, literalTag: string, alreadyUpdated: () => T): boolean | T {
         return updateLiteralProperty(currentTask, predicate, predicate, value, literalTag, alreadyUpdated);
     }
 
@@ -992,7 +1044,7 @@ function processCurrent(): boolean {
     const type = getPropertyFromCurrent('type');
 
     function processFileSystemPath<T>(path: string, directory: () => T, file: () => T, missing: () => T): T {
-        console.log(`processing ${type} ${path}`);
+        log(`processing ${type} ${path}`);
         return stat(path, stat => (stat.isDirectory() ? directory : file)(), missing);
     }
 
@@ -1035,7 +1087,8 @@ function processCurrent(): boolean {
         complyWithRateLimit('musicbrainz.org', 1000);
         const mbid = getStringProperty('mb:mbid');
         const resourcePath = `/ws/2/${type}/${mbid}${inc.length === 0 ? '' : '?inc=' + inc.join('+')}`;
-        console.log(`https://musicbrainz.org${resourcePath}`)
+        //mbLog(resourcePath);
+        log(`https://musicbrainz.org${resourcePath}`)
         const run = getRunner();
         https.get({
             hostname: 'musicbrainz.org',
@@ -1067,7 +1120,7 @@ function processCurrent(): boolean {
                 onNoMatch();
                 break;
             }
-            console.log(asString(predicates.first));
+            log(asString(predicates.first));
             if (predicates.first(nextEvent())) {
                 break;
             }
@@ -1140,7 +1193,7 @@ function processCurrent(): boolean {
 
     function getMBEntity<T>(type: string, params: Dictionary<string>, idPredicate: string, path: (mbid: string) => string): T {
         const mbid = getStringProperty(idPredicate);
-        console.log(url('musicbrainz.org', type, path(mbid)));
+        log(url('musicbrainz.org', type, path(mbid)));
 
         const metaData: Entity = mbGet(`${type}/${mbid}`, params);
         assertEquals(metaData.id, mbid);
@@ -1161,7 +1214,7 @@ function processCurrent(): boolean {
         return enqueueTopLevelTask(mbid, `mb:${type}`, 'mb:mbid', alreadyAdded);
     }
 
-    function enqueueMBEntity(entity: Entity, type: string, alreadyAdded: () => boolean): boolean {
+    function enqueueMBEntity<T>(entity: Entity, type: string, alreadyAdded: () => T): boolean | T {
         return enqueueMBEntityId(entity.id, type, alreadyAdded);
     }
 
@@ -1176,10 +1229,64 @@ function processCurrent(): boolean {
     }
 
 
+    function attributeHandler<T>(record: T, attribute: LiteralPropertyNames<T>, type: string): () => undefined | boolean {
+        return () => enqueueTypedTopLevelTask(record[attribute] as any as string | number, `mb:${type}-${attribute}`, () => undefined);
+    }
+
+
+    function processSearch<T extends EntityList>(type: string, field: string, entities: (list: T) => Entity[]): void {
+        const key = getStringProperty(`mb:${type}-${field}`);
+        log(`https://musicbrainz.org/search?query=${field}%3A${encodeURIComponent(key)}&type=${type}&method=advanced`);
+        const list: EntityList = mbGet(type, { query: `${field}:${key}` });
+        if (list.count === 0) {
+            deleteCurrentTask('no search results');
+        }
+        else {
+            //failIf(list.count === 0);
+            enqueueNextEntityTask(entities(list as T), entity => entity, () => type, fail);
+        }
+
+    }
+
+
+    function deleteCurrentTask(msg: string) {
+        const next = getPropertyFromCurrent('next');
+        const nextStatement = getStream({ subject: currentTask });
+        const updateStatements: UpdateStatement[] = [];
+        for (; ;) {
+            const statement = nextStatement();
+            if (isUndefined(statement)) {
+                break;
+            }
+            assertEquals(statement.subject, currentTask);
+            updateStatements.push(del(currentTask, statement.predicate, statement.object));
+        }
+        assertMissing({ predicate: currentTask });
+        log(`  ${msg} -> remove entry`);
+        update([
+            ...appendToPrev(next),
+            ...setCurrent(next),
+            ...updateStatements
+        ]);
+        assertMissing({ object: currentTask });
+        assertMissing({ subject: currentTask });
+    }
+
+    function processList<T>(items: T[], entity: (item: T) => Entity, type: (item: T) => string): () => undefined | boolean {
+        return () => enqueueNextEntityTask(items, entity, type, () => undefined);
+    }
+
+
+    function getNumberProperty(name: string): number {
+        const res = decodeLiteral(getPropertyFromCurrent(name));
+        assertType(res, "number");
+        return res as number;
+    }
+
 
     switch (type) {
         case 'root':
-            console.log('processing root');
+            log('processing root');
             enqueueTasks(['/Volumes/Musik', '/Volumes/music', '/Volumes/Qmultimedia', '/Users/ralph.sigrist/Music/iTunes/ITunes Media/Music'], 'volume', 'path', undefined /*() => { }*/);
             return true;
         case 'volume':
@@ -1242,7 +1349,7 @@ function processCurrent(): boolean {
                                     const trackId = common.musicbrainz_trackid;
                                     assertDefined(trackId);
                                     return enqueueMBResourceTask(trackId as string, 'track', taskId => {
-                                        for (const key of ['title', 'artist']) {
+                                        for (const key of ['title', 'artist', 'album']) {
                                             if (getObject(taskId, `mb:${key}`, FALSE, value => {
                                                 if ((common as any)[key] === decodeStringLiteral(value)) {
                                                     return false;
@@ -1253,10 +1360,11 @@ function processCurrent(): boolean {
                                                 }
 
                                             })) {
+                                                console.error(`  Tag ${key} has oudated value. Please fix tag in picard.`);
                                                 return false;
                                             }
                                         }
-                                        console.log('  Please check tagging in picard');
+                                        log('  Please check tagging in picard');
                                         moveToNext();
                                         return false;
                                     })
@@ -1278,6 +1386,8 @@ function processCurrent(): boolean {
 
                 }, () => stat(vPath, () => {
                     assertMissing({ predicate: 'directory', object: currentTask });
+                    deleteCurrentTask('missing');
+                    /*
                     const next = getPropertyFromCurrent('next');
                     const nextStatement = getStream({ subject: currentTask });
                     const updateStatements: UpdateStatement[] = [];
@@ -1290,7 +1400,7 @@ function processCurrent(): boolean {
                         updateStatements.push(del(currentTask, statement.predicate, statement.object));
                     }
                     assertMissing({ predicate: currentTask });
-                    console.log('  missing -> remove entry');
+                    log('  missing -> remove entry');
                     update([
                         ...appendToPrev(next),
                         ...setCurrent(next),
@@ -1298,6 +1408,8 @@ function processCurrent(): boolean {
                     ]);
                     assertMissing({ object: currentTask });
                     assertMissing({ subject: currentTask });
+*/
+
                     return true;
                 }, () => {
                     //fail();
@@ -1307,32 +1419,43 @@ function processCurrent(): boolean {
         case 'mb:artist':
 
             const artist: Artist = getMBCoreEntity('artist');
-            return enqueueTypedTopLevelTask(artist.type, 'mb:artist-type', () => enqueueMBEntity(artist.area, 'area', fail));
+            return processHandlers([
+                attributeHandler(artist, 'type', 'artist'),
+                () => enqueueMBEntity(artist.area, 'area', () => undefined),
+                attributeHandler(artist, 'name', 'artist'),
 
-        //return enqueueMBEntity(artist.area, 'area', () => enqueueTypedTopLevelTask(type, 'mb:artist-type', fail));
+            ]);
 
         case 'mb:area':
             const area: Area = getMBCoreEntity('area');
-            //console.log(area);
-            return enqueueTypedTopLevelTask(area.type, 'mb:area-type', fail);
-        case 'mb:release':
-            const release: Release = getMBCoreEntity('release');
             return processHandlers([
-                () => enqueueTypedTopLevelTask(release.title, 'mb:release-title', () => undefined),
-                () => enqueueTypedTopLevelTask(release.status, 'mb:release-status', () => undefined),
-            ]);
+                attributeHandler(area, 'type', 'area'),
+                attributeHandler(area, 'name', 'area')
+            ])
+        case 'mb:release':
+            {
+                const release: Release = getMBCoreEntity('release');
 
-        //return enqueueTypedTopLevelTask(release.status, 'mb:release-status', fail);
+                function releaseAttributeHandler(attribute: LiteralPropertyNames<Release>): () => boolean | undefined {
+                    return attributeHandler(release, attribute, 'release')
+                }
+
+                return processHandlers([
+                    releaseAttributeHandler('title'),
+                    releaseAttributeHandler('status'),
+                    attributeHandler(release['text-representation'], 'language', 'release'),
+                    attributeHandler(release['text-representation'], 'script', 'release'),
+                ]);
+            }
         case 'mb:recording':
 
             const recording: Recording = getMBEntity('recording', {
                 inc: 'artists+artist-rels+work-rels'
             }, 'mb:mbid', path => path);
 
-            function processList<T>(items: T[], entity: (item: T) => Entity, type: (item: T) => string): () => undefined | boolean {
-                return () => enqueueNextEntityTask(items, entity, type, () => undefined);
-            }
             return processHandlers([
+                attributeHandler(recording, 'title', 'recording'),
+                attributeHandler(recording, 'length', 'recording'),
                 processList(recording['artist-credit'], artistCredit => artistCredit.artist, () => 'artist'),
                 processList(recording.relations, relation => {
                     const artist = relation.artist;
@@ -1401,7 +1524,7 @@ function processCurrent(): boolean {
             return true;
         case 'acoustid':
             const acoustid = getStringProperty('acoustid');
-            console.log(url('acoustid.org', 'track', acoustid));
+            log(url('acoustid.org', 'track', acoustid));
             const result: AcoustIdMetaData = acoustIdGet('lookup', {
                 meta: 'recordingids',
                 trackid: acoustid
@@ -1411,15 +1534,18 @@ function processCurrent(): boolean {
             const firstResult = results[0];
             assertEquals(firstResult.id, acoustid);
             return enqueueNextEntityTask(firstResult.recordings, recording => recording, () => 'recording', () => {
-                console.log("  completed: please check acoustid resource");
-                const promise = opn(url('acoustid.org', 'track', acoustid), { wait: false });
+                log("  completed: please check acoustid resource");
+                /*const promise = */opn(url('acoustid.org', 'track', acoustid), { wait: false });
                 // const run = getRunner();
+                /*
                 promise.then(childProcess => {
-                    childProcess.disconnect();
+
+                   // childProcess.subprocess.disconnect();
                 }, err => {
                     console.log(err);
                     fail();
                 })
+                */
                 //const childProcess = yieldValue();
                 //childProcess.disconnect();
                 moveToNext();
@@ -1428,10 +1554,11 @@ function processCurrent(): boolean {
         case 'mb:track':
 
             const mbid = getStringProperty('mb:mbid');
-            console.log(url('musicbrainz.org', 'track', mbid));
+            log(url('musicbrainz.org', 'track', mbid));
 
             const metaData: ReleaseList = mbGet('release', {
-                track: mbid
+                track: mbid,
+                inc: "artist-credits"
             });
             //console.log(metaData);
             assertEquals(metaData["release-count"], 1);
@@ -1444,37 +1571,57 @@ function processCurrent(): boolean {
 
             const medium = rels.media.find(media => isDefined(findTrack(media)));
             const position = (medium as Medium).position;
-            return tryAddKeyedTask('mb:medium', {
-                "mb:release-id": encodeString(releaseId),
-                "mb:position": encodeLiteral('n', `${position}`)
-            }, `${releaseId}/${position}`, '  ', undefined, () => {
-                moveToNext();
-                return true;
-            }, () => {
-                const track = findTrack(medium as Medium) as Track;
-                return enqueueMBEntity(track.recording, 'recording', () => {
-                    return updateLiteralPropertyOnCurrentTask('mb:title', track.title, 's', fail);
-
-                    // TODO: update mb:artist on track task
-
-                });
-            });
-
-
-        case 'mb:medium':
-            const mposition = Number(decodeLiteral(getPropertyFromCurrent('mb:position'), 'n'));
-            const rel: Release = getMBEntity('release', {
-                inc: 'media'
-            }, 'mb:release-id', mbid => `${mbid}/disc/${mposition}`);
-            const media = rel.media.find(m => m.position == mposition);
-            assertDefined(media);
+            const track = findTrack(medium as Medium) as Track;
             return processHandlers([
-                () => enqueueMBEntityId(getStringProperty('mb:release-id'), 'release', () => undefined),
-                () => enqueueTypedTopLevelTask((media as Medium).format, 'mb:release-quality', () => undefined)
+                () => tryAddKeyedTask('mb:medium', {
+                    "mb:release-id": encodeString(releaseId),
+                    "mb:position": encodeNumber(position)
+                }, `${releaseId}/${position}`, '  ', undefined, () => {
+                    moveToNext();
+                    return true;
+                }, () => undefined),
+                () => enqueueMBEntity(track.recording, 'recording', () => undefined),
+                () => updateLiteralPropertyOnCurrentTask('mb:title', track.title, 's', () => undefined),
+                processList(track['artist-credit'], artistCredit => artistCredit.artist, () => 'artist'),
+                () => updateLiteralPropertyOnCurrentTask('mb:artist', track['artist-credit'].map(artistCredit => `${artistCredit.joinphrase}${artistCredit.artist.name}`).join(), 's', () => undefined)
+                // TODO: update mb:album on track task
             ]);
-        //return enqueueMBEntityId(getStringProperty('mb:release-id'), 'release', fail);
+        case 'mb:medium':
+            {
+                const mposition = getNumberProperty('mb:position');
+                //assertType (mposition, "number");
+                const rel: Release = getMBEntity('release', {
+                    inc: 'recordings'
+                }, 'mb:release-id', mbid => `${mbid}/disc/${mposition}`);
+                const medium: Medium = rel.media.find(m => m.position == mposition) as Medium;
+                assertDefined(medium);
+                return processHandlers([
+                    () => enqueueMBEntityId(getStringProperty('mb:release-id'), 'release', () => undefined),
+                    attributeHandler(medium, 'format', 'medium'),
+                    processList(medium.tracks, track => track, () => 'track')
 
+                ]);
+            }
+        case 'mb:work':
+            const work: Work = getMBCoreEntity('work');
+            return processHandlers([
+                attributeHandler(work, 'title', 'work')
+            ]);
+
+        case 'mb:area-type':
+            processSearch<AreaList>('area', 'type', list => list.areas);
+            return true;
+        case 'mb:artist-type':
+            processSearch<ArtistList>('artist', 'type', list => list.artists);
+            return true;
+        case 'mb:release-status':
+            processSearch<ReleaseList>('release', 'status', list => list.releases);
+            return true;
+        case 'mb:release-quality':
+            processSearch<ReleaseList>('release', 'quality', list => list.releases);
+            return true;
         default:
+            console.error(type);
             fail();
             return false;
     }
@@ -1496,7 +1643,7 @@ function getAll(subject: string | undefined, predicate: string | undefined, obje
 
 
 defineCommand("get", "retrieve triples from database", ["-s, --subject <IRI>", "-p, --predicate <IRI>", "-o, --object <IRI>"], options => {
-    getAll(options.subject, options.predicate, options.object, console.log);
+    getAll(options.subject, options.predicate, options.object, log);
 });
 
 
@@ -1505,7 +1652,7 @@ defineCommand("browse <uri>", "browse URI, shows triples where URI is used eithe
     function browse(subject: any, predicate: any, object: any) {
         getAll(subject, predicate, object, line => {
             if (!listed.contains(line)) {
-                console.log(line);
+                log(line);
                 listed = listed.add(line);
             }
         });
@@ -1553,7 +1700,7 @@ function search(query: Statement<string>[], handlers: any): void {
 
 specCommand("query", "queries the database", (query) => {
     search(query, {
-        data: (data: any) => console.log(query.select.map((field: string) => {
+        data: (data: any) => log(query.select.map((field: string) => {
             const fieldName = field.slice(1);
             return `${fieldName}: ${data[fieldName]}`
         }).join(', '))
@@ -1579,12 +1726,12 @@ specCommand("update", "update the database (experimental)", query => {
             actions.forEach((action: UpdateStatement) => {
                 const type = action.operation;
                 const s = statement(action.subject, action.predicate, action.object);
-                console.log(`${type} subject: ${s.subject} predicate=${s.predicate} object=${s.object}`)
+                log(`${type} subject: ${s.subject} predicate=${s.predicate} object=${s.object}`)
                 streams[type].write(statement);
             });
             putStream.end();
             delStream.end();
-            console.log('processed!')
+            log('processed!')
         }
     });
 });
@@ -1596,7 +1743,7 @@ defineCommand("purge", "removes all triples from the database, empties the datab
 });
 
 function enqueue(type: string, id: string) {
-    tryAdd(id, type, type, undefined, '', undefined, () => undefined, () => console.log(`already added ${type} ${id}`));
+    tryAdd(id, type, type, undefined, '', undefined, () => undefined, () => log(`already added ${type} ${id}`));
 }
 
 
@@ -1631,11 +1778,11 @@ defineCommand("import", "import tasks from music.txt file", [], () => {
             }
             else {
                 if (nl.startsWith('    ')) {
-                    console.log(`ignore file: ${nl.substr(4)}`);
+                    log(`ignore file: ${nl.substr(4)}`);
                 }
                 else {
                     if (nl === '<root>') {
-                        console.log('ignore root')
+                        log('ignore root')
                     }
                     else {
                         handleScheme('http', () => assert(nl === ''));
@@ -1654,30 +1801,42 @@ defineCommand('dump', 'dump database to text format', [], () => {
         return getProperty(current, name);
     }
 
-    function getStringProperty(name: string): string {
-        return decodeStringLiteral(getPropertyFromCurrent(name));
+    function getLiteral(name: string): string | number {
+        return decodeLiteral(getPropertyFromCurrent(name));
+    }
+
+    function getString(name: string): string {
+        const value = getLiteral(name);
+        assertType(value, "string");
+        return value as string;
     }
 
     function url(domain: string, path: string) {
-        console.log(`https://${domain}/${path}`);
+        log(`https://${domain}/${path}`);
     }
 
     function resource(domain: string, type: string, predicate: string): void {
-        url(domain, `${type}/${getStringProperty(predicate)}`);
+        url(domain, `${type}/${getLiteral(predicate)}`);
     }
 
     function mbResource(type: string): void {
         resource('musicbrainz.org', type, 'mb:mbid');
     }
 
+    function searchBase(field: string, prefix: string, suffix: string, type: string) {
+        url('musicbrainz.org', `search?query=${field}%3A${encodeURIComponent(`${getLiteral(`mb:${prefix}-${suffix}`)}`)}&type=${type}&method=advanced`);
+    }
+
+    function searchMB(field: string, type: string, suffix: string) {
+        searchBase(field, type, suffix, type);
+    }
 
     function search(field: string, type: string) {
-        url('musicbrainz.org', `search?query=${field}%3A${getStringProperty(`mb:${type}-${field}`)}&type=${type}&method=advanced`);
+        searchMB(field, type, field);
     }
 
     function searchType(type: string) {
         search('type', type);
-        //        url('musicbrainz.org', `search?query=type%3A${getStringProperty(`mb:${type}-type`)}&type=${type}&method=advanced`);
     }
 
     for (; ;) {
@@ -1689,7 +1848,7 @@ defineCommand('dump', 'dump database to text format', [], () => {
                 resource('acoustid.org', 'track', 'acoustid');
                 break;
             case 'fileSystemEntry':
-                let path = getStringProperty('name');
+                let path = getString('name');
 
 
                 let fso = current;
@@ -1704,17 +1863,17 @@ defineCommand('dump', 'dump database to text format', [], () => {
                 for (; ;) {
                     fso = prop('directory');
                     if (prop('type') === 'volume') {
-                        console.log(prepend('path'));
+                        log(prepend('path'));
                         break;
                     }
                     path = prepend('name');
                 }
                 break;
             case 'volume':
-                console.log(getStringProperty('path'));
+                log(getString('path'));
                 break;
             case 'root':
-                console.log('<root>');
+                log('<root>');
                 break;
             case 'mb:recording':
                 mbResource('recording');
@@ -1726,7 +1885,7 @@ defineCommand('dump', 'dump database to text format', [], () => {
                 mbResource('artist');
                 break;
             case 'mb:medium':
-                console.log(`https://musicbrainz.org/release/${getStringProperty('mb:release-id')}/disc/${decodeLiteral(getPropertyFromCurrent('mb:position'), 'n')}`);
+                log(`https://musicbrainz.org/release/${getString('mb:release-id')}/disc/${getLiteral('mb:position')}`);
                 break;
             case 'mb:area':
                 mbResource('area');
@@ -1749,10 +1908,36 @@ defineCommand('dump', 'dump database to text format', [], () => {
             case 'mb:release-quality':
                 search('quality', 'release');
                 break;
+            case 'mb:release-title':
+                searchMB('release', 'release', 'title');
+                break;
+            case 'mb:recording-title':
+                searchMB('recording', 'recording', 'title');
+                break;
+            case 'mb:artist-name':
+                searchMB('artist', 'artist', 'name');
+                break;
+            case 'mb:area-name':
+                searchMB('area', 'area', 'name');
+                break;
+            case 'mb:release-language':
+                searchMB('lang', 'release', 'language');
+                break;
+            case 'mb:medium-format':
+                searchBase('format', 'medium', 'format', 'release');
+                break;
+            case 'mb:work-title':
+                searchMB('work', 'work', 'title');
+                break;
+            case 'mb:recording-length':
+                searchMB('dur', 'recording', 'length');
+                break;
+            case 'mb:release-script':
+                search('script', 'release');
+                break;
             default:
+                console.error(`Cannot dump type ${type}!`);
                 fail();
-                //console.log(`https://musicbrainz.org/search?query=type%3A${getStringProperty('mb:area-type')}&type=area&method=advanced`);
-                //console.log(`https://musicbrainz.org/release/${getStringProperty('mb:release-id')}/disc/${decodeLiteral(getPropertyFromCurrent('mb:position'), 'n')}`);
                 break;
         }
         const next = getPropertyFromCurrent('next');
