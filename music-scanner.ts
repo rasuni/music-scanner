@@ -821,19 +821,6 @@ interface Lifespan {
     readonly begin: string;
 }
 
-interface Artist {
-    readonly id: string;
-    readonly area: Area;
-    readonly type: string;
-    readonly name: string;
-    readonly 'life-span': Lifespan;
-}
-
-interface ArtistCredit {
-    readonly artist: Artist;
-    readonly joinphrase: string;
-}
-
 interface Relation {
     readonly artist?: Entity;
     readonly work?: Entity;
@@ -841,11 +828,20 @@ interface Relation {
     readonly 'target-type': string;
 }
 
-/*
-interface ArtistCredits {
-    readonly "artist-credit": ArtistCredit[];
+interface Artist {
+    readonly id: string;
+    readonly area: Area;
+    readonly type: string;
+    readonly name: string;
+    readonly 'life-span': Lifespan;
+    readonly relations: Relation[];
 }
-*/
+
+interface ArtistCredit {
+    readonly artist: Artist;
+    readonly joinphrase: string;
+}
+
 
 interface Recording {
     readonly id: string;
@@ -1272,8 +1268,9 @@ function processCurrent(): boolean {
         return metaData as any;
     }
 
-    function getMBCoreEntity<T>(type: string, params: Dictionary<string>): T {
-        return getMBEntity(type, params, 'mb:mbid', path => path);
+
+    function getMBCoreEntity<T>(type: string, incs: string[]): T {
+        return getMBEntity(type, { inc: `artist-rels+recording-rels+work-rels${incs.map(inc => `+${inc}`)}` }, 'mb:mbid', path => path);
     }
 
     function enqueueNextEntityTask<T, R>(items: T[], entity: (item: T) => Entity, type: (item: T) => string, completed: () => R): boolean | R {
@@ -1309,8 +1306,9 @@ function processCurrent(): boolean {
 
 
     function processSearch(type: 'area' | 'artist' | 'release' | 'recording' | 'work', field: string, queryField?: string, taskType?: string): void {
-        const key = getStringProperty(`mb:${isDefined(taskType) ? taskType : type}-${field}`);
-        log(`https://musicbrainz.org/search?query=${isDefined(queryField) ? queryField : field}%3A${encodeURIComponent(key)}&type=${type}&method=advanced`);
+        const key = decodeLiteral(getPropertyFromCurrent(`mb:${isDefined(taskType) ? taskType : type}-${field}`));
+        //getStringProperty(`mb:${isDefined(taskType) ? taskType : type}-${field}`);
+        log(`https://musicbrainz.org/search?query=${isDefined(queryField) ? queryField : field}%3A${encodeURIComponent(`${key}`)}&type=${type}&method=advanced`);
         const list: EntityList = mbGet(type, { query: `${field}:${key}` });
         if (list.count === 0) {
             deleteCurrentTask('no search results');
@@ -1394,6 +1392,9 @@ function processCurrent(): boolean {
         }, relation => relation["target-type"]);
     }
 
+    function getReferencesToCurrent(pred: string) {
+        return getStream({ predicate: pred, object: currentTask })
+    }
 
 
 
@@ -1457,6 +1458,7 @@ function processCurrent(): boolean {
                             let metaData: mm.IAudioMetadata = r.metaData;
                             const common = metaData.common;
                             const acoustid = common.acoustid_id;
+
                             if (isDefined(acoustid)) {
                                 return enqueueTypedTopLevelTask(acoustid, 'acoustid', () => {
                                     const trackId = common.musicbrainz_trackid;
@@ -1482,11 +1484,47 @@ function processCurrent(): boolean {
                                         //checkArtistName(common.albumartist, release);
                                         // TODO: use standard artist name
                                         // TODO: check for invalid acoustid's
-                                        log('  ==> check album artist sort order');
-                                        log('  Please check tagging in picard');
-                                        moveToNext();
-                                        return false;
-                                    })
+                                        const recordingId = track.recording.id;
+                                        // must associate track with recording task
+                                        fail();
+
+                                        const acoustidForRecording: AcoustIdTracks = acoustIdGet('track/list_by_mbid', {
+                                            mbid: recordingId
+                                        });
+                                        const invalidTrack = acoustidForRecording.tracks.find(track => {
+                                            const id = track.id;
+                                            if (id === acoustid) {
+                                                return false;
+                                            }
+                                            else {
+                                                const result: AcoustIdMetaData = acoustIdGet('lookup', {
+                                                    meta: 'recordingids',
+                                                    trackid: id
+                                                });
+                                                const results = result.results;
+                                                assertEquals(results.length, 1);
+                                                const firstResult = results[0];
+                                                assertEquals(firstResult.id, id);
+                                                const recordings = firstResult.recordings;
+                                                const rlen = recordings.length;
+                                                assert(rlen !== 0);
+                                                if (rlen === 1) {
+                                                    log(`  alternative acoustid ${id} is assigned to only one recording`);
+                                                }
+                                                return recordings.length !== 1;
+                                            }
+                                        })
+                                        if (isDefined(invalidTrack)) {
+                                            log(`  acoustid ${invalidTrack.id} is possibly incorrectly assigned to recording ${recordingId}. Correct accoustid is ${acoustid}`);
+                                            openBrowser('musicbrainz.org', 'recording', `${recordingId}/fingerprints`);
+                                            return false
+                                        }
+                                        else {
+                                            log('  Please check tagging in picard');
+                                            moveToNext();
+                                            return false;
+                                        }
+                                    });
                                 });
                             }
                             else {
@@ -1507,7 +1545,7 @@ function processCurrent(): boolean {
                     //const next = prepareDBStream(db.getStream({ predicate: 'directory', object: currentTask }));
                     //const data = next();
 
-                    if (isDefined(getStream({ predicate: 'directory', object: currentTask })())) {
+                    if (isDefined(getReferencesToCurrent('directory')())) {
                         log('  keeping missing entry, still referenced');
                         moveToNext();
                     }
@@ -1523,18 +1561,35 @@ function processCurrent(): boolean {
                 }));
         case 'mb:artist':
 
-            const artist: Artist = getMBCoreEntity('artist', {});
+            const artist: Artist = getMBCoreEntity('artist', []);
             return processHandlers([
                 attributeHandler(artist, 'type', 'artist'),
                 attributeHandler(artist, 'name', 'artist'),
                 () => enqueueMBEntity(artist.area, 'area', () => undefined),
-                attributeHandler(artist['life-span'], 'begin', 'artist')
+                attributeHandler(artist['life-span'], 'begin', 'artist'),
+                processRelations(artist.relations)
+                /*
+                () => {
+
+                    const recordingList: RecordingList = mbGet('artist', {
+                        artist: artist.id
+                    });
+                    const recordings = recordingList.recordings;
+                    return fail();
+                    
+                       recordings
+                       assertEquals(releaseList["release-count"], releases.length);
+                       return enqueueNextEntityTask(releaseList.releases, release => release, () => 'release', () => undefined);
+                       
+                }
+                */
+
 
             ]);
 
         case 'mb:area':
             {
-                const area: Area = getMBCoreEntity('area', {});
+                const area: Area = getMBCoreEntity('area', []);
                 return processHandlers([
                     attributeHandler(area, 'type', 'area'),
                     attributeHandler(area, 'name', 'area'),
@@ -1543,7 +1598,7 @@ function processCurrent(): boolean {
             }
         case 'mb:release':
             {
-                const release: Release = getMBCoreEntity('release', {});
+                const release: Release = getMBCoreEntity('release', []);
 
                 function releaseAttributeHandler(attribute: LiteralPropertyName<Release>): () => boolean | undefined {
                     return attributeHandler(release, attribute, 'release')
@@ -1559,41 +1614,13 @@ function processCurrent(): boolean {
             }
         case 'mb:recording':
 
-            const recording: Recording = getMBEntity('recording', {
-                inc: 'artists+artist-rels+work-rels'
-            }, 'mb:mbid', path => path);
+            const recording: Recording = getMBCoreEntity('recording', ['artist-credits']);
 
             return processHandlers([
                 attributeHandler(recording, 'title', 'recording'),
                 attributeHandler(recording, 'length', 'recording'),
                 processList(recording['artist-credit'], artistCredit => artistCredit.artist, () => 'artist'),
                 processRelations(recording.relations),
-                /*
-
-                processList(recording.relations, relation => {
-                    const artist = relation.artist;
-                    if (isDefined(artist)) {
-                        return artist;
-                    }
-                    else {
-                        const work = relation.work;
-                        assertDefined(work);
-                        return work as Entity;
-                    }
-                }, relation => {
-
-                    const artist = relation.artist;
-                    if (isDefined(artist)) {
-                        return 'artist';
-                    }
-                    else {
-                        const work = relation.work;
-                        assertDefined(work);
-                        return 'work';
-                    }
-
-                }),
-                */
                 () => {
                     const releaseList: ReleaseList = mbGet('release', {
                         recording: recording.id
@@ -1608,6 +1635,30 @@ function processCurrent(): boolean {
                     });
                     return enqueueNextTask(result.tracks, rec => rec.id, () => 'acoustid', 'acoustid', undefined, true, () => undefined)
                     //fail();
+                },
+                () => {
+                    const next = getReferencesToCurrent('recording');
+                    const fso1 = next();
+                    if (isDefined(fso1)) {
+                        const fso2 = next();
+                        if (isDefined(fso2)) {
+                            // duplicate files for same recording
+                            return fail();
+                        }
+                        else {
+                            // found single recording, everything fine
+                            return fail();
+                        }
+                    }
+                    else {
+                        // no recording found
+                        logError(`  missing recording ${url('musicbrainz.org', 'recording', recording.id)}!`);
+                        openBrowser('musicbrainz.org', 'recording', recording.id);
+                        moveToNext();
+                        return false;
+                        //openBrowser()
+                        //return fail();
+                    }
                 }
             ]);
         case 'mb:label':
@@ -1647,11 +1698,22 @@ function processCurrent(): boolean {
             assertEquals(results.length, 1);
             const firstResult = results[0];
             assertEquals(firstResult.id, acoustid);
-            return enqueueNextEntityTask(firstResult.recordings, recording => recording, () => 'recording', () => {
-                log("  completed: please check acoustid resource");
-                openBrowser('acoustid.org', 'track', acoustid);
+            const recordings = firstResult.recordings;
+            assert(recordings.length !== 0);
+            return enqueueNextEntityTask(recordings, recording => recording, () => 'recording', () => {
                 moveToNext();
-                return false;
+                if (recordings.length === 1) {
+                    log("  completed: no merge potential");
+                    //openBrowser('acoustid.org', 'track', acoustid);
+                    return true;
+
+                }
+                else {
+                    fail();
+                    log("  check possible merges");
+                    openBrowser('acoustid.org', 'track', acoustid);
+                    return false;
+                }
             });
         case 'mb:track': {
             const mbid = getStringProperty('mb:mbid');
@@ -1696,7 +1758,7 @@ function processCurrent(): boolean {
                 ]);
             }
         case 'mb:work':
-            const work: Work = getMBCoreEntity('work', { inc: 'artist-rels+recording-rels' });
+            const work: Work = getMBCoreEntity('work', []);
             return processHandlers([
                 attributeHandler(work, 'title', 'work'),
                 processRelations(work.relations),
@@ -1739,6 +1801,9 @@ function processCurrent(): boolean {
             return true;
         case 'mb:work-title':
             processSearch('work', 'title', 'work');
+            return true;
+        case 'mb:recording-length':
+            processSearch('recording', 'length');
             return true;
         default:
             console.error(type);
