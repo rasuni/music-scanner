@@ -13,6 +13,8 @@ import * as https from 'https';
 import * as sax from 'sax';
 import * as readline from 'readline';
 import opn = require('opn');
+import * as http from 'http';
+
 
 
 commander.version('0.0.1').description('music-scanner command line tool');
@@ -811,11 +813,16 @@ interface EntityList {
     readonly count: 0;
 }
 
+interface Alias {
+    readonly name: string;
+}
+
 interface Area {
     readonly id: string;
     readonly type: string;
     readonly name: string;
     readonly 'iso-3166-1-codes': string[];
+    readonly aliases: Alias[];
 }
 
 interface Lifespan {
@@ -860,10 +867,15 @@ interface Track {
     readonly position: number;
 }
 
+interface Disc {
+    readonly id: string;
+}
+
 interface Medium {
     readonly tracks: Track[];
     readonly position: number;
     readonly format: string;
+    readonly discs: Disc[]
 }
 
 interface TextRepresentation {
@@ -872,7 +884,7 @@ interface TextRepresentation {
 }
 
 interface ReleaseEvent {
-    area: Entity;
+    area: Entity | null;
 }
 interface Release {
     readonly id: string;
@@ -884,6 +896,7 @@ interface Release {
     readonly date: string;
     readonly "artist-credit": ArtistCredit[];
     readonly "release-events": ReleaseEvent[];
+    readonly barcode?: string;
 }
 
 interface ReleaseList extends EntityList {
@@ -950,7 +963,7 @@ type ConformMembers<T, C> = { [K in keyof T]: T[K] extends C ? K : never };
 
 type ConformPropertyName<T, C> = ConformMembers<T, C>[keyof T];
 
-type LiteralPropertyName<T> = ConformPropertyName<T, string | number | null>;
+type LiteralPropertyName<T> = ConformPropertyName<T, string | number | null | undefined>;
 
 //type ArrayPropertyName<T> = ConformPropertyName<T, any[]>;
 
@@ -1012,6 +1025,10 @@ function escapeLucene(key: string | number): string {
     //  console.log(`${key}`.replace(/[!"()&+:]|\||\{|\}|\[|\]|\^|\~|\*|\?|\\|\/|\-/g, s => `\\${s}`));
     return `${key}`.replace(/[!"()&+:]|\||\{|\}|\[|\]|\^|\~|\*|\?|\\|\/|\-/g, s => `\\${s}`);
 }
+
+function mb(name: string): string {
+    return `mb:${name}`;
+}
 function processCurrent(): boolean {
     const currentTask = getCurrentTask();
 
@@ -1055,9 +1072,10 @@ function processCurrent(): boolean {
         return enqueueTask<boolean | T>(key, type, namePredicate, parentPredicate, undefined, true, alreadyAdded);
     }
 
-    function enqueueNextTask<T, R>(items: T[], name: (item: T) => string, type: (item: T) => string, predicate: string, parentPredicate: string | undefined, foundResult: R, completed: () => R): R {
+    function enqueueNextTask<T, R>(items: T[], processTypedItem: (item: T, handler: (name: string, type: string) => boolean) => boolean, predicate: string, parentPredicate: string | undefined, foundResult: R, completed: () => R): R {
         for (const item of items) {
-            if (enqueueUnlinkedTask(name(item), type(item), predicate, parentPredicate, () => false)) {
+            //console.log(item);
+            if (processTypedItem(item, (name: string, type: string) => enqueueUnlinkedTask(name, type, predicate, parentPredicate, () => false))) {
                 return foundResult;
             }
         }
@@ -1077,8 +1095,12 @@ function processCurrent(): boolean {
         moveToNext();
     }
 
+    function enqueueNextTypedTask<T, R>(items: T[], data: (item: T) => string, type: string, predicate: string, parentPredicate: string | undefined, foundResult: R, completed: () => R): R {
+        return enqueueNextTask(items, (item, handler) => handler(data(item), type), predicate, parentPredicate, foundResult, () => completed())
+    }
+
     function enqueueNextItemTask<T>(items: string[], type: string, predicate: string, parentPredicate: string | undefined, foundResult: T, completed: () => T): T {
-        return enqueueNextTask(items, item => item, () => type, predicate, parentPredicate, foundResult, () => completed())
+        return enqueueNextTypedTask<string, T>(items, item => item, type, predicate, parentPredicate, foundResult, () => completed())
     }
 
     function enqueueTasks(items: string[], type: string, predicate: string, parentPredicate: string | undefined): void {
@@ -1152,25 +1174,26 @@ function processCurrent(): boolean {
         return stat(path, stat => (stat.isDirectory() ? directory : file)(), missing);
     }
 
+
     function enqueueMBTask<T>(mbid: string, resource: string, linkPredicate: string | undefined, enqueued: T, alreadyExists: (id: string) => T): T {
-        return enqueueTask(mbid, `mb:${resource}`, 'mb:mbid', undefined, linkPredicate, enqueued, alreadyExists);
+        return enqueueTask(mbid, mb(resource), 'mb:mbid', undefined, linkPredicate, enqueued, alreadyExists);
     }
 
     function enqueueMBResourceTask<T>(mbid: string, resource: string, found: (id: string) => T): boolean | T {
         return enqueueMBTask<boolean | T>(mbid, resource, undefined, true, found);
     }
 
-    function getStringProperty(name: string) {
+    function getStringProperty(name: string): string {
         return decodeStringLiteral(getPropertyFromCurrent(name));
     }
 
-    function complyWithRateLimit(server: string, minimumDelay: number) {
+    function httpsGet(apiHost: string, minimumDelay: number, resourcePath: string): http.IncomingMessage {
 
         function update(la: number) {
-            lastAccessed[server] = la;
+            lastAccessed[apiHost] = la;
         }
 
-        const la = lastAccessed[server];
+        const la = lastAccessed[apiHost];
         if (isUndefined(la)) {
             update(Date.now());
         }
@@ -1183,81 +1206,6 @@ function processCurrent(): boolean {
             }
             update(now);
         }
-
-    }
-
-
-    function processMBResource(type: string, inner: Sequence<Predicate<SaxEvent>>, inc: string[], extraAttributes: Matcher<Attributes>, onNoMatch: () => void): void {
-        complyWithRateLimit('musicbrainz.org', 1000);
-        const mbid = getStringProperty('mb:mbid');
-        const resourcePath = `/ws/2/${type}/${mbid}${inc.length === 0 ? '' : '?inc=' + inc.join('+')}`;
-        //mbLog(resourcePath);
-        log(`https://musicbrainz.org${resourcePath}`)
-        const run = getRunner();
-        https.get({
-            hostname: 'musicbrainz.org',
-            path: resourcePath,
-            port: 443,
-            headers: { 'user-agent': 'rasuni-musicscanner/0.0.1 ( https://musicbrainz.org/user/rasuni )' }
-        }, run).on("error", fail);
-        const resp = yieldValue();
-        assertEquals(resp.statusCode, 200);
-        const parser = sax.parser(true, {});
-        resp.on('data', (chunk: any) => parser.write(chunk));
-        resp.on('end', () => parser.close());
-        const nextEvent = makeBlockingQueue((push: Consumer<SaxEvent>) => {
-            parser.onopentag = tag => push({ type: 'openTag', tag: tag as sax.Tag });
-            parser.onerror = fail;
-            parser.onclosetag = name => push({ type: 'closeTag', name: name });
-            parser.ontext = text => push({ type: "text", text: text });
-        });
-
-        let predicates = matchTagAndAttributes('metadata', {
-            xmlns: "http://musicbrainz.org/ns/mmd-2.0#"
-        }, matchTag(type, matchObject({
-            id: expectEquals(mbid),
-            ...extraAttributes,
-        }), inner));
-
-        for (; ;) {
-            if (isUndefined(predicates)) {
-                onNoMatch();
-                break;
-            }
-            log(asString(predicates.first));
-            if (predicates.first(nextEvent())) {
-                break;
-            }
-            predicates = predicates.rest;
-        }
-
-    }
-
-    function processMBNamedResource(type: string, subType: Predicate<string>, typeId: Predicate<string>, name: Predicate<string>, sortName: string, additionalTags: Sequence<Predicate<SaxEvent>>, inc: string[], onNoMatch: () => void): void {
-        processMBResource(type, concat(
-            nameTags(name, sortName),
-            additionalTags
-        ), inc, {
-                type: subType,
-                'type-id': typeId
-            }, onNoMatch);
-    }
-
-    function enqueueArea(mbid: string, found: () => void): void {
-        enqueueMBResourceTask(mbid, 'area', () => {
-            found();
-            return true;
-        });
-    }
-
-    function wsGet<T, R>(minimalDelay: number, path: string, params: Dictionary<string>, apiHost: string, found: (data: T) => R, notFound: () => R): R {
-        complyWithRateLimit(apiHost, minimalDelay);
-        let resourcePath = `/${path}`;
-        const paramString = mapDictionary(params, (key, value) => `${key}=${encodeURIComponent(value)}`).join('&');
-        if (paramString.length !== 0) {
-            resourcePath = `${resourcePath}?${paramString}`
-        }
-        //console.log(url(hostName, logType, id));
         const run = getRunner();
         https.get({
             hostname: apiHost,
@@ -1265,38 +1213,42 @@ function processCurrent(): boolean {
             port: 443,
             headers: { 'user-agent': 'rasuni-musicscanner/0.0.1 ( https://musicbrainz.org/user/rasuni )' }
         }, run).on("error", fail);
-        const resp = yieldValue();
-        switch (resp.statusCode) {
-            case 200:
-                const nextChunk = makeBlockingStream((event: string, consumer: Consumer<string>) => resp.on(event, consumer));
-                let response = '';
-                for (; ;) {
-                    const chunk = nextChunk();
-                    if (isUndefined(chunk)) {
-                        break;
-                    }
-                    response += chunk;
-                }
-                return found(JSON.parse(response));
-            case 404:
-                return notFound();
-            default:
-                return fail();
+        return yieldValue();
+    }
 
+    function wsGet<T, R>(minimalDelay: number, path: string, params: Dictionary<string>, apiHost: string, found: (data: T) => R, notFound: () => R): R {
+        let resourcePath = `/${path}`;
+        const paramString = mapDictionary(params, (key, value) => `${key}=${encodeURIComponent(value)}`).join('&');
+        if (paramString.length !== 0) {
+            resourcePath = `${resourcePath}?${paramString}`
         }
-        /*
-        assertEquals(resp.statusCode, 200);
-        const nextChunk = makeBlockingStream((event: string, consumer: Consumer<string>) => resp.on(event, consumer));
-        let response = '';
+        let retryCount = 0;
         for (; ;) {
-            const chunk = nextChunk();
-            if (isUndefined(chunk)) {
-                break;
+            const resp = httpsGet(apiHost, minimalDelay, resourcePath);
+            switch (resp.statusCode) {
+                case 200:
+                    const nextChunk = makeBlockingStream((event: string, consumer: Consumer<string>) => resp.on(event, consumer));
+                    let response = '';
+                    for (; ;) {
+                        const chunk = nextChunk();
+                        if (isUndefined(chunk)) {
+                            break;
+                        }
+                        response += chunk;
+                    }
+                    return found(JSON.parse(response));
+                case 404:
+                    return notFound();
+                case 503:
+                    if (retryCount === 1) {
+                        return fail();
+                    }
+                    retryCount++;
+                    break;
+                default:
+                    return fail();
             }
-            response += chunk;
         }
-        return JSON.parse(response);
-        */
     }
 
 
@@ -1326,7 +1278,7 @@ function processCurrent(): boolean {
             return found(metaData as T);
         }, () => {
             deleteCurrentTask('not found');
-            return false;
+            return true;
         });
         /*
         assertEquals(metaData.id, mbid);
@@ -1340,13 +1292,16 @@ function processCurrent(): boolean {
         return getMBEntity(type, { inc: `artist-rels+recording-rels+work-rels${incs.map(inc => `+${inc}`)}` }, 'mb:mbid', path => path, found);
     }
 
-    function enqueueNextEntityTask<T, R>(items: T[], entity: (item: T) => Entity, type: (item: T) => string, completed: () => R): boolean | R {
-        return enqueueNextTask<T, boolean | R>(items, item => entity(item).id, item => `mb:${type(item)}`, 'mb:mbid', undefined, true, completed);
+    function enqueueNextEntityTask<T, R>(items: T[], entity: (item: T) => Entity | null, type: (item: T) => string, completed: () => R): boolean | R {
+        return enqueueNextTask<T, boolean | R>(items, (item, handler) => {
+            const e = entity(item);
+            return e !== null && handler(e.id, mb(type(item)));
+        }, 'mb:mbid', undefined, true, completed);
     }
 
 
     function enqueueMBEntityId<T>(mbid: string, type: string, alreadyAdded: () => T): boolean | T {
-        return enqueueTopLevelTask(mbid, `mb:${type}`, 'mb:mbid', alreadyAdded);
+        return enqueueTopLevelTask(mbid, mb(type), 'mb:mbid', alreadyAdded);
     }
 
     function enqueueMBEntity<T>(entity: Entity, type: string, alreadyAdded: () => T): boolean | T {
@@ -1367,7 +1322,7 @@ function processCurrent(): boolean {
     function attributeHandler<T>(record: T, attribute: LiteralPropertyName<T>, type: string): () => undefined | boolean {
         return () => {
             const value = record[attribute] as any as string | number | null;
-            return isNull(value) ? undefined : enqueueTypedTopLevelTask(value, `mb:${type}-${attribute}`);
+            return isNull(value) ? undefined : enqueueTypedTopLevelTask(value, mb(`${type}-${attribute}`));
         }
     }
 
@@ -1375,41 +1330,41 @@ function processCurrent(): boolean {
 
 
 
-    function processSearch(type: 'area' | 'artist' | 'release' | 'recording' | 'work', field: string, queryField?: string, taskType?: string): void {
-        //const key = decodeLiteral(getPropertyFromCurrent(`mb:${isDefined(taskType) ? taskType : type}-${field}`));
-        //getStringProperty(`mb:${isDefined(taskType) ? taskType : type}-${field}`);
-        const escapedKey = escapeLucene(decodeLiteral(getPropertyFromCurrent(`mb:${isDefined(taskType) ? taskType : type}-${field}`)));
-        //; //.replace(/[+-&|!(){}[\]^"~*?:\\]/g, "\\\\&");
-        log(`https://musicbrainz.org/search?query=${isDefined(queryField) ? queryField : field}%3A${encodeURIComponent(escapedKey)}&type=${type}&method=advanced`);
-        const list: EntityList = mbGet<EntityList, EntityList>(type, { query: `${field}:${escapedKey}` }, found => found, fail);
-        if (list.count === 0) {
+    function processSearch(type: 'area' | 'artist' | 'release' | 'recording' | 'work', field: string, queryField?: string, taskType?: string): boolean {
+        const escapedKey = escapeLucene(decodeLiteral(getPropertyFromCurrent(mb(`${isDefined(taskType) ? taskType : type}-${field}`))));
+        const searchField = isDefined(queryField) ? queryField : field;
+        log(`https://musicbrainz.org/search?query=${searchField}%3A${encodeURIComponent(escapedKey)}&type=${type}&method=advanced`);
+        const list: EntityList = mbGet<EntityList, EntityList>(type, { query: `${searchField}:${escapedKey}` }, found => found, fail);
+        const count: number = list.count;
+        if (count === 0) {
             deleteCurrentTask('no search results');
+            return true;
         }
         else {
-            function process(entities: Entity[]): void {
-                enqueueNextEntityTask(entities, entity => entity, () => type, fail);
+            function process(entities: Entity[]): boolean {
+                return enqueueNextEntityTask(entities, entity => entity, () => type, () => {
+                    assert(count === entities.length);
+                    entities.forEach(entity => searchMBEntityTask(type, entity.id, fail, taskId => getObject(taskId, 'playlist', () => undefined, fail)));
+                    //fail();
+                    log('  complete: all search results enqueued');
+                    moveToNext();
+                    return true;
+                });
             }
             switch (type) {
                 case 'area':
-                    process((list as AreaList).areas);
-                    break;
+                    return process((list as AreaList).areas);
                 case 'artist':
-                    process((list as ArtistList).artists);
-                    break;
+                    return process((list as ArtistList).artists);
                 case 'release':
-                    process((list as ReleaseList).releases);
-                    break;
+                    return process((list as ReleaseList).releases);
                 case 'recording':
-                    process((list as RecordingList).recordings);
-                    break;
+                    return process((list as RecordingList).recordings);
                 case 'work':
-                    process((list as WorkList).works);
-                    break;
+                    return process((list as WorkList).works);
                 default:
-                    fail();
-
+                    return fail();
             }
-            //enqueueNextEntityTask(entities(list as T), entity => entity, () => type, fail);
         }
 
     }
@@ -1438,7 +1393,7 @@ function processCurrent(): boolean {
         assertMissing({ subject: currentTask });
     }
 
-    function processList<T>(items: T[], entity: (item: T) => Entity, type: (item: T) => string): () => undefined | boolean {
+    function processList<T>(items: T[], entity: (item: T) => Entity | null, type: (item: T) => string): () => undefined | boolean {
         return () => enqueueNextEntityTask(items, entity, type, () => undefined);
     }
 
@@ -1468,9 +1423,29 @@ function processCurrent(): boolean {
         return getStream({ predicate: pred, object: currentTask })
     }
 
+    function processListAttribute<T, E>(source: T, collection: ConformPropertyName<T, E[]>, entity: (elem: E) => Entity | null, elementName: string): () => boolean | undefined {
+        return processList(source[collection] as unknown as E[], elem => entity(elem), () => elementName);
+    }
 
-    function processEntityList<T, E>(source: T, collection: ConformPropertyName<T, E[]>, elementName: ConformPropertyName<E, Entity>): () => boolean | undefined {
-        return processList(source[collection] as unknown as E[], event => event[elementName] as unknown as Entity, () => elementName as string);
+    function processEntityList<T, E>(source: T, collection: ConformPropertyName<T, E[]>, elementName: ConformPropertyName<E, Entity | null>): () => boolean | undefined {
+        return processListAttribute(source, collection, elem => elem[elementName] as unknown as Entity | null, elementName as string);
+        //return processList(source[collection] as unknown as E[], elem => elem[elementName] as unknown as Entity, () => elementName as string);
+    }
+
+    /*
+    function processEntities<T>(source: T, collection: ConformPropertyName<T, Entity[]>, elementName: ConformPropertyName<E, Entity | null>): () => boolean | undefined {
+        return processList(source[collection] as Entity[], elem => elem, () => elementName);
+    }
+    */
+
+    function searchMBEntityTask<R>(type: string, mbid: string, notFound: () => R, found: (taskId: string) => R) {
+        function pattern(predicate: string, object: string): Statement<any> {
+            return statement(db.v('entity'), predicate, object);
+        }
+        return streamOpt(db.searchStream([
+            pattern('type', mb(type)),
+            pattern('mb:mbid', encodeString(mbid))
+        ]), notFound, result => found(result.entity))
     }
 
 
@@ -1559,29 +1534,20 @@ function processCurrent(): boolean {
                                     };
                                 },
                                 () => enqueueMBResourceTask(mbid, 'track', () => undefined),
-                                () => {
-
-                                    function pattern(predicate: string, object: string): Statement<any> {
-                                        return statement(db.v('rt'), predicate, object);
-                                    }
-                                    return streamOpt<boolean | undefined>(db.searchStream([
-                                        pattern('type', 'mb:recording'),
-                                        pattern('mb:mbid', encodeString(recordingId()))
-                                    ]), () => undefined, res => {
-                                        return getObject<boolean | undefined>(currentTask, 'recording', () => {
-                                            const object = res.rt;
-                                            log(`  recording: undefined --> ${object} `);
-                                            update([
-                                                put(currentTask, 'recording', object),
-                                                ...moveToNextStatements(),
-                                            ]);
-                                            return true;
-                                        }, (object: string) => {
-                                            assertEquals(object, object);
-                                            return undefined;
-                                        });
+                                () => searchMBEntityTask<boolean | undefined>('recording', recordingId(), () => undefined, taskId => {
+                                    return getObject<boolean | undefined>(currentTask, 'recording', () => {
+                                        //const object = res.rt;
+                                        log(`  recording: undefined --> ${taskId} `);
+                                        update([
+                                            put(currentTask, 'recording', taskId),
+                                            ...moveToNextStatements(),
+                                        ]);
+                                        return true;
+                                    }, (object: string) => {
+                                        assertEquals(object, object);
+                                        return undefined;
                                     });
-                                },
+                                }),
                                 () => {
                                     const acoustidForRecording: AcoustIdTracks = acoustIdGet('track/list_by_mbid', {
                                         mbid: recordingId()
@@ -1603,9 +1569,11 @@ function processCurrent(): boolean {
                                             const recordings = firstResult.recordings;
                                             const rlen = recordings.length;
                                             assert(rlen !== 0);
+                                            /*
                                             if (rlen === 1) {
                                                 log(`  alternative acoustid ${id} is assigned to only one recording`);
                                             }
+                                            */
                                             return recordings.length !== 1;
                                         }
                                     })
@@ -1621,6 +1589,9 @@ function processCurrent(): boolean {
                                     }
                                 },
                                 () => {
+                                    if (metaData.format.dataformat !== 'flac') {
+                                        logError('  Not flac encoding! Consider to replace file with lossless flac encoding')
+                                    }
                                     log('  Please check tagging in picard');
                                     moveToNext();
                                     return false;
@@ -1663,11 +1634,12 @@ function processCurrent(): boolean {
                 processRelations(artist.relations)
             ]));
         case 'mb:area':
-            return getMBCoreEntity<Area>('area', [], area =>
+            return getMBCoreEntity<Area>('area', ['aliases'], area =>
                 processHandlers([
                     attributeHandler(area, 'type', 'area'),
                     attributeHandler(area, 'name', 'area'),
                     () => enqueueNextItemTask(area["iso-3166-1-codes"], 'mb:area-iso1', 'mb:area-iso1', undefined, true, () => undefined),
+                    () => enqueueNextTypedTask(area.aliases, alias => alias.name, 'mb:area-alias', 'mb:area-alias', undefined, true, () => undefined)
                 ]));
         case 'mb:release':
 
@@ -1684,8 +1656,8 @@ function processCurrent(): boolean {
                     attributeHandler(release['text-representation'], 'script', 'release'),
                     releaseAttributeHandler('date'),
                     processEntityList<Release, ReleaseEvent>(release, "release-events", 'area'),
-                    processEntityList<Release, ArtistCredit>(release, 'artist-credit', 'artist')
-
+                    processEntityList<Release, ArtistCredit>(release, 'artist-credit', 'artist'),
+                    releaseAttributeHandler('barcode')
                 ])
             });
 
@@ -1710,7 +1682,7 @@ function processCurrent(): boolean {
                         const result: AcoustIdTracks = acoustIdGet(`track/list_by_mbid`, {
                             mbid: recording.id
                         });
-                        return enqueueNextTask(result.tracks, rec => rec.id, () => 'acoustid', 'acoustid', undefined, true, () => undefined)
+                        return enqueueNextTask(result.tracks, (rec, handler) => handler(rec.id, 'acoustid'), 'acoustid', undefined, true, () => undefined)
                         //fail();
                     },
                     () => {
@@ -1726,8 +1698,27 @@ function processCurrent(): boolean {
                                 return fail();
                             }
                             else {
-                                // found single recording, everything fine
-                                return fail();
+                                // found single recording, everything fine, set playlist
+
+                                return getObject<boolean | undefined>(currentTask, 'playlist', () => {
+                                    //return fail();                                    
+                                    const object = fso1.subject;
+                                    log(`  playlist: undefined --> ${object} `);
+                                    update([
+                                        put(currentTask, 'playlist', object),
+                                        ...moveToNextStatements(),
+                                    ]);
+                                    return true;
+                                }, (object: string) => {
+                                    object;
+                                    return fail();
+                                    /*
+                                    assertEquals(object, object);
+                                    return undefined;
+                                    */
+                                });
+
+                                //return fail();
                             }
                         }
                         else {
@@ -1743,29 +1734,65 @@ function processCurrent(): boolean {
                 ]));
         case 'mb:label':
             fail();
+            const mbid = getStringProperty('mb:mbid');
+            const resourcePath = `/ws/2/${type}/${mbid}?inc=releases`;
+            log(`https://musicbrainz.org${resourcePath}`);
+            const resp = httpsGet('musicbrainz.org', 1000, resourcePath)
+            assertEquals(resp.statusCode, 200);
+            const parser = sax.parser(true, {});
+            resp.on('data', (chunk: any) => parser.write(chunk));
+            resp.on('end', () => parser.close());
+            const nextEvent = makeBlockingQueue((push: Consumer<SaxEvent>) => {
+                parser.onopentag = tag => push({ type: 'openTag', tag: tag as sax.Tag });
+                parser.onerror = fail;
+                parser.onclosetag = name => push({ type: 'closeTag', name: name });
+                parser.ontext = text => push({ type: "text", text: text });
+            });
 
-            processMBNamedResource('label', expectEquals("Original Production"), expectEquals("7aaa37fe-2def-3476-b359-80245850062d"), expectEquals('Arista'), 'Arista', concat(
-                expectPlainTextTag('label-code', '3484'),
-                expectUsCountry,
+            let predicates = matchTagAndAttributes('metadata', {
+                xmlns: "http://musicbrainz.org/ns/mmd-2.0#"
+            }, matchTag(type, matchObject({
+                id: expectEquals(mbid),
+                type: expectEquals("Original Production"),
+                'type-id': expectEquals("7aaa37fe-2def-3476-b359-80245850062d")
+            }), concat(
+                nameTags(expectEquals('Arista'), 'Arista'),
+                concat(
+                    expectPlainTextTag('label-code', '3484'),
+                    expectUsCountry,
 
 
-                expectArea('489ce91b-6658-3307-9877-795b68554c98', 'United States', expectIsoList1('US')),
-                expectLifeSpan('1974', concat(
-                    expectPlainTextTag('end', '2011-10-07'),
-                    expectPlainTextTag('ended', 'true'),
-                )),
-                expectTag('release-list', {
-                    count: '2857'
-                }, concat(
+                    expectArea('489ce91b-6658-3307-9877-795b68554c98', 'United States', expectIsoList1('US')),
+                    expectLifeSpan('1974', concat(
+                        expectPlainTextTag('end', '2011-10-07'),
+                        expectPlainTextTag('ended', 'true'),
+                    )),
+                    expectTag('release-list', {
+                        count: '2857'
+                    }, concat(
 
-                    expectRelease('00991de5-3dc9-32c3-830b-baeeec1757af', 'The Monty Python Matching Tie and Handkerchief', expectOfficial, 'US', '489ce91b-6658-3307-9877-795b68554c98', expectCardboard, expectBarcode),
-                    expectRelease('0681f65c-302a-462e-9bff-7c25cdcf4188', 'Under the Sun', undefined, 'US', '489ce91b-6658-3307-9877-795b68554c98', undefined, undefined),
-                    expectRelease('1f77f98f-a010-4b13-8b11-bdc6df39adc9', "Tryin' to Get the Feeling", expectOfficial, 'US', '489ce91b-6658-3307-9877-795b68554c98', expectCardboard, expectBarcode),
-                    expectRelease('25321ea5-4148-4cea-adeb-b04b62dcb8b6', 'Live at Montreux', expectOfficial, 'US', '489ce91b-6658-3307-9877-795b68554c98', expectTextRepresentation, undefined),
-                    expectRelease('3957c01f-e4a9-4a98-a17d-386f4bb43657', 'Modern Times', expectOfficial, 'CA', '71bbafaa-e825-3e15-8ca9-017dcad1748b', expectCardboard, expectBarcode)
-                ))
-            ), ['releases'], () => enqueueArea('489ce91b-6658-3307-9877-795b68554c98', fail))
-            //fail();
+                        expectRelease('00991de5-3dc9-32c3-830b-baeeec1757af', 'The Monty Python Matching Tie and Handkerchief', expectOfficial, 'US', '489ce91b-6658-3307-9877-795b68554c98', expectCardboard, expectBarcode),
+                        expectRelease('0681f65c-302a-462e-9bff-7c25cdcf4188', 'Under the Sun', undefined, 'US', '489ce91b-6658-3307-9877-795b68554c98', undefined, undefined),
+                        expectRelease('1f77f98f-a010-4b13-8b11-bdc6df39adc9', "Tryin' to Get the Feeling", expectOfficial, 'US', '489ce91b-6658-3307-9877-795b68554c98', expectCardboard, expectBarcode),
+                        expectRelease('25321ea5-4148-4cea-adeb-b04b62dcb8b6', 'Live at Montreux', expectOfficial, 'US', '489ce91b-6658-3307-9877-795b68554c98', expectTextRepresentation, undefined),
+                        expectRelease('3957c01f-e4a9-4a98-a17d-386f4bb43657', 'Modern Times', expectOfficial, 'CA', '71bbafaa-e825-3e15-8ca9-017dcad1748b', expectCardboard, expectBarcode)
+                    ))
+                )
+            )));
+
+            for (; ;) {
+                if (isUndefined(predicates)) {
+                    enqueueMBResourceTask('489ce91b-6658-3307-9877-795b68554c98', 'area', fail);
+                    break;
+                }
+                log(asString(predicates.first));
+                if (predicates.first(nextEvent())) {
+                    break;
+                }
+                predicates = predicates.rest;
+            }
+
+            //}
             return true;
         case 'acoustid':
             const acoustid = getStringProperty('acoustid');
@@ -1780,22 +1807,36 @@ function processCurrent(): boolean {
             assertEquals(firstResult.id, acoustid);
             const recordings = firstResult.recordings;
             assert(recordings.length !== 0);
-            fail() // must filter out invalid recording id's;
-            return enqueueNextEntityTask(recordings, recording => recording, () => 'recording', () => {
-                moveToNext();
-                if (recordings.length === 1) {
-                    log("  completed: no merge potential");
-                    //openBrowser('acoustid.org', 'track', acoustid);
-                    return true;
+            return processHandlers([
+                () => {
+                    for (const item of recordings) {
+                        const recordingId = item.id;
+                        if (mbGet(`recording/${item.id}`, {}, () => false, () => true)) {
+                            log(`  please deactivate deleted recording ${recordingId}`);
+                            openBrowser('acoustid.org', 'track', acoustid);
+                            moveToNext();
+                            return false;
+                        }
+                    }
+                    return undefined;
+                },
+                () => enqueueNextEntityTask(recordings, recording => recording, () => 'recording', () => undefined),
+                () => {
+                    moveToNext();
+                    if (recordings.length === 1) {
+                        log("  completed: no merge potential");
+                        //openBrowser('acoustid.org', 'track', acoustid);
+                        return true;
 
+                    }
+                    else {
+                        //fail();
+                        log("  check possible merges");
+                        openBrowser('acoustid.org', 'track', acoustid);
+                        return false;
+                    }
                 }
-                else {
-                    fail();
-                    log("  check possible merges");
-                    openBrowser('acoustid.org', 'track', acoustid);
-                    return false;
-                }
-            });
+            ]);
         case 'mb:track': {
             const mbid = getStringProperty('mb:mbid');
             log(url('musicbrainz.org', 'track', mbid));
@@ -1826,14 +1867,15 @@ function processCurrent(): boolean {
                 const mposition = getNumberProperty('mb:position');
                 //assertType (mposition, "number");
                 return getMBEntity<Release>('release', {
-                    inc: 'recordings'
+                    inc: 'recordings+discids'
                 }, 'mb:release-id', mbid => `${mbid}/disc/${mposition}`, rel => {
                     const medium: Medium = rel.media.find(m => m.position == mposition) as Medium;
                     assertDefined(medium);
                     return processHandlers([
                         () => enqueueMBEntityId(getStringProperty('mb:release-id'), 'release', () => undefined),
                         attributeHandler(medium, 'format', 'medium'),
-                        processList(medium.tracks, track => track, () => 'track')
+                        processListAttribute<Medium, Disc>(medium, "discs", disc => disc, 'discid'),
+                        processListAttribute<Medium, Track>(medium, "tracks", track => track, 'track'),
 
                     ]);
                 });
@@ -1850,48 +1892,37 @@ function processCurrent(): boolean {
             ]));
 
         case 'mb:area-type':
-            processSearch('area', 'type');
-            return true;
+            return processSearch('area', 'type');
         case 'mb:artist-type':
-            processSearch('artist', 'type');
-            return true;
+            return processSearch('artist', 'type');
         case 'mb:release-status':
-            processSearch('release', 'status');
-            return true;
+            return processSearch('release', 'status');
         case 'mb:release-quality':
-            processSearch('release', 'quality');
-            return true;
+            return processSearch('release', 'quality');
         case 'mb:release-title':
-            processSearch('release', 'title', 'release');
-            return true;
+            return processSearch('release', 'title', 'release');
         case 'mb:recording-title':
-            processSearch('recording', 'title', 'recording');
-            return true;
+            return processSearch('recording', 'title', 'recording');
         case 'mb:artist-name':
-            processSearch('artist', 'name', 'artist');
-            return true;
+            return processSearch('artist', 'name', 'artist');
         case 'mb:area-name':
-            processSearch('area', 'name', 'area');
-            return true;
+            return processSearch('area', 'name', 'area');
         case 'mb:release-language':
-            processSearch('release', 'language', 'lang');
-            return true;
+            return processSearch('release', 'language', 'lang');
         case 'mb:medium-format':
-            processSearch('release', 'format', 'format', 'medium');
-            return true;
+            return processSearch('release', 'format', 'format', 'medium');
         case 'mb:work-title':
-            processSearch('work', 'title', 'work');
-            return true;
+            return processSearch('work', 'title', 'work');
         case 'mb:recording-length':
-            processSearch('recording', 'length');
-            return true;
+            return processSearch('recording', 'length', 'dur');
         case 'mb:release-script':
-            processSearch('release', 'script');
-            return true;
+            return processSearch('release', 'script');
         case 'mb:artist-begin':
-            processSearch('artist', 'begin');
-            return true;
-
+            return processSearch('artist', 'begin');
+        case 'mb:area-iso1':
+            return processSearch('area', 'iso1');
+        case 'mb:release-date':
+            return processSearch('release', 'date');
         default:
             console.error(type);
             fail();
