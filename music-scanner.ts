@@ -325,7 +325,11 @@ function getProperty(subject: string, name: string): string {
     return getObject(subject, name, fail, obj => obj);
 }
 
-function isEmpty(array: any[]): boolean {
+interface Sized {
+    readonly length: number;
+}
+
+function isEmpty(array: Sized): boolean {
     return array.length === 0;
 }
 
@@ -817,12 +821,18 @@ interface Alias {
     readonly name: string;
 }
 
+interface Tag {
+    readonly name: string;
+}
+
 interface Area {
     readonly id: string;
     readonly type: string;
     readonly name: string;
     readonly 'iso-3166-1-codes': string[];
     readonly aliases: Alias[];
+    readonly tags: Tag[];
+    readonly relations: Relation[];
 }
 
 interface Lifespan {
@@ -838,7 +848,7 @@ interface Relation {
 
 interface Artist {
     readonly id: string;
-    readonly area: Area;
+    readonly area: Area | null;
     readonly type: string;
     readonly name: string;
     readonly 'life-span': Lifespan;
@@ -884,8 +894,13 @@ interface TextRepresentation {
 }
 
 interface ReleaseEvent {
-    area: Entity | null;
+    readonly area: Entity | null;
 }
+
+interface LabelInfo {
+    readonly "catalog-number": string;
+}
+
 interface Release {
     readonly id: string;
     readonly title: string;
@@ -897,6 +912,8 @@ interface Release {
     readonly "artist-credit": ArtistCredit[];
     readonly "release-events": ReleaseEvent[];
     readonly barcode?: string;
+    readonly asin: string;
+    readonly "label-info": LabelInfo[]
 }
 
 interface ReleaseList extends EntityList {
@@ -905,6 +922,7 @@ interface ReleaseList extends EntityList {
 }
 
 interface RecordingList extends EntityList {
+    readonly "recording-count": number;
     readonly recordings: Recording[];
 }
 
@@ -1074,7 +1092,6 @@ function processCurrent(): boolean {
 
     function enqueueNextTask<T, R>(items: T[], processTypedItem: (item: T, handler: (name: string, type: string) => boolean) => boolean, predicate: string, parentPredicate: string | undefined, foundResult: R, completed: () => R): R {
         for (const item of items) {
-            //console.log(item);
             if (processTypedItem(item, (name: string, type: string) => enqueueUnlinkedTask(name, type, predicate, parentPredicate, () => false))) {
                 return foundResult;
             }
@@ -1096,7 +1113,11 @@ function processCurrent(): boolean {
     }
 
     function enqueueNextTypedTask<T, R>(items: T[], data: (item: T) => string, type: string, predicate: string, parentPredicate: string | undefined, foundResult: R, completed: () => R): R {
-        return enqueueNextTask(items, (item, handler) => handler(data(item), type), predicate, parentPredicate, foundResult, () => completed())
+        return enqueueNextTask(items, (item, handler) => {
+            const d = data(item);
+            assertDefined(d);
+            return handler(d, type)
+        }, predicate, parentPredicate, foundResult, () => completed())
     }
 
     function enqueueNextItemTask<T>(items: string[], type: string, predicate: string, parentPredicate: string | undefined, foundResult: T, completed: () => T): T {
@@ -1260,11 +1281,16 @@ function processCurrent(): boolean {
         }, 'musicbrainz.org', found, notFound);
     }
 
+    function mbGetList<T>(resource: string, params: Dictionary<string>): T {
+        return mbGet<T, T>(resource, params, data => data, fail);
+    }
+
+
     function getReleaseForTrack(trackId: string): Release {
-        const metaData: ReleaseList = mbGet('release', {
+        const metaData: ReleaseList = mbGetList('release', {
             track: trackId,
             inc: "artist-credits"
-        }, (data: ReleaseList) => data, fail);
+        });
         assertEquals(metaData["release-count"], 1);
         return metaData.releases[0];
     }
@@ -1272,6 +1298,7 @@ function processCurrent(): boolean {
     function getMBEntity<T extends Entity>(type: string, params: Dictionary<string>, idPredicate: string, path: (mbid: string) => string, found: (data: T) => boolean): boolean {
         const mbid = getStringProperty(idPredicate);
         log(url('musicbrainz.org', type, path(mbid)));
+        // console.log(params);
         return mbGet(`${type}/${mbid}`, params, (metaData: Entity) => {
             assertEquals(metaData.id, mbid);
             //console.log(metaData.area.id);
@@ -1289,7 +1316,7 @@ function processCurrent(): boolean {
 
 
     function getMBCoreEntity<T extends Entity>(type: string, incs: string[], found: (data: T) => boolean): boolean {
-        return getMBEntity(type, { inc: `artist-rels+recording-rels+work-rels${incs.map(inc => `+${inc}`)}` }, 'mb:mbid', path => path, found);
+        return getMBEntity(type, { inc: `artist-rels+recording-rels+work-rels${incs.map(inc => `+${inc}`).join('')}` }, 'mb:mbid', path => path, found);
     }
 
     function enqueueNextEntityTask<T, R>(items: T[], entity: (item: T) => Entity | null, type: (item: T) => string, completed: () => R): boolean | R {
@@ -1304,8 +1331,9 @@ function processCurrent(): boolean {
         return enqueueTopLevelTask(mbid, mb(type), 'mb:mbid', alreadyAdded);
     }
 
-    function enqueueMBEntity<T>(entity: Entity, type: string, alreadyAdded: () => T): boolean | T {
-        return enqueueMBEntityId(entity.id, type, alreadyAdded);
+    function enqueueMBEntity<T>(source: T, property: ConformPropertyName<T, Entity | null>): () => boolean | undefined {
+        const entity: Entity | null = source[property] as any;
+        return () => isNull(entity) ? undefined : enqueueMBEntityId(entity.id, property as string, () => undefined);
     }
 
 
@@ -1332,9 +1360,10 @@ function processCurrent(): boolean {
 
     function processSearch(type: 'area' | 'artist' | 'release' | 'recording' | 'work', field: string, queryField?: string, taskType?: string): boolean {
         const escapedKey = escapeLucene(decodeLiteral(getPropertyFromCurrent(mb(`${isDefined(taskType) ? taskType : type}-${field}`))));
+        failIf(isEmpty(escapedKey)); // found issue with empty barcode
         const searchField = isDefined(queryField) ? queryField : field;
         log(`https://musicbrainz.org/search?query=${searchField}%3A${encodeURIComponent(escapedKey)}&type=${type}&method=advanced`);
-        const list: EntityList = mbGet<EntityList, EntityList>(type, { query: `${searchField}:${escapedKey}` }, found => found, fail);
+        const list: EntityList = mbGetList(type, { query: `${searchField}:${escapedKey}` });
         const count: number = list.count;
         if (count === 0) {
             deleteCurrentTask('no search results');
@@ -1424,12 +1453,11 @@ function processCurrent(): boolean {
     }
 
     function processListAttribute<T, E>(source: T, collection: ConformPropertyName<T, E[]>, entity: (elem: E) => Entity | null, elementName: string): () => boolean | undefined {
-        return processList(source[collection] as unknown as E[], elem => entity(elem), () => elementName);
+        return processList(source[collection] as any as E[], elem => entity(elem), () => elementName);
     }
 
     function processEntityList<T, E>(source: T, collection: ConformPropertyName<T, E[]>, elementName: ConformPropertyName<E, Entity | null>): () => boolean | undefined {
-        return processListAttribute(source, collection, elem => elem[elementName] as unknown as Entity | null, elementName as string);
-        //return processList(source[collection] as unknown as E[], elem => elem[elementName] as unknown as Entity, () => elementName as string);
+        return processListAttribute(source, collection, elem => (elem as any)[elementName], elementName as string);
     }
 
     /*
@@ -1448,6 +1476,11 @@ function processCurrent(): boolean {
         ]), notFound, result => found(result.entity))
     }
 
+
+    function handleAttributes<T, M>(entity: T, collection: ConformPropertyName<T, M[]>, field: ConformPropertyName<M, string>, entityType: string, subType: string): () => boolean | undefined {
+        const type = mb(`${entityType}-${subType}`);
+        return () => enqueueNextTypedTask<M, boolean | undefined>(entity[collection] as any as M[], member => member[field] as any, type, subType, undefined, true, () => undefined);
+    }
 
     switch (type) {
         case 'root':
@@ -1510,7 +1543,7 @@ function processCurrent(): boolean {
                             const common = metaData.common;
                             const acoustid = common.acoustid_id;
                             const trackId = common.musicbrainz_trackid;
-                            assertDefined(trackId);
+                            //assertDefined(trackId);
                             const mbid = trackId as string;
                             let recordingIdResult: string | undefined = undefined;
                             const recordingId = () => {
@@ -1523,17 +1556,44 @@ function processCurrent(): boolean {
                                 return recordingIdResult;
                             }
 
+                            function checkId(id: string | undefined, enqueue: () => boolean | undefined, idName: string): () => boolean | undefined {
+                                return () => {
+                                    if (isDefined(id)) {
+                                        return enqueue();
+                                    }
+                                    else {
+                                        logError(`  ${idName} is missing!`);
+                                        return false;
+                                    };
+                                }
+                            }
+
                             return processHandlers([
+                                checkId(acoustid, () => enqueueTypedTopLevelTask(acoustid as string, 'acoustid'), 'acoustid'),
+                                /*
                                 () => {
                                     if (isDefined(acoustid)) {
                                         return enqueueTypedTopLevelTask(acoustid, 'acoustid');
                                     }
                                     else {
-                                        console.error("  acoustid is missing!");
+                                        logError("  acoustid is missing!");
                                         return false;
                                     };
                                 },
-                                () => enqueueMBResourceTask(mbid, 'track', () => undefined),
+                                */
+                                checkId(trackId, () => enqueueMBResourceTask(mbid, 'track', () => undefined), 'trackid'),
+                                /*
+                                 () => {
+                                     if (isDefined(trackId)) {
+                                         return enqueueMBResourceTask(mbid, 'track', () => undefined)
+                                     }
+                                     else {
+                                         logError("  trackid is missing!");
+                                         return false;
+                                     }
+                                 },
+                                 */
+                                //() => enqueueMBResourceTask(mbid, 'track', () => undefined),
                                 () => searchMBEntityTask<boolean | undefined>('recording', recordingId(), () => undefined, taskId => {
                                     return getObject<boolean | undefined>(currentTask, 'recording', () => {
                                         //const object = res.rt;
@@ -1629,21 +1689,32 @@ function processCurrent(): boolean {
             return getMBCoreEntity<Artist>('artist', [], artist => processHandlers([
                 attributeHandler(artist, 'type', 'artist'),
                 attributeHandler(artist, 'name', 'artist'),
-                () => enqueueMBEntity(artist.area, 'area', () => undefined),
+                enqueueMBEntity(artist, 'area'),
                 attributeHandler(artist['life-span'], 'begin', 'artist'),
-                processRelations(artist.relations)
+                processRelations(artist.relations),
+                () => {
+                    const recordingList: RecordingList = mbGetList('recording', {
+                        artist: artist.id
+                    });
+                    const recordings = recordingList.recordings;
+                    assertEquals(recordingList["recording-count"], recordings.length);
+                    return enqueueNextEntityTask(recordings, recording => recording, () => 'recording', () => undefined);
+                },
+
             ]));
+        // TODO: browse recoring?artist=
         case 'mb:area':
-            return getMBCoreEntity<Area>('area', ['aliases'], area =>
-                processHandlers([
-                    attributeHandler(area, 'type', 'area'),
-                    attributeHandler(area, 'name', 'area'),
-                    () => enqueueNextItemTask(area["iso-3166-1-codes"], 'mb:area-iso1', 'mb:area-iso1', undefined, true, () => undefined),
-                    () => enqueueNextTypedTask(area.aliases, alias => alias.name, 'mb:area-alias', 'mb:area-alias', undefined, true, () => undefined)
-                ]));
+            return getMBCoreEntity<Area>('area', ['aliases', 'tags'], area => processHandlers([
+                attributeHandler(area, 'type', 'area'),
+                attributeHandler(area, 'name', 'area'),
+                () => enqueueNextItemTask(area["iso-3166-1-codes"], 'mb:area-iso1', 'mb:area-iso1', undefined, true, () => undefined),
+                handleAttributes<Area, Alias>(area, 'aliases', 'name', 'area', 'alias'),
+                //() => enqueueNextTypedTask(area.aliases, alias => alias.name, 'mb:area-alias', 'mb:area-alias', undefined, true, () => undefined),
+                processRelations(area.relations)
+            ]));
         case 'mb:release':
 
-            return getMBCoreEntity<Release>('release', ['artists'], release => {
+            return getMBCoreEntity<Release>('release', ['artists', 'labels'], release => {
 
                 function releaseAttributeHandler(attribute: LiteralPropertyName<Release>): () => boolean | undefined {
                     return attributeHandler(release, attribute, 'release')
@@ -1657,7 +1728,12 @@ function processCurrent(): boolean {
                     releaseAttributeHandler('date'),
                     processEntityList<Release, ReleaseEvent>(release, "release-events", 'area'),
                     processEntityList<Release, ArtistCredit>(release, 'artist-credit', 'artist'),
-                    releaseAttributeHandler('barcode')
+                    releaseAttributeHandler('barcode'),
+                    releaseAttributeHandler('asin'),
+                    handleAttributes<Release, LabelInfo>(release, 'label-info', 'catalog-number', 'release', 'catno')
+
+                    //() => enqueueNextTypedTask(release['label-info'], labelInfo => labelInfo['catalog-number'], 'mb:release-catno', 'mb:release-catno', undefined, undefined, () => true)
+
                 ])
             });
 
@@ -1671,12 +1747,15 @@ function processCurrent(): boolean {
                     processEntityList<Recording, ArtistCredit>(recording, 'artist-credit', 'artist'),
                     processRelations(recording.relations),
                     () => {
-                        const releaseList: ReleaseList = mbGet<ReleaseList, ReleaseList>('release', {
+                        const releaseList: ReleaseList = mbGetList('release', {
                             recording: recording.id
-                        }, list => list, fail);
+                        });
                         const releases = releaseList.releases;
-                        assertEquals(releaseList["release-count"], releases.length);
-                        return enqueueNextEntityTask(releaseList.releases, release => release, () => 'release', () => undefined);
+                        //assertEquals(releaseList["release-count"], releases.length);
+                        return enqueueNextEntityTask(releaseList.releases, release => release, () => 'release', () => {
+                            assertEquals(releaseList["release-count"], releases.length);
+                            return undefined;
+                        });
                     },
                     () => {
                         const result: AcoustIdTracks = acoustIdGet(`track/list_by_mbid`, {
@@ -1699,7 +1778,6 @@ function processCurrent(): boolean {
                             }
                             else {
                                 // found single recording, everything fine, set playlist
-
                                 return getObject<boolean | undefined>(currentTask, 'playlist', () => {
                                     //return fail();                                    
                                     const object = fso1.subject;
@@ -1712,13 +1790,7 @@ function processCurrent(): boolean {
                                 }, (object: string) => {
                                     object;
                                     return fail();
-                                    /*
-                                    assertEquals(object, object);
-                                    return undefined;
-                                    */
                                 });
-
-                                //return fail();
                             }
                         }
                         else {
@@ -1806,7 +1878,7 @@ function processCurrent(): boolean {
             const firstResult = results[0];
             assertEquals(firstResult.id, acoustid);
             const recordings = firstResult.recordings;
-            assert(recordings.length !== 0);
+            failIf(isEmpty(recordings));
             return processHandlers([
                 () => {
                     for (const item of recordings) {
@@ -1855,7 +1927,7 @@ function processCurrent(): boolean {
                     moveToNext();
                     return true;
                 }, () => undefined),
-                () => enqueueMBEntity(track.recording, 'recording', () => undefined),
+                enqueueMBEntity(track, 'recording'),
                 () => {
                     completed();
                     return true;
@@ -1923,6 +1995,10 @@ function processCurrent(): boolean {
             return processSearch('area', 'iso1');
         case 'mb:release-date':
             return processSearch('release', 'date');
+        case 'mb:area-alias':
+            return processSearch('area', 'alias');
+        case 'mb:release-barcode':
+            return processSearch('release', 'barcode');
         default:
             console.error(type);
             fail();
@@ -2122,6 +2198,11 @@ defineCommand('dump', 'dump database to text format', [], () => {
         url(domain, `${type}/${getLiteral(predicate)}`);
     }
 
+    /*
+    function musicbrainz(type: string, predicate: string): void {
+        resource('musicbrainz.org', type, predicate);
+    }
+    */
     function mbResource(type: string): void {
         resource('musicbrainz.org', type, 'mb:mbid');
     }
@@ -2246,6 +2327,21 @@ defineCommand('dump', 'dump database to text format', [], () => {
                 break;
             case 'mb:release-date':
                 search('date', 'release');
+                break;
+            case 'mb:area-alias':
+                search('alias', 'area');
+                break;
+            case 'mb:release-barcode':
+                search('barcode', 'release');
+                break;
+            case 'mb:discid':
+                mbResource('cdtoc');
+                break;
+            case 'mb:tag':
+                resource('musicbrainz.org', 'tag', 'mb:tag');
+                break;
+            case 'mb:release-asin':
+                search('asin', 'release');
                 break;
             default:
                 console.error(`Cannot dump type ${type}!`);
