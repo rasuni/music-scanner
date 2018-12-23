@@ -842,6 +842,7 @@ interface Artist {
     readonly name: string;
     readonly 'life-span': Lifespan;
     readonly relations: Relation[];
+    readonly disambiguation?: string;
 }
 
 interface ArtistCredit {
@@ -1039,6 +1040,7 @@ function escapeLucene(key: string | number): string {
 }
 
 function mb(name: string): string {
+    failIf(name.startsWith('mb:'));
     return `mb:${name}`;
 }
 
@@ -1052,16 +1054,33 @@ function openMB(type: string, id: string): void {
 }
 
 
+function walkUpFileSystemEntries(directory: string, segment: (name: string) => void): string {
+
+    let currentDir = directory;
+
+    function property(name: string): string {
+        return getProperty(currentDir, name);
+    }
+
+    function stringProperty(name: string): string {
+        return decodeStringLiteral(property(name))
+    }
+    for (; ;) {
+        const type = property('type');
+        if (type === 'volume') {
+            break;
+        }
+        assertEquals(type, 'fileSystemEntry');
+        segment(stringProperty('name'));
+        currentDir = property('directory');
+    }
+    return stringProperty('path')
+}
+
+
 function withFileSystemObjectPath<T>(subjectProperty: (predicate: string) => string, path: (entryPath: string, volume: string) => T): T {
     let directoryId = subjectProperty('directory');
 
-    function getPropertyFromDirectory(name: string) {
-        return getProperty(directoryId, name);
-    }
-
-    function getStringPropertyFromDirectory(name: string) {
-        return decodeStringLiteral(getPropertyFromDirectory(name));
-    }
 
     let ePath = decodeStringLiteral(subjectProperty('name'));
 
@@ -1070,19 +1089,11 @@ function withFileSystemObjectPath<T>(subjectProperty: (predicate: string) => str
         return join(prepend, ePath);
     }
 
-
-    for (; ;) {
-        const type = getPropertyFromDirectory('type');
-        if (type === 'volume') {
-            break;
-        }
-        assertEquals(type, 'fileSystemEntry');
-        ePath = joinEntryPath(getStringPropertyFromDirectory('name'));
-        directoryId = getPropertyFromDirectory('directory');
-    }
-
-    const vPath = getStringPropertyFromDirectory('path');
+    const vPath = walkUpFileSystemEntries(directoryId, name => {
+        ePath = joinEntryPath(name);
+    });
     return path(joinEntryPath(vPath), vPath);
+
 }
 
 function stat<T>(path: string, success: (stats: fs.Stats) => T, missing: () => T): T {
@@ -1116,6 +1127,10 @@ function getAcoustId(filePath: string): string {
 
 function excludeNull<T>(data: T | null, predicate: (data: T) => boolean): boolean {
     return data !== null && predicate(data);
+}
+
+function assertSameProp(prop: (o: string) => string, o: string, expected: string) {
+    assertSame(prop(o), expected);
 }
 
 function processCurrent(): boolean {
@@ -1226,10 +1241,10 @@ function processCurrent(): boolean {
     }
 
 
-    const type = getPropertyFromCurrent('type');
+    //const type = getPropertyFromCurrent('type');
 
     function processFileSystemPath<T>(path: string, directory: () => T, file: () => T, missing: () => T): T {
-        log(`processing ${type} ${path}`);
+        log(path);
         return stat(path, stat => (stat.isDirectory() ? directory : file)(), missing);
     }
 
@@ -1275,7 +1290,7 @@ function processCurrent(): boolean {
         return yieldValue();
     }
 
-    function wsGet<T, R>(minimalDelay: number, path: string, params: Dictionary<string>, apiHost: string, found: (data: T) => R, notFound: () => R): R {
+    function wsGet<T, R>(minimalDelay: number, path: string, params: Dictionary<string>, apiHost: string, found: (data: T) => R, notFound: () => R, moved: () => R): R {
         let resourcePath = `/${path}`;
         const paramString = mapDictionary(params, (key, value) => `${key}=${encodeURIComponent(value)}`).join('&');
         if (paramString.length !== 0) {
@@ -1305,6 +1320,8 @@ function processCurrent(): boolean {
                     }
                     retryCount++;
                     break;
+                case 301:
+                    return moved();
                 default:
                     return fail();
             }
@@ -1312,19 +1329,19 @@ function processCurrent(): boolean {
     }
 
 
-    function mbGet<T, R>(resource: string, params: Dictionary<string>, found: (data: T) => R, notFound: () => R): R {
+    function mbGet<T, R>(resource: string, params: Dictionary<string>, found: (data: T) => R, notFound: () => R, moved: () => R): R {
         //console.log(url('musicbrainz.org', logType, mbid));
         return wsGet(1000, `ws/2/${resource}`, {
             fmt: 'json',
             ...params
-        }, 'musicbrainz.org', found, notFound);
+        }, 'musicbrainz.org', found, notFound, moved);
     }
 
     function mbGetList<T>(resource: string, params: Dictionary<string>): T {
         return mbGet<T, T>(resource, {
             ...params,
             limit: "100"
-        }, data => data, fail);
+        }, data => data, fail, fail);
     }
 
 
@@ -1337,12 +1354,20 @@ function processCurrent(): boolean {
         return metaData.releases[0];
     }
 
+    function deleteCurrent(reason: string): () => true {
+        return () => {
+            deleteCurrentTask(reason);
+            return true;
+        }
+    }
+
     function getTypedMBEntity<T extends Entity>(idPredicate: string, type: string, resourceType: string, params: Dictionary<string>, path: (mbid: string) => string, found: (data: T) => boolean): boolean {
         const mbid = getStringProperty(idPredicate);
         log(url('musicbrainz.org', type, path(mbid)));
         // console.log(params);
         return mbGet(`${resourceType}/${mbid}`, params, (metaData: Entity) => {
             const newId = metaData.id;
+            assertSame(newId, mbid);
             if (newId === mbid) {
                 return found(metaData as T);
             }
@@ -1350,10 +1375,7 @@ function processCurrent(): boolean {
                 deleteCurrentTask(`merged into ${newId}`);
                 return true;
             }
-        }, () => {
-            deleteCurrentTask('not found');
-            return true;
-        });
+        }, deleteCurrent('not found'), deleteCurrent('moved (merged)'));
     }
 
     function getMBEntity<T extends Entity>(type: string, params: Dictionary<string>, idPredicate: string, path: (mbid: string) => string, found: (data: T) => boolean): boolean {
@@ -1384,7 +1406,7 @@ function processCurrent(): boolean {
         const result: AcoustIdResult = wsGet<T, T>(334, `v2/${path}`, {
             client: '0mgRxc969N',
             ...params
-        }, 'api.acoustid.org', data => data, fail);
+        }, 'api.acoustid.org', data => data, fail, fail);
         assertEquals(result.status, "ok");
         return result as T;
     }
@@ -1430,7 +1452,8 @@ function processCurrent(): boolean {
         })
         */
 
-        log(`https://musicbrainz.org/search?query=${searchField}%3A${encodeURIComponent(escapedKey)}&type=${type}&method=advanced`);
+        const url = `https://musicbrainz.org/search?query=${searchField}%3A${encodeURIComponent(escapedKey)}&type=${type}&method=advanced`;
+        log(url);
         //const escapedKey = escapeLucene(key);
         if (isEmpty(escapedKey)) {
             deleteCurrentTask('empty search key');
@@ -1451,8 +1474,9 @@ function processCurrent(): boolean {
                         entities.forEach(entity => withPlaylistForEntity(type, entity, () => undefined, fail));
                         //fail();
                         log('  complete: all search results enqueued');
+                        opn(url);
                         moveToNext();
-                        return true;
+                        return false;
 
                     });
                 }
@@ -1569,7 +1593,7 @@ function processCurrent(): boolean {
         return processList(relations, relation => relation[relation["target-type"]] as Entity, relation => relation["target-type"]);
     }
 
-    function getReferencesToCurrent(pred: string) {
+    function getReferencesToCurrent(pred: string): Provider<Statement<string>> {
         return getStream({ predicate: pred, object: currentTask })
     }
 
@@ -1645,6 +1669,7 @@ function processCurrent(): boolean {
             });
         }));
     }
+    const type = getPropertyFromCurrent('type');
     switch (type) {
         case 'root':
             log('processing root');
@@ -1664,6 +1689,7 @@ function processCurrent(): boolean {
                         case '.flac':
                         case '.m4a':
                         case '.mp4':
+                            //case '.wma':
                             /*
 
                             const promise: Promise<mm.IAudioMetadata> = mm.parseFile(entryPath);
@@ -1744,6 +1770,7 @@ function processCurrent(): boolean {
                                     if (metaData.format.dataformat !== 'flac') {
                                         logError('  Not flac encoding! Consider to replace file with lossless flac encoding')
                                     }
+                                    fail(); // dump playlists
                                     log('  Please check tagging in picard');
                                     moveToNext();
                                     return false;
@@ -1775,6 +1802,7 @@ function processCurrent(): boolean {
             return getMBCoreEntity<Artist>('artist', [], artist => processHandlers([
                 attributeHandler(artist, 'type', 'artist'),
                 attributeHandler(artist, 'name', 'artist'),
+                attributeHandler(artist, 'disambiguation', 'artist'),
                 enqueueMBEntity(artist, 'area'),
                 attributeHandler(artist['life-span'], 'begin', 'artist'),
                 processRelations(artist.relations),
@@ -1859,7 +1887,7 @@ function processCurrent(): boolean {
                                 // when not same, this would be an indication that the recordings have been merged incorrectly   
                                 return getFileSystemObjectPathFromSubject(fso1, entryPath1 => {
                                     return getFileSystemObjectPathFromSubject(fso2, entryPath2 => {
-                                        assertSame(getAcoustId(entryPath1), getAcoustId(entryPath2));
+                                        assertSameProp(getAcoustId, entryPath1, getAcoustId(entryPath2));
                                         logError('Same recording found in following files:');
                                         logError(`   ${entryPath1}`);
                                         logError(`   ${entryPath2}`);
@@ -1985,7 +2013,7 @@ function processCurrent(): boolean {
                 () => {
                     for (const item of recordings) {
                         const recordingId = item.id;
-                        if (mbGet(`recording/${item.id}`, {}, () => false, () => true)) {
+                        if (mbGet(`recording/${item.id}`, {}, () => false, () => true, fail)) {
                             log(`  please deactivate deleted recording ${recordingId}`);
                             openBrowser('acoustid.org', 'track', acoustid);
                             moveToNext();
@@ -2032,26 +2060,30 @@ function processCurrent(): boolean {
                 enqueueMBEntity(track, 'recording'),
                 () => {
                     const discs = medium.discs;
-                    assert(discs.length !== 0);
-                    //assertEquals(discs.length, 1);
-                    let lengthSum = 0;
-                    const position = track.position;
-                    for (const disc of discs) {
-                        const offsets = disc.offsets;
-                        lengthSum += (position === offsets.length ? disc.sectors : offsets[position]) - offsets[position - 1];
-                    }
-                    //const disc = discs[0];
-                    //const offsets = disc.offsets;
-                    const length = div(lengthSum, 75 * discs.length);
-                    if (div(track.length, 1000) === length) {
-                        return undefined
+                    if (discs.length === 0) {
+                        return undefined;
                     }
                     else {
-                        logError(`  Inaccurate track length. Track length according discid's should be ${format(length * 1000)}.`);
-                        openMB('track', mbid);
-                        return false;
-                    }
-                    //}
+                        //assertEquals(discs.length, 1);
+                        let lengthSum = 0;
+                        const position = track.position;
+                        for (const disc of discs) {
+                            const offsets = disc.offsets;
+                            lengthSum += (position === offsets.length ? disc.sectors : offsets[position]) - offsets[position - 1];
+                        }
+                        //const disc = discs[0];
+                        //const offsets = disc.offsets;
+                        const length = div(lengthSum, 75 * discs.length);
+                        if (div(track.length, 1000) === length) {
+                            return undefined
+                        }
+                        else {
+                            logError(`  Inaccurate track length. Track length according discid's should be ${format(length * 1000)}.`);
+                            openMB('track', mbid);
+                            //moveToNext();
+                            return false;
+                        }
+                    }//}
 
                 },
                 COMPLETED_HANDLER
@@ -2147,7 +2179,7 @@ function processCurrent(): boolean {
             //const tag = decodeLiteral(getPropertyFromCurrent(mb(`tag`)), 's');
             //        failIf(isEmpty(escapedKey)); // found issue with empty barcode
             // const searchField = isDefined(queryField) ? queryField : field;
-            const key = decodeLiteral(getPropertyFromCurrent(mb(`tag`)), 's');
+            const key = decodeStringLiteral(getPropertyFromCurrent(mb(`tag`)));
             //log(`https://musicbrainz.org/tag/${encodeURIComponent(decodeLiteral(getPropertyFromCurrent(mb(`tag`)), 's'))}`);
             //return handleSearch(`tag/${encodeURIComponent(key)}`, escapeLucene(key), 'area', 'tag', fail);
 
@@ -2164,14 +2196,74 @@ function processCurrent(): boolean {
                 assert(count === entities.length);
                 return fail();
             });
-
-        //return handleSearch(`tag/${encodeURIComponent(key)}`, escapeLucene(key), 'area', 'tag', fail);
-        //return fail();
         case 'mb:release-asin':
-
-            //return fail();
             return processDefaultSearch('release', 'asin');
+        case 'mb:release-catno':
+            return processDefaultSearch('release', 'catno');
+        /*
+        case 'mb:mb:discid':
+            deleteCurrentTask('invalid: mb:mb:discid');
+            return true;
+            */
+        case 'playlist':
+            const next = getReferencesToCurrent('playlist');
+            let statement = next();
+            const fso = getPropertyFromCurrent('first');
 
+
+
+            function getDirectory(fileSystemEntry: string): string {
+                return getProperty(fileSystemEntry, 'directory')
+            }
+
+
+            let dir = getDirectory(fso);
+
+            function getDirProperty(name: string): string {
+                return getProperty(dir, name);
+            }
+
+
+            assertSameProp(getDirProperty, 'type', 'fileSystemEntry');
+            let p = decodeStringLiteral(getDirProperty('name'));
+
+            const parts = currentTask.split('/');
+            assertSame(parts.length, 2);
+            assertSame(parts[0], 'task');
+            const m3uPath = join(join(walkUpFileSystemEntries(getDirectory(dir), name => {
+                p = join(name, p);
+            }), p), `${parts[1]}.m3u8`);
+            log(m3uPath);
+
+            var m3uOut = fs.createWriteStream(m3uPath);
+            const item = statement.subject;
+
+            assertSame(getProperty(item, 'type'), 'mb:medium');
+
+            m3uOut.write(`# https://musicbrainz.org/release/${decodeStringLiteral(getProperty(item, 'mb:release-id'))}/disc/${decodeLiteral(getProperty(item, 'mb:position'), 'n')}\n`);
+
+            let fse = getPropertyFromCurrent('first');
+            assertSame(getProperty(fse, 'type'), 'fileSystemEntry');
+
+            function listEntry(fse: string): void {
+                let path = decodeStringLiteral(getProperty(fse, 'name'));
+                assertSame(walkUpFileSystemEntries(getDirectory(fse), name => {
+                    path = `${name}\\${path}`;
+                }), '/Volumes/Musik');
+                m3uOut.write(`D:\\Musik\\${path}\n`);
+
+            }
+            listEntry(fse);
+
+            const rest = getPropertyFromCurrent('rest');
+            assertSame(getProperty(rest, 'type'), 'fileSystemEntry');
+            listEntry(rest);
+
+
+            m3uOut.end();
+
+            waitFor(cb => m3uOut.on('finish', cb));
+            return fail();
         default:
             console.error(type);
             fail();
@@ -2352,21 +2444,37 @@ defineCommand('dump', 'dump database to text format', [], () => {
     function getPropertyFromCurrent(name: string): string {
         return getProperty(current, name);
     }
-
-    function getLiteral(name: string, tag: string): string {
-        return decodeLiteral(getPropertyFromCurrent(name), tag);
+    function decodeLiteral(literal: string): string | number {
+        const segments = literal.split('/');
+        assertEquals(segments.length, 2);
+        const value = decodeURIComponent(segments[1]);
+        switch (segments[0]) {
+            case 'n':
+                return Number(value);
+            case 's':
+                return value;
+            default:
+                return fail();
+        }
     }
 
+    function getLiteral(name: string): string | number {
+        return decodeLiteral(getPropertyFromCurrent(name));
+    }
+
+    /*
     function getString(name: string): string {
         return getLiteral(name, 's');
     }
+    */
 
     function url(domain: string, path: string) {
         log(`https://${domain}/${path}`);
     }
 
+
     function resource(domain: string, type: string, predicate: string): void {
-        url(domain, `${type}/${getString(predicate)}`);
+        url(domain, `${type}/${getLiteral(predicate)}`);
     }
 
     /*
@@ -2379,7 +2487,7 @@ defineCommand('dump', 'dump database to text format', [], () => {
     }
 
     function searchBase(field: string, prefix: string, suffix: string, type: string) {
-        url('musicbrainz.org', `search?query=${field}%3A${encodeURIComponent(escapeLucene(getString(`mb:${prefix}-${suffix}`)))}&type=${type}&method=advanced`);
+        url('musicbrainz.org', `search?query=${field}%3A${encodeURIComponent(escapeLucene(getLiteral(`mb:${prefix}-${suffix}`)))}&type=${type}&method=advanced`);
     }
 
     function searchMB(field: string, type: string, suffix: string) {
@@ -2403,7 +2511,7 @@ defineCommand('dump', 'dump database to text format', [], () => {
                 resource('acoustid.org', 'track', 'acoustid');
                 break;
             case 'fileSystemEntry':
-                let path = getString('name');
+                let path = getLiteral('name');
 
 
                 let fso = current;
@@ -2411,21 +2519,15 @@ defineCommand('dump', 'dump database to text format', [], () => {
                 function prop(predicate: string): string {
                     return getProperty(fso, predicate);
                 }
-                function prepend(predicate: string) {
-                    return `${decodeStringLiteral(prop(predicate))}/${path}`;
+                function prepend(name: string) {
+                    return `${name}/${path}`;
                 }
-
-                for (; ;) {
-                    fso = prop('directory');
-                    if (prop('type') === 'volume') {
-                        log(prepend('path'));
-                        break;
-                    }
-                    path = prepend('name');
-                }
+                log(prepend(walkUpFileSystemEntries(prop('directory'), name => {
+                    path = prepend(name);
+                })))
                 break;
             case 'volume':
-                log(getString('path'));
+                log(getLiteral('path'));
                 break;
             case 'root':
                 log('<root>');
@@ -2440,7 +2542,7 @@ defineCommand('dump', 'dump database to text format', [], () => {
                 mbResource('artist');
                 break;
             case 'mb:medium':
-                log(`https://musicbrainz.org/release/${getString('mb:release-id')}/disc/${getLiteral('mb:position', 'n')}`);
+                log(`https://musicbrainz.org/release/${getLiteral('mb:release-id')}/disc/${getLiteral('mb:position')}`);
                 break;
             case 'mb:area':
                 mbResource('area');
@@ -2508,6 +2610,9 @@ defineCommand('dump', 'dump database to text format', [], () => {
             case 'mb:discid':
                 mbResource('cdtoc');
                 break;
+            case 'mb:mb:tag':
+                console.log('mb:mb:tag');
+                break;
             case 'mb:tag':
                 resource('musicbrainz.org', 'tag', 'mb:tag');
                 break;
@@ -2517,6 +2622,25 @@ defineCommand('dump', 'dump database to text format', [], () => {
             case 'mb:release-catno':
                 search('catno', 'release');
                 break;
+            case 'playlist':
+                console.log('playlist');
+                break;
+            case 'mb:url':
+                mbResource('url');
+                break;
+            case 'mb:release-group':
+                mbResource('release-group');
+                break;
+            /*
+            case 'mb:mb:tag':
+            console.log ('mb:mb:tag');
+            break;
+            */
+
+            case 'mb:artist-disambiguation':
+                search('disambiguation', 'artist');
+                break;
+
             default:
                 console.error(`Cannot dump type ${type}!`);
                 fail();
