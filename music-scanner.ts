@@ -313,11 +313,9 @@ function getProperty(subject: string, name: string): string {
     return getObject(subject, name, fail, obj => obj);
 }
 
-interface Sized {
+function isEmpty(array: {
     readonly length: number;
-}
-
-function isEmpty(array: Sized): boolean {
+}): boolean {
     return array.length === 0;
 }
 
@@ -1030,8 +1028,11 @@ function url(hostName: string, type: string, id: string): string {
     return `https://${hostName}/${type}/${id}`;
 }
 
+function browser(url: string) {
+    opn(url, { wait: false });
+}
 function openBrowser(server: string, type: string, id: string): void {
-    opn(url(server, type, id), { wait: false });
+    browser(url(server, type, id));
 }
 
 function escapeLucene(key: string | number): string {
@@ -1054,47 +1055,53 @@ function openMB(type: string, id: string): void {
 }
 
 
-function walkUpFileSystemEntries(directory: string, segment: (name: string) => void): string {
+function withVolumeAndEntryPath<T>(fileSystemEntry: string, joinEntryPath: (name: string, path: string) => string, process: (volume: string, entryPath: string) => T): T {
 
-    let currentDir = directory;
+    let currentEntry = fileSystemEntry;
 
     function property(name: string): string {
-        return getProperty(currentDir, name);
+        return getProperty(currentEntry, name);
     }
 
     function stringProperty(name: string): string {
         return decodeStringLiteral(property(name))
     }
+
+    function name(): string {
+        return stringProperty('name');
+    }
+
+    let ePath = name();
+
+
     for (; ;) {
+        currentEntry = property('directory');
         const type = property('type');
         if (type === 'volume') {
             break;
         }
         assertEquals(type, 'fileSystemEntry');
-        segment(stringProperty('name'));
-        currentDir = property('directory');
+        ePath = joinEntryPath(name(), ePath);
     }
-    return stringProperty('path')
+
+    return process(stringProperty('path'), ePath);
+
+}
+
+function withJoinedVolumeAndEntryPath<T>(entryId: string, process: (volume: string, entryPath: string) => T): T {
+    return withVolumeAndEntryPath(entryId, join, process)
 }
 
 
-function withFileSystemObjectPath<T>(subjectProperty: (predicate: string) => string, path: (entryPath: string, volume: string) => T): T {
-    let directoryId = subjectProperty('directory');
-
-
-    let ePath = decodeStringLiteral(subjectProperty('name'));
-
-
-    function joinEntryPath(prepend: string): string {
-        return join(prepend, ePath);
-    }
-
-    const vPath = walkUpFileSystemEntries(directoryId, name => {
-        ePath = joinEntryPath(name);
-    });
-    return path(joinEntryPath(vPath), vPath);
+function withFileSystemObjectPath<T>(entryId: string, path: (entryPath: string, volume: string) => T): T {
+    return withJoinedVolumeAndEntryPath(entryId, (vPath, entryPath) => path(join(vPath, entryPath), vPath))
 
 }
+
+function getPath(entryId: string): string {
+    return withJoinedVolumeAndEntryPath(entryId, join);
+}
+
 
 function stat<T>(path: string, success: (stats: fs.Stats) => T, missing: () => T): T {
     const result: Pair<NodeJS.ErrnoException, fs.Stats> = waitFor2((consumer: (first: NodeJS.ErrnoException, second: fs.Stats) => void) => fs.stat(path, consumer));
@@ -1129,9 +1136,10 @@ function excludeNull<T>(data: T | null, predicate: (data: T) => boolean): boolea
     return data !== null && predicate(data);
 }
 
-function assertSameProp(prop: (o: string) => string, o: string, expected: string) {
-    assertSame(prop(o), expected);
+function assertSameProp(o: string, name: string, expected: string) {
+    assertSame(getProperty(o, name), expected);
 }
+
 
 function processCurrent(): boolean {
     const currentTask = getCurrentTask();
@@ -1469,15 +1477,13 @@ function processCurrent(): boolean {
             else {
                 function process(entities: Entity[]): boolean {
                     return enqueueNextEntityFromList(entities, type, () => {
-                        assert(count === entities.length);
-                        //entities.forEach(entity => searchMBEntityTask(type, entity.id, fail, taskId => getObject(taskId, 'playlist', () => undefined, fail)));
+                        assertSame(count, entities.length);
                         entities.forEach(entity => withPlaylistForEntity(type, entity, () => undefined, fail));
                         //fail();
                         log('  complete: all search results enqueued');
-                        opn(url);
+                        browser(url);
                         moveToNext();
                         return false;
-
                     });
                 }
                 switch (type) {
@@ -1656,7 +1662,7 @@ function processCurrent(): boolean {
     }
 
     function getFileSystemObjectPathFromSubject(statement: Statement<string>, found: (entryPaht: string) => boolean): boolean {
-        return withFileSystemObjectPath(predicate => getProperty(statement.subject, predicate), (entryPath, vPath) => stat(entryPath, () => {
+        return withFileSystemObjectPath(statement.subject, (entryPath, vPath) => stat(entryPath, () => {
             return found(entryPath);
         }, () => {
             return stat(vPath, () => {
@@ -1668,6 +1674,45 @@ function processCurrent(): boolean {
                 return fail();
             });
         }));
+    }
+
+
+
+    function makePlaylist(fso: string, format: (path: string) => string, contents: (comment: (type: string, path: string) => void, entry: (fso: string) => void) => void): void {
+        let dir = getProperty(fso, 'directory');
+        assertSameProp(dir, 'type', 'fileSystemEntry');
+        const parts = currentTask.split('/');
+        assertSame(parts.length, 2);
+        assertSame(parts[0], 'task');
+        const m3uPath = join(getPath(dir), `${parts[1]}.m3u8`);
+
+        log(format(m3uPath));
+        var m3uOut = fs.createWriteStream(m3uPath);
+
+        function writeLine(line: string): void {
+            m3uOut.write(`${line}\n`);
+        }
+
+        contents((type, path) => {
+            writeLine(`# https://musicbrainz.org/${type}/${path}`);
+        }, fso => {
+            writeLine(withVolumeAndEntryPath(fso, (name, path) => `${name}\\${path}`, (vPath, ePath) => {
+                assertSame(vPath, '/Volumes/Musik');
+                return `D:\\Musik\\${ePath}`;
+            }));
+        })
+        /*
+        writeLine(`# https://musicbrainz.org/recording/${recording.id}`);
+
+        writeLine(withVolumeAndEntryPath(fso, (name, path) => `${name}\\${path}`, (vPath, ePath) => {
+            assertSame(vPath, '/Volumes/Musik');
+            return `D:\\Musik\\${ePath}`;
+        }));
+        */
+        m3uOut.end();
+
+        waitFor(cb => m3uOut.on('finish', cb));
+
     }
     const type = getPropertyFromCurrent('type');
     switch (type) {
@@ -1682,7 +1727,7 @@ function processCurrent(): boolean {
                 return false;
             });
         case 'fileSystemEntry':
-            return withFileSystemObjectPath(getPropertyFromCurrent, (entryPath, vPath) => processFileSystemPath(entryPath,
+            return withFileSystemObjectPath(currentTask, (entryPath, vPath) => processFileSystemPath(entryPath,
                 () => processDirectory(entryPath),
                 () => {
                     switch (path.extname(entryPath)) {
@@ -1770,7 +1815,6 @@ function processCurrent(): boolean {
                                     if (metaData.format.dataformat !== 'flac') {
                                         logError('  Not flac encoding! Consider to replace file with lossless flac encoding')
                                     }
-                                    fail(); // dump playlists
                                     log('  Please check tagging in picard');
                                     moveToNext();
                                     return false;
@@ -1887,7 +1931,7 @@ function processCurrent(): boolean {
                                 // when not same, this would be an indication that the recordings have been merged incorrectly   
                                 return getFileSystemObjectPathFromSubject(fso1, entryPath1 => {
                                     return getFileSystemObjectPathFromSubject(fso2, entryPath2 => {
-                                        assertSameProp(getAcoustId, entryPath1, getAcoustId(entryPath2));
+                                        assertSame(getAcoustId(entryPath1), getAcoustId(entryPath2));
                                         logError('Same recording found in following files:');
                                         logError(`   ${entryPath1}`);
                                         logError(`   ${entryPath2}`);
@@ -1928,6 +1972,40 @@ function processCurrent(): boolean {
                         }
                     },
                     () => {
+                        const fso = getPropertyFromCurrent('playlist');
+                        //log(fso);
+                        makePlaylist(fso, path => `  write ${path}`, (comment, entry) => {
+                            comment('recording', recording.id);
+                            entry(fso);
+                        })
+                        /*
+                        let dir = getProperty(fso, 'directory');
+                        assertSameProp(dir, 'type', 'fileSystemEntry');
+                        const parts = currentTask.split('/');
+                        assertSame(parts.length, 2);
+                        assertSame(parts[0], 'task');
+                        const m3uPath = join(getPath(dir), `${parts[1]}.m3u8`);
+
+                        log(m3uPath);
+                        var m3uOut = fs.createWriteStream(m3uPath);
+
+                        function writeLine(line: string): void {
+                            m3uOut.write(`${line}\n`);
+                        }
+
+                        writeLine(`# https://musicbrainz.org/recording/${recording.id}`);
+
+                        writeLine(withVolumeAndEntryPath(fso, (name, path) => `${name}\\${path}`, (vPath, ePath) => {
+                            assertSame(vPath, '/Volumes/Musik');
+                            return `D:\\Musik\\${ePath}`;
+                        }));
+
+                        m3uOut.end();
+
+                        waitFor(cb => m3uOut.on('finish', cb));
+                        */
+
+                        //fail(); // write playlist
                         log('  completed. Please verify!');
                         openRecording(recording.id);
                         moveToNext();
@@ -2209,61 +2287,59 @@ function processCurrent(): boolean {
             const next = getReferencesToCurrent('playlist');
             let statement = next();
             const fso = getPropertyFromCurrent('first');
+            const item = statement.subject;
+            makePlaylist(fso, p => p, (comment, entry) => {
+                comment('release', `${decodeStringLiteral(getProperty(item, 'mb:release-id'))}/disc/${decodeLiteral(getProperty(item, 'mb:position'), 'n')}`);
+                entry(getPropertyFromCurrent('first'));
 
+                const rest = getPropertyFromCurrent('rest');
+                assertSameProp(rest, 'type', 'fileSystemEntry');
+                entry(rest);
 
+            });
 
-            function getDirectory(fileSystemEntry: string): string {
-                return getProperty(fileSystemEntry, 'directory')
-            }
-
-
-            let dir = getDirectory(fso);
-
-            function getDirProperty(name: string): string {
-                return getProperty(dir, name);
-            }
-
-
-            assertSameProp(getDirProperty, 'type', 'fileSystemEntry');
-            let p = decodeStringLiteral(getDirProperty('name'));
-
+            /*
+            let dir = getProperty(fso, 'directory');
+            assertSameProp(dir, 'type', 'fileSystemEntry');
             const parts = currentTask.split('/');
             assertSame(parts.length, 2);
             assertSame(parts[0], 'task');
-            const m3uPath = join(join(walkUpFileSystemEntries(getDirectory(dir), name => {
-                p = join(name, p);
-            }), p), `${parts[1]}.m3u8`);
+            const m3uPath = join(getPath(dir), `${parts[1]}.m3u8`);
             log(m3uPath);
-
             var m3uOut = fs.createWriteStream(m3uPath);
             const item = statement.subject;
+            assertSameProp(item, 'type', 'mb:medium');
 
-            assertSame(getProperty(item, 'type'), 'mb:medium');
+            function writeLine(line: string): void {
+                m3uOut.write(`${line}\n`);
+            }
 
-            m3uOut.write(`# https://musicbrainz.org/release/${decodeStringLiteral(getProperty(item, 'mb:release-id'))}/disc/${decodeLiteral(getProperty(item, 'mb:position'), 'n')}\n`);
+            writeLine(`# https://musicbrainz.org/release/${decodeStringLiteral(getProperty(item, 'mb:release-id'))}/disc/${decodeLiteral(getProperty(item, 'mb:position'), 'n')}`);
 
             let fse = getPropertyFromCurrent('first');
-            assertSame(getProperty(fse, 'type'), 'fileSystemEntry');
+            assertSameProp(fse, 'type', 'fileSystemEntry');
 
             function listEntry(fse: string): void {
-                let path = decodeStringLiteral(getProperty(fse, 'name'));
-                assertSame(walkUpFileSystemEntries(getDirectory(fse), name => {
-                    path = `${name}\\${path}`;
-                }), '/Volumes/Musik');
-                m3uOut.write(`D:\\Musik\\${path}\n`);
-
+                writeLine(withVolumeAndEntryPath(fse, (name, path) => `${name}\\${path}`, (vPath, ePath) => {
+                    assertSame(vPath, '/Volumes/Musik');
+                    return `D:\\Musik\\${ePath}`;
+                }));
             }
             listEntry(fse);
 
             const rest = getPropertyFromCurrent('rest');
-            assertSame(getProperty(rest, 'type'), 'fileSystemEntry');
+            assertSameProp(rest, 'type', 'fileSystemEntry');
             listEntry(rest);
 
 
             m3uOut.end();
 
             waitFor(cb => m3uOut.on('finish', cb));
-            return fail();
+            */
+            log('  written');
+            moveToNext();
+            return true;
+        //return fail();
         default:
             console.error(type);
             fail();
@@ -2511,20 +2587,7 @@ defineCommand('dump', 'dump database to text format', [], () => {
                 resource('acoustid.org', 'track', 'acoustid');
                 break;
             case 'fileSystemEntry':
-                let path = getLiteral('name');
-
-
-                let fso = current;
-
-                function prop(predicate: string): string {
-                    return getProperty(fso, predicate);
-                }
-                function prepend(name: string) {
-                    return `${name}/${path}`;
-                }
-                log(prepend(walkUpFileSystemEntries(prop('directory'), name => {
-                    path = prepend(name);
-                })))
+                log(getPath(current));
                 break;
             case 'volume':
                 log(getLiteral('path'));
