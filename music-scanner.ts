@@ -257,8 +257,8 @@ function logError(message: string): void {
     console.error(message);
 }
 
-function volumeNotMounted(): void {
-    logError('Volume not mounted. Please mount!');
+function volumeNotMounted(path: string): void {
+    logError(`Volume ${path} not mounted. Please mount!`);
 }
 
 const join = path.join;
@@ -327,10 +327,11 @@ function persist(type: Operation, statements: Statement<string>[]): void {
 
 type Predicate<T> = (value: T) => boolean;
 
+/*
 type Matcher<T> = {
     readonly [P in keyof T]: Predicate<T[P]>;
 };
-
+*/
 
 function mapDictionary<F, T>(source: Dictionary<F>, mapper: (key: string, value: F) => T): T[] {
     return Object.getOwnPropertyNames(source).map(key => mapper(key, source[key]));
@@ -382,7 +383,9 @@ function update(changeSet: UpdateStatement[]): void {
 }
 
 
-function matchObject<T>(checkers: Matcher<T>): Predicate<T> {
+function matchObject<T>(checkers: {
+    readonly [P in keyof T]: Predicate<T[P]>;
+}): Predicate<T> {
     const res = (object: T) => {
         //return searchMatch(object, checkers, () => true, FALSE);
         for (const compareValue of compareObjects(object, checkers)) {
@@ -976,6 +979,13 @@ type ConformPropertyName<T, C> = ConformMembers<T, C>[keyof T];
 
 type LiteralPropertyName<T> = ConformPropertyName<T, string | number | null | undefined>;
 
+interface URL extends Entity {
+    readonly resource: string;
+}
+interface ReleaseGroup extends Entity {
+    readonly title: string;
+}
+
 //type ArrayPropertyName<T> = ConformPropertyName<T, any[]>;
 
 //type ElementType<T> = T extends (infer E)[] ? E : never;
@@ -1419,14 +1429,14 @@ function processCurrent(): boolean {
         return result as T;
     }
 
-
-    function attributeHandler<T>(record: T, attribute: LiteralPropertyName<T>, type: string): () => undefined | boolean {
-        return () => {
-            const value = record[attribute] as any as string | number | null | undefined;
-            return isNull(value) || isUndefined(value) ? undefined : enqueueTypedTopLevelTask(value, mb(`${type}-${attribute}`));
-        }
+    function processAttribute<T>(record: T, attribute: LiteralPropertyName<T>, type: string): undefined | boolean {
+        const value = record[attribute] as any as string | number | null | undefined;
+        return isNull(value) || isUndefined(value) ? undefined : enqueueTypedTopLevelTask(value, mb(`${type}-${attribute}`));
     }
 
+    function attributeHandler<T>(record: T, attribute: LiteralPropertyName<T>, type: string): () => undefined | boolean {
+        return () => processAttribute(record, attribute, type);
+    }
 
     function enqueueNextEntityFromList<T>(entities: Entity[], entityType: string, completed: () => T): boolean | T {
         return enqueueNextEntityTask(entities, entity => entity, () => entityType, completed);
@@ -1623,22 +1633,64 @@ function processCurrent(): boolean {
 
 
     function updateObject(predicate: string, object: string | undefined): true | undefined {
+
+        function checkUpdateRequired(alreadyUpToDate: boolean, from: string, extend: (statements: UpdateStatement[]) => UpdateStatement[]): true | undefined {
+            if (alreadyUpToDate) {
+                return undefined;
+            }
+            else {
+                log(`  ${predicate}: ${from} --> ${object}`);
+                update(extend([
+                    put(currentTask, predicate, object as string),
+                    ...moveToNextStatements()
+                ]));
+                return true;
+            }
+        }
+
+
         return getObject<true | undefined>(currentTask, predicate, () => {
+            return checkUpdateRequired(isUndefined(object), 'undefined', stms => stms);
+            /*
             if (isUndefined(object)) {
                 return undefined;
             }
             else {
                 //assertDefined(object);
-                log(`  ${predicate}: undefined --> ${object} `);
+                log(`  ${predicate}: undefined --> ${object}`);
                 update([
                     put(currentTask, predicate, object as string),
                     ...moveToNextStatements(),
                 ]);
                 return true;
             }
-        }, (object: string) => {
-            assertEquals(object, object);
+            */
+        }, (existingObject: string) => {
+            assertDefined(object);
+            return checkUpdateRequired(object === existingObject, existingObject, statements => [
+                del(currentTask, predicate, existingObject),
+                ...statements
+            ]);
+            /*
+            if (object === existingObject) {
+                return undefined;
+            }
+            else {
+                assertDefined(object);
+                fail();
+                log(`  ${predicate}: ${existingObject} --> ${object}`);
+                update([
+                    del(currentTask, predicate, existingObject),
+                    put(currentTask, predicate, object as string),
+                    ...moveToNextStatements(),
+                ]);
+                return true;
+            }
+            */
+            /*
+            assertSame(object, existingObject);
             return undefined;
+            */
         })
     }
 
@@ -1657,23 +1709,34 @@ function processCurrent(): boolean {
         return true;
     }
 
-    function processDefaultSearch(type: 'area' | 'artist' | 'release' | 'recording' | 'work', field: string): boolean {
-        return processStringSearch(type, field, field, type);
+    function processEntitySearch(type: 'area' | 'artist' | 'release' | 'recording' | 'work', field: string, queryField: string): boolean {
+        return processStringSearch(type, field, queryField, type);
     }
 
-    function getFileSystemObjectPathFromSubject(statement: Statement<string>, found: (entryPaht: string) => boolean): boolean {
-        return withFileSystemObjectPath(statement.subject, (entryPath, vPath) => stat(entryPath, () => {
-            return found(entryPath);
-        }, () => {
-            return stat(vPath, () => {
-                log(`  recording file ${entryPath} has been deleted.`);
-                moveToNext();
-                return true;
+    function processDefaultSearch(type: 'area' | 'artist' | 'release' | 'recording' | 'work', field: string): boolean {
+        return processEntitySearch(type, field, field);
+    }
 
-            }, () => {
-                return fail();
-            });
-        }));
+
+    function handleNotMountedVolume(vPath: string, mounted: () => void): boolean {
+        return stat(vPath, () => {
+            mounted();
+            return true;
+
+        }, () => {
+            //logError(`Volume ${vPath} not mounted. Please mount!`);
+            //fail();
+            volumeNotMounted(vPath);
+            return false;
+            //return fail();
+        });
+    }
+
+    function getFileSystemObjectPathFromSubject(statement: Statement<string>, found: (entryPath: string) => boolean): boolean {
+        return withFileSystemObjectPath(statement.subject, (entryPath, vPath) => stat(entryPath, () => found(entryPath), () => handleNotMountedVolume(vPath, () => {
+            log(`  recording file ${entryPath} has been deleted.`);
+            moveToNext();
+        })));
     }
 
 
@@ -1714,6 +1777,25 @@ function processCurrent(): boolean {
         waitFor(cb => m3uOut.on('finish', cb));
 
     }
+
+    function processMBCoreEntity<T extends Entity>(type: string, handlers: ((entity: T, type: string) => undefined | boolean)[]): boolean {
+        return getMBCoreEntity<T>(type, [], entity => processHandlers(handlers.map(handler => (() => handler(entity, type)))));
+    }
+
+    function processAttributeHandler<T>(field: LiteralPropertyName<T>): (record: T, type: string) => undefined | boolean {
+        return (record: T, type: string) => processAttribute<T>(record, field, type);
+    }
+
+    function enqueueMedium<T>(releaseId: string, position: number, notFoundResult: T): T | true {
+        return tryAddKeyedTaskIndent<T | true>('mb:medium', {
+            "mb:release-id": encodeString(releaseId),
+            "mb:position": encodeNumber(position)
+        }, () => `${releaseId}/${position}`, () => {
+            moveToNext();
+            return true;
+        }, () => notFoundResult);
+    }
+
     const type = getPropertyFromCurrent('type');
     switch (type) {
         case 'root':
@@ -1723,7 +1805,7 @@ function processCurrent(): boolean {
         case 'volume':
             const volumePath = getStringProperty('path'); // getStringProperty('path');
             return processFileSystemPath(volumePath, () => processDirectory(volumePath), fail, () => {
-                volumeNotMounted();
+                volumeNotMounted(volumePath);
                 return false;
             });
         case 'fileSystemEntry':
@@ -1828,7 +1910,7 @@ function processCurrent(): boolean {
                             logError('unknown file type!');
                             return false;
                     }
-                }, () => stat(vPath, () => {
+                }, () => handleNotMountedVolume(vPath, () => {
                     if (isDefined(getReferencesToCurrent('directory')())) {
                         log('  keeping missing entry, still referenced');
                         moveToNext();
@@ -1836,21 +1918,17 @@ function processCurrent(): boolean {
                     else {
                         deleteCurrentTask('missing');
                     }
-                    return true;
-                }, () => {
-                    volumeNotMounted();
-                    return false;
                 }))
             );
         case 'mb:artist':
-            return getMBCoreEntity<Artist>('artist', [], artist => processHandlers([
-                attributeHandler(artist, 'type', 'artist'),
-                attributeHandler(artist, 'name', 'artist'),
-                attributeHandler(artist, 'disambiguation', 'artist'),
-                enqueueMBEntity(artist, 'area'),
-                attributeHandler(artist['life-span'], 'begin', 'artist'),
-                processRelations(artist.relations),
-                () => {
+            return processMBCoreEntity<Artist>('artist', [
+                processAttributeHandler('type'), //artist => processAttribute(artist, 'type', 'artist'),
+                processAttributeHandler('name'), //artist => processAttribute(artist, 'name', 'artist'),
+                processAttributeHandler('disambiguation'), //artist => processAttribute(artist, 'disambiguation', 'artist'),
+                artist => enqueueMBEntity(artist, 'area')(),
+                artist => processAttribute(artist['life-span'], 'begin', 'artist'),
+                artist => processRelations(artist.relations)(),
+                artist => {
                     const recordingList: RecordingList = mbGetList('recording', {
                         artist: artist.id
                     });
@@ -1858,8 +1936,7 @@ function processCurrent(): boolean {
                     assertEquals(recordingList["recording-count"], recordings.length);
                     return processNextEntityFromList(recordings, 'recording');
                 },
-
-            ]));
+            ]);
         // TODO: browse recoring?artist=
         case 'mb:area':
             return getMBCoreEntity<Area>('area', ['aliases', 'tags'], area => processHandlers([
@@ -1872,7 +1949,7 @@ function processCurrent(): boolean {
             ]));
         case 'mb:release':
 
-            return getMBCoreEntity<Release>('release', ['artists', 'labels', 'release-groups'], release => {
+            return getMBCoreEntity<Release>('release', ['artists', 'release-groups', 'media', 'labels'], release => {
 
                 function releaseAttributeHandler(attribute: LiteralPropertyName<Release>): () => boolean | undefined {
                     return attributeHandler(release, attribute, 'release')
@@ -1880,16 +1957,40 @@ function processCurrent(): boolean {
 
                 return processHandlers([
                     releaseAttributeHandler('title'),
+                    processEntityList<Release, ArtistCredit>(release, 'artist-credit', 'artist'),
+                    enqueueMBEntity(release, 'release-group'),
+                    () => {
+                        for (const medium of release.media) {
+
+                            //fail();
+
+                            if (enqueueMedium<boolean>(release.id, medium.position, false)) {
+                                return true;
+                            }
+                            /*
+                            'mb:medium', {
+                                "mb:release-id": encodeString(release.id),
+                                "mb:position": encodeNumber(medium.position)
+                            }, () => `${release.id}/${medium.position}`, () => {
+                                fail();
+                                moveToNext();
+                                return true;
+                            }, () => false)) {
+                                return true;
+                            }
+                            */
+
+                        }
+                        return undefined;
+                    },
                     releaseAttributeHandler('status'),
                     attributeHandler(release['text-representation'], 'language', 'release'),
                     attributeHandler(release['text-representation'], 'script', 'release'),
                     releaseAttributeHandler('date'),
                     processEntityList<Release, ReleaseEvent>(release, "release-events", 'area'),
-                    processEntityList<Release, ArtistCredit>(release, 'artist-credit', 'artist'),
                     releaseAttributeHandler('barcode'),
                     releaseAttributeHandler('asin'),
                     handleAttributes<Release, LabelInfo>(release, 'label-info', 'catalog-number', 'release', 'catno'),
-                    enqueueMBEntity(release, 'release-group')
                 ])
             });
 
@@ -2128,13 +2229,18 @@ function processCurrent(): boolean {
             const position = (medium as Medium).position;
             const track = findTrack(medium as Medium, mbid) as Track;
             return processHandlers([
-                () => tryAddKeyedTaskIndent<boolean | undefined>('mb:medium', {
+
+                () => enqueueMedium(releaseId, position, undefined),
+                /*
+                tryAddKeyedTaskIndent<boolean | undefined>('mb:medium', {
                     "mb:release-id": encodeString(releaseId),
                     "mb:position": encodeNumber(position)
                 }, () => `${releaseId}/${position}`, () => {
                     moveToNext();
                     return true;
-                }, () => undefined),
+                }, () => undefined)
+                */
+
                 enqueueMBEntity(track, 'recording'),
                 () => {
                     const discs = medium.discs;
@@ -2224,15 +2330,19 @@ function processCurrent(): boolean {
         case 'mb:recording-title':
             return processDefaultSearch('recording', 'title');
         case 'mb:artist-name':
-            return processDefaultSearch('artist', 'name');
+            //fail();
+            // should search artist field and not name field
+            // search string needs quote
+            //return processDefaultSearch('artist', 'name');
+            return processEntitySearch('artist', 'name', 'artist');
         case 'mb:area-name':
             return processDefaultSearch('area', 'name');
         case 'mb:release-language':
-            return processStringSearch('release', 'language', 'lang', 'release');
+            return processEntitySearch('release', 'language', 'lang');
         case 'mb:medium-format':
             return processStringSearch('release', 'format', 'format', 'medium');
         case 'mb:work-title':
-            return processDefaultSearch('work', 'title');
+            return processEntitySearch('work', 'title', 'work');
         case 'mb:recording-length':
             return processSearch('recording', 'length', 'n', 'dur', 'recording');
         case 'mb:release-script':
@@ -2340,6 +2450,25 @@ function processCurrent(): boolean {
             moveToNext();
             return true;
         //return fail();
+        case 'mb:url':
+            return processMBCoreEntity<URL>('url', [
+                url => enqueueTypedTopLevelTask(url.resource, 'url')
+                /*
+                attributeHandler(work, 'title', 'work'),
+                processRelations(work.relations),
+                () => {
+                    openMB('work', work.id);
+                    completed();
+                    return false;
+                }
+                */
+            ]);
+        //fail();
+        //return false;
+        case 'mb:release-group':
+            return processMBCoreEntity<ReleaseGroup>('release-group', [processAttributeHandler('title') /*releaseGroup => processAttribute(releaseGroup, 'title', 'release-group') */]);
+        //return fail();
+        //return getMBCoreEntity<ReleaseGroup>('release-group', [], releaseGroup => processHandlers())
         default:
             console.error(type);
             fail();
