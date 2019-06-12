@@ -18,18 +18,21 @@ import format = require('format-duration');
 
 commander.version('0.0.1').description('music-scanner command line tool');
 
+type Function<P, R> = (parameter: P) => R;
 
+type Consumer<T> = Function<T, void>;
 
-type Consumer<T> = (value: T) => void;
-
-function getRunner(): (value?: any) => void {
+function getRunner(): Consumer<any> {
     const currentFiber = Fiber.current;
     return (value?: any) => currentFiber.run(value);
 }
 
 const yieldValue = Fiber.yield;
 
-function waitFor<R>(asyncFunction: (consumer: Consumer<R>) => void): R {
+type Visitable<T> = Consumer<Consumer<T>>;
+
+
+function waitFor<R>(asyncFunction: Visitable<R>): R {
     asyncFunction(getRunner());
     return yieldValue();
 }
@@ -39,7 +42,9 @@ interface Pair<F, S> {
     readonly second: S
 }
 
-function waitFor2<F, S>(asyncFunction: (consumer: (first: F, second: S) => void) => void): Pair<F, S> {
+type BiFunction<P1, P2, R> = (p1: P1, p2: P2) => R;
+
+function waitFor2<F, S>(asyncFunction: Consumer<BiFunction<F, S, void>>): Pair<F, S> {
     return waitFor((consumer: Consumer<Pair<F, S>>) => asyncFunction((first: F, second: S) => consumer({
         first: first,
         second: second
@@ -87,7 +92,6 @@ interface CompareValues<T> {
     actual: any,
     expected: T
 }
-
 
 
 function* compareObjects<T>(actual: Dictionary<any>, expected: Dictionary<T>): IterableIterator<CompareValues<T>> {
@@ -139,11 +143,14 @@ function isUndefined(value: any): value is undefined {
 function assertUndefined(value: any): void {
     assert(isUndefined(value));
 }
+
+
 interface Statement<T> {
     subject: T;
     predicate: T;
     object: T;
 }
+
 
 function statement<T>(subject: T, predicate: T, object: T): Statement<T> {
     return {
@@ -190,7 +197,9 @@ function decodeStringLiteral(stringLiteral: string): string {
     return decodeLiteral(stringLiteral, 's');
 }
 
-function makeBlockingQueue<T>(assignProducers: Consumer<Consumer<T>>): Provider<T> {
+type Provider<T> = () => T;
+
+function makeBlockingQueue<T>(assignProducers: Visitable<T>): Provider<T> {
     const buffer: T[] = [];
     let waiting: boolean = false;
     const run = getRunner();
@@ -240,7 +249,7 @@ function prepareDBStream(stream: any): Provider<any> {
 }
 
 
-function streamOpt<T>(stream: any, onEmpty: () => T, onData: (data: any) => T): T {
+function streamOpt<T>(stream: any, onEmpty: Provider<T>, onData: Function<any, T>): T {
     const next = prepareDBStream(stream);
     const data = next();
     if (isUndefined(data)) {
@@ -252,10 +261,13 @@ function streamOpt<T>(stream: any, onEmpty: () => T, onData: (data: any) => T): 
     }
 }
 
+const logError = console.error;
 
+/*
 function logError(message: string): void {
     console.error(message);
 }
+*/
 
 function volumeNotMounted(path: string): void {
     logError(`Volume ${path} not mounted. Please mount!`);
@@ -282,11 +294,11 @@ function defineCommand(cmdSyntax: string, description: string, options: string[]
 const db = levelgraph(level(dbPath), { joinAlgorithm: 'basic' });
 
 
-function get<T>(pattern: StatementPattern, onEmpty: () => T, onStatement: (statement: Statement<string>) => T): T {
+function get<T>(pattern: StatementPattern, onEmpty: Provider<T>, onStatement: Function<Statement<string>, T>): T {
     return streamOpt(db.getStream(pattern), onEmpty, onStatement);
 }
 
-function navigate<T>(source: string, predicate: string, isOutDirection: boolean, notFound: () => T, found: (target: string) => T): T {
+function navigate<T>(source: string, predicate: string, isOutDirection: boolean, notFound: Provider<T>, found: Function<string, T>): T {
 
     const pattern: StatementPattern = { predicate: predicate };
     const sourceKey = isOutDirection ? 'subject' : 'object';
@@ -304,7 +316,7 @@ function navigate<T>(source: string, predicate: string, isOutDirection: boolean,
     });
 }
 
-function getObject<T>(subject: string, predicate: string, notFound: () => T, found: (object: string) => T): T {
+function getObject<T>(subject: string, predicate: string, notFound: Provider<T>, found: Function<string, T>): T {
     return navigate(subject, predicate, true, notFound, found);
 }
 
@@ -327,13 +339,8 @@ function persist(type: Operation, statements: Statement<string>[]): void {
 
 type Predicate<T> = (value: T) => boolean;
 
-/*
-type Matcher<T> = {
-    readonly [P in keyof T]: Predicate<T[P]>;
-};
-*/
 
-function mapDictionary<F, T>(source: Dictionary<F>, mapper: (key: string, value: F) => T): T[] {
+function mapDictionary<F, T>(source: Dictionary<F>, mapper: BiFunction<string, F, T>): T[] {
     return Object.getOwnPropertyNames(source).map(key => mapper(key, source[key]));
 }
 
@@ -406,22 +413,17 @@ let lastAccessed: {
     [name: string]: number;
 } = {};
 
-interface OpenTagEvent {
+
+type SaxEvent = {
     readonly type: 'openTag';
     readonly tag: sax.Tag;
-}
-
-interface TextEvent {
+} | {
     readonly type: 'text';
     readonly text: string;
-}
-
-interface CloseTagEvent {
+} | {
     readonly type: 'closeTag';
     readonly name: string;
-}
-
-type SaxEvent = OpenTagEvent | TextEvent | CloseTagEvent;
+};
 
 type Attributes = Dictionary<string>;
 
@@ -488,23 +490,10 @@ function map<F, T>(sequence: Sequence<F>, mapper: (source: F) => Sequence<T>): S
 }
 
 function concat<T>(...sequences: Sequence<T>[]): Sequence<T> {
-
-
-
     return map(sequence(...sequences), seq => seq);
 
 }
 
-
-
-function sequenceToString(sequence: Sequence<any>): string {
-    const members: string[] = [];
-    while (sequence != undefined) {
-        members.push(asString(sequence.first));
-        sequence = sequence.rest;
-    }
-    return members.join(',');
-}
 
 function append<T>(sequence: Sequence<T>, elem: T): SequenceNode<T> {
 
@@ -521,7 +510,16 @@ function append<T>(sequence: Sequence<T>, elem: T): SequenceNode<T> {
 
 
     }
-    res.toString = () => sequenceToString(res);
+    res.toString = () => {
+        const members: string[] = [];
+        let sequence: SequenceNode<T> | undefined = res;
+        while (sequence != undefined) {
+            members.push(asString(sequence.first));
+            sequence = sequence.rest;
+        }
+        return members.join(',');
+    }
+    //return sequenceToString(res) };
     return res;
 
 }
@@ -619,7 +617,7 @@ function expectArea(mbid: string, name: string, additionalTags: Sequence<Predica
     return expectAreaRaw('area', mbid, name, additionalTags);
 }
 
-type Provider<T> = () => T;
+
 
 function getStream(pattern: StatementPattern): Provider<Statement<string>> {
     return prepareDBStream(db.getStream(pattern));
@@ -733,6 +731,9 @@ function appendToPrev(taskId: string): UpdateStatement[] {
     return updateObjectFromCurrent(getPrevious(getCurrentTask()), 'next', taskId);
 }
 
+function searchOpt<T>(query: Statement<any>[], onEmpty: () => T, onData: (data: any) => T) {
+    return streamOpt(db.searchStream(query), onEmpty, onData);
+}
 
 function tryAddKeyedTask<T>(type: string, keys: Dictionary<string>, path: () => string, prefix: string, linkPredicate: string | undefined, enqueued: (taskId: string) => T, alreadyAdded: (found: any) => T): T {
 
@@ -747,7 +748,7 @@ function tryAddKeyedTask<T>(type: string, keys: Dictionary<string>, path: () => 
         }, (key, value) => mapper(subject, key, value));
     }
 
-    return streamOpt(db.searchStream(mapAttributeValues(statement, db.v('s'))), () => {
+    return searchOpt(mapAttributeValues(statement, db.v('s')), () => {
         log(`${prefix}adding ${type} ${path()}`);
         const taskId = `task/${uuid()}`;
         update([
@@ -1006,9 +1007,9 @@ type ProcessEntityList<T > ={
     collection: ConformPropertyName<T, any[]>;
     elementName: ConformPropertyName<ConformPropertyMembers<T, any[]>, Entity>
 };
-
+ 
 //type PELR = ProcessEntityList<Release>;
-
+ 
 const pelr: ProcessEntityList<Release> {
     collection: ""
 }
@@ -1136,12 +1137,13 @@ function getAudioMetaData(filePath: string): mm.IAudioMetadata {
     return r.metaData;
 }
 
+/*
 function getAcoustId(filePath: string): string {
     const acoustId = getAudioMetaData(filePath).common.acoustid_id;
     assertDefined(acoustId);
     return acoustId as string;
 }
-
+*/
 function excludeNull<T>(data: T | null, predicate: (data: T) => boolean): boolean {
     return data !== null && predicate(data);
 }
@@ -1446,10 +1448,10 @@ function processCurrent(): boolean {
         function pattern(predicate: string, object: string): Statement<any> {
             return statement(db.v('entity'), predicate, object);
         }
-        return streamOpt(db.searchStream([
+        return searchOpt([
             pattern('type', mb(type)),
-            pattern('mb:mbid', encodeString(mbid))
-        ]), notFound, result => found(result.entity))
+            pattern(mb('mbid'), encodeString(mbid))
+        ], notFound, result => found(result.entity));
     }
 
 
@@ -1466,7 +1468,7 @@ function processCurrent(): boolean {
             log('  complete: all search results enqueued');
             moveToNext();
             return true;
-
+ 
         })
         */
 
@@ -1732,12 +1734,14 @@ function processCurrent(): boolean {
         });
     }
 
+    /*
     function getFileSystemObjectPathFromSubject(statement: Statement<string>, found: (entryPath: string) => boolean): boolean {
         return withFileSystemObjectPath(statement.subject, (entryPath, vPath) => stat(entryPath, () => found(entryPath), () => handleNotMountedVolume(vPath, () => {
             log(`  recording file ${entryPath} has been deleted.`);
             moveToNext();
         })));
     }
+    */
 
 
 
@@ -1766,7 +1770,7 @@ function processCurrent(): boolean {
         })
         /*
         writeLine(`# https://musicbrainz.org/recording/${recording.id}`);
-
+ 
         writeLine(withVolumeAndEntryPath(fso, (name, path) => `${name}\\${path}`, (vPath, ePath) => {
             assertSame(vPath, '/Volumes/Musik');
             return `D:\\Musik\\${ePath}`;
@@ -1818,12 +1822,12 @@ function processCurrent(): boolean {
                         case '.mp4':
                             //case '.wma':
                             /*
-
+ 
                             const promise: Promise<mm.IAudioMetadata> = mm.parseFile(entryPath);
                             const fiber = Fiber.current;
                             promise.then((value: mm.IAudioMetadata) => fiber.run({ type: "metadata", metaData: value }), (err: any) => fiber.run({ type: "error", error: err }));
                             const r = yieldValue();
-
+ 
                             assertEquals(r.type, 'metadata');
                             */
                             const metaData: mm.IAudioMetadata = getAudioMetaData(entryPath);
@@ -1893,6 +1897,7 @@ function processCurrent(): boolean {
                                         return undefined;
                                     }
                                 },
+                                fail, // check file associated track is preferred track, if not re-tag with preferred track
                                 () => {
                                     if (metaData.format.dataformat !== 'flac') {
                                         logError('  Not flac encoding! Consider to replace file with lossless flac encoding')
@@ -1983,6 +1988,7 @@ function processCurrent(): boolean {
                         }
                         return undefined;
                     },
+                    fail, // create tracklist
                     releaseAttributeHandler('status'),
                     attributeHandler(release['text-representation'], 'language', 'release'),
                     attributeHandler(release['text-representation'], 'script', 'release'),
@@ -2021,6 +2027,7 @@ function processCurrent(): boolean {
                         return enqueueNextTask(result.tracks, (rec, handler) => handler(rec.id, 'acoustid'), 'acoustid', undefined, true, () => undefined)
                         //fail();
                     },
+                    /*
                     () => {
                         const next = getReferencesToCurrent('recording');
                         const fso1 = next();
@@ -2043,24 +2050,11 @@ function processCurrent(): boolean {
                                 //return false;
                             }
                             else {
-
+ 
                                 // found single recording, everything fine, set playlist
                                 return updateObject('playlist', fso1.subject);
                             }
                             //return isUndefined(next()) ? updateObject('playlist', fso1.subject) : fail();
-                            /*
-                             if (isDefined(fso2)) {
-                                // duplicate files for same recording
-                                // check whether acoustid's of the files are the same
-                                // when not same, this would be an indication that the recordings have been merged incorrectly
-                                // when not same, this would be an indication that the recordings have been merged incorrectly
-                                return fail();
-                            }
-                            else {
-                                // found single recording, everything fine, set playlist
-                                return updateObject('playlist', fso1.subject);
-                            }
-                            */
                         }
                         else {
                             // no recording found
@@ -2072,43 +2066,21 @@ function processCurrent(): boolean {
                             //return fail();
                         }
                     },
+                    */
                     () => {
+                        /*
                         const fso = getPropertyFromCurrent('playlist');
                         //log(fso);
                         makePlaylist(fso, path => `  write ${path}`, (comment, entry) => {
                             comment('recording', recording.id);
                             entry(fso);
                         })
-                        /*
-                        let dir = getProperty(fso, 'directory');
-                        assertSameProp(dir, 'type', 'fileSystemEntry');
-                        const parts = currentTask.split('/');
-                        assertSame(parts.length, 2);
-                        assertSame(parts[0], 'task');
-                        const m3uPath = join(getPath(dir), `${parts[1]}.m3u8`);
-
-                        log(m3uPath);
-                        var m3uOut = fs.createWriteStream(m3uPath);
-
-                        function writeLine(line: string): void {
-                            m3uOut.write(`${line}\n`);
-                        }
-
-                        writeLine(`# https://musicbrainz.org/recording/${recording.id}`);
-
-                        writeLine(withVolumeAndEntryPath(fso, (name, path) => `${name}\\${path}`, (vPath, ePath) => {
-                            assertSame(vPath, '/Volumes/Musik');
-                            return `D:\\Musik\\${ePath}`;
-                        }));
-
-                        m3uOut.end();
-
-                        waitFor(cb => m3uOut.on('finish', cb));
                         */
 
                         //fail(); // write playlist
                         log('  completed. Please verify!');
                         openRecording(recording.id);
+                        fail();
                         moveToNext();
                         return false;
                     }
@@ -2205,7 +2177,7 @@ function processCurrent(): boolean {
                 () => {
                     moveToNext();
                     if (recordings.length === 1) {
-                        log("  completed: no merge potential");
+                        log("  pleted: no merge potential");
                         //openBrowser('acoustid.org', 'track', acoustid);
                         return true;
 
@@ -2270,6 +2242,60 @@ function processCurrent(): boolean {
                     }//}
 
                 },
+                // determine preferred track list, by medium.release.tracklist.preferred
+                // get corresponding preferred track from prefered track list
+                // set preferred
+                () => {
+                    //const vRelease = db.v('release');
+                    const vTrackList = db.v('tracklist');
+                    function releasePattern(predicate: string, object: string): Statement<any> {
+                        return statement(db.v('release'), predicate, object);
+                    }
+                    return searchOpt([
+                        releasePattern('type', mb('release')),
+                        releasePattern(mb('mbid'), encodeString(releaseId)),
+                        releasePattern('tracklist', vTrackList),
+                        statement<any>(vTrackList, 'preferred', db.v('preferred'))
+                    ], () => {
+                        log('  Preferred release not set -> skip');
+                        moveToNext();
+                        return true;
+                    }, fail);
+                    //return fail();
+                },
+                //fail,
+
+                // if preferred track is current track then
+                //   check for music files with current track
+                //   case number of found music files
+                //   0: find musicfile with same recording, duiplicate and retag
+                //   1: // everithing ok
+                //   default:
+                //     duplicate found -> delete
+                //   end case
+                // endif
+                fail,
+
+                /*
+                () => {
+                    // check multiple files for track
+                    assertUndefined(getReferencesToCurrent("track")());
+                    // ensure file exist if preferred
+                    getObject(currentTask, "preferred", fail, fail);
+                    
+                    if (isDefined(getReferencesToCurrent("track")())) {
+                        fail();
+ 
+                    }
+                    else {
+                        fail();
+                    }
+                    //next()
+                    
+ 
+                    return fail();
+                },
+                */
                 COMPLETED_HANDLER
             ]);
         }
@@ -2287,6 +2313,7 @@ function processCurrent(): boolean {
                         attributeHandler(medium, 'format', 'medium'),
                         processListAttribute<Medium, Disc>(medium, "discs", disc => disc, 'discid'),
                         processListAttribute<Medium, Track>(medium, "tracks", track => track, 'track'),
+                        /*
                         () => {
                             const tracks = medium.tracks;
                             let index = tracks.length;
@@ -2302,6 +2329,7 @@ function processCurrent(): boolean {
                             }
                             return updateObject('playlist', plist);
                         },
+                        */
                         COMPLETED_HANDLER
                     ]);
                 });
@@ -2395,9 +2423,9 @@ function processCurrent(): boolean {
             */
         case 'playlist':
             const next = getReferencesToCurrent('playlist');
-            let statement = next();
+            let stmt = next();
             const fso = getPropertyFromCurrent('first');
-            const item = statement.subject;
+            const item = stmt.subject;
             makePlaylist(fso, p => p, (comment, entry) => {
                 comment('release', `${decodeStringLiteral(getProperty(item, 'mb:release-id'))}/disc/${decodeLiteral(getProperty(item, 'mb:position'), 'n')}`);
                 entry(getPropertyFromCurrent('first'));
@@ -2419,16 +2447,16 @@ function processCurrent(): boolean {
             var m3uOut = fs.createWriteStream(m3uPath);
             const item = statement.subject;
             assertSameProp(item, 'type', 'mb:medium');
-
+ 
             function writeLine(line: string): void {
                 m3uOut.write(`${line}\n`);
             }
-
+ 
             writeLine(`# https://musicbrainz.org/release/${decodeStringLiteral(getProperty(item, 'mb:release-id'))}/disc/${decodeLiteral(getProperty(item, 'mb:position'), 'n')}`);
-
+ 
             let fse = getPropertyFromCurrent('first');
             assertSameProp(fse, 'type', 'fileSystemEntry');
-
+ 
             function listEntry(fse: string): void {
                 writeLine(withVolumeAndEntryPath(fse, (name, path) => `${name}\\${path}`, (vPath, ePath) => {
                     assertSame(vPath, '/Volumes/Musik');
@@ -2436,14 +2464,14 @@ function processCurrent(): boolean {
                 }));
             }
             listEntry(fse);
-
+ 
             const rest = getPropertyFromCurrent('rest');
             assertSameProp(rest, 'type', 'fileSystemEntry');
             listEntry(rest);
-
-
+ 
+ 
             m3uOut.end();
-
+ 
             waitFor(cb => m3uOut.on('finish', cb));
             */
             log('  written');
