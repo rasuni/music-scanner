@@ -518,14 +518,14 @@ function append<T>(sequence: Sequence<T>, elem: T): SequenceNode<T> {
             sequence = sequence.rest;
         }
         return members.join(',');
-    }
-    //return sequenceToString(res) };
+    };
     return res;
 
 }
 
+type SaxEventMatchers = Sequence<Predicate<SaxEvent>>;
 
-function matchTag(name: string, attributes: Predicate<any>, inner: Sequence<Predicate<SaxEvent>>): Sequence<Predicate<SaxEvent>> {
+function matchTag(name: string, attributes: Predicate<any>, inner: SaxEventMatchers): SaxEventMatchers {
 
     return {
         first: matchObject<SaxEvent>({
@@ -547,25 +547,25 @@ function matchTag(name: string, attributes: Predicate<any>, inner: Sequence<Pred
     }
 }
 
-function matchTagAndAttributes(name: string, attributes: Attributes, inner: Sequence<Predicate<SaxEvent>>): Sequence<Predicate<SaxEvent>> {
+function matchTagAndAttributes(name: string, attributes: Attributes, inner: SaxEventMatchers): SaxEventMatchers {
     return matchTag(name, expectEquals(attributes), inner);
 }
 
-function expectTag(name: string, attributes: Attributes, inner: Sequence<Predicate<SaxEvent>>): Sequence<Predicate<SaxEvent>> {
+function expectTag(name: string, attributes: Attributes, inner: SaxEventMatchers): SaxEventMatchers {
     return matchTagAndAttributes(name, attributes, inner);
 }
 
 
-function expectTextEvent(value: Predicate<string>): Sequence<Predicate<SaxEvent>> {
+function expectTextEvent(value: Predicate<string>): SaxEventMatchers {
     return sequence(matchObject<SaxEvent>({ type: expectEquals('text'), text: value }));
 }
 
-function matchTextTag(name: string, attributes: Attributes, value: Predicate<string>): Sequence<Predicate<SaxEvent>> {
+function matchTextTag(name: string, attributes: Attributes, value: Predicate<string>): SaxEventMatchers {
     return expectTag(name, attributes, expectTextEvent(value));
 }
 
 
-function matchPlainTextTag(name: string, value: Predicate<string>): Sequence<Predicate<SaxEvent>> {
+function matchPlainTextTag(name: string, value: Predicate<string>): SaxEventMatchers {
     return matchTextTag(name, {}, value);
 }
 
@@ -586,13 +586,7 @@ function expectEntityTag(tagName: string, mbid: string, additionalTags: Sequence
     }, additionalTags);
 }
 
-
-function expectNamed(tagName: string, mbid: string, name: string, additionalTags: Sequence<Predicate<SaxEvent>>): Sequence<Predicate<SaxEvent>> {
-    return expectEntityTag(tagName, mbid, concat(
-        nameTags(expectEquals(name), name),
-        additionalTags
-    ));
-}
+////
 
 function expectSimpleTag(name: string, inner: Sequence<Predicate<SaxEvent>>): Sequence<Predicate<SaxEvent>> {
     return expectTag(name, {}, inner);
@@ -610,7 +604,11 @@ const expectUSIsoList = expectIsoList1('US');
 
 
 function expectAreaRaw(tagName: string, mbid: string, name: string, additionalTags: Sequence<Predicate<SaxEvent>>): Sequence<Predicate<SaxEvent>> {
-    return expectNamed(tagName, mbid, name, additionalTags);
+    //return expectNamed(tagName, mbid, name, additionalTags);
+    return expectEntityTag(tagName, mbid, concat(
+        nameTags(expectEquals(name), name),
+        additionalTags
+    ));
 }
 
 function expectArea(mbid: string, name: string, additionalTags: Sequence<Predicate<SaxEvent>>): Sequence<Predicate<SaxEvent>> {
@@ -1444,14 +1442,19 @@ function processCurrent(): boolean {
         return enqueueNextEntityTask(entities, entity => entity, () => entityType, completed);
     }
 
-    function searchMBEntityTask<R>(type: string, mbid: string, notFound: () => R, found: (taskId: string) => R) {
+    function searchOptMBEntity<R>(type: string, mbid: string, additionalFilter: Statement<any>[], notFound: () => R, found: (result: any) => R) {
         function pattern(predicate: string, object: string): Statement<any> {
             return statement(db.v('entity'), predicate, object);
         }
         return searchOpt([
             pattern('type', mb(type)),
-            pattern(mb('mbid'), encodeString(mbid))
-        ], notFound, result => found(result.entity));
+            pattern(mb('mbid'), encodeString(mbid)),
+            ...additionalFilter
+        ], notFound, found);
+    }
+
+    function searchMBEntityTask<R>(type: string, mbid: string, notFound: () => R, found: (taskId: string) => R) {
+        return searchOptMBEntity(type, mbid, [], notFound, result => found(result.entity));
     }
 
 
@@ -1897,7 +1900,13 @@ function processCurrent(): boolean {
                                         return undefined;
                                     }
                                 },
-                                fail, // check file associated track is preferred track, if not re-tag with preferred track
+                                () => {
+
+                                    return searchOptMBEntity('track', mbid, [
+                                        statement(db.v('entity'), 'preferred', db.v('preferred'))
+                                    ], () => undefined, fail);
+                                },
+                                //fail, // check file associated track is preferred track, if not re-tag with preferred track
                                 () => {
                                     if (metaData.format.dataformat !== 'flac') {
                                         logError('  Not flac encoding! Consider to replace file with lossless flac encoding')
@@ -2248,16 +2257,13 @@ function processCurrent(): boolean {
                 () => {
                     //const vRelease = db.v('release');
                     const vTrackList = db.v('tracklist');
-                    function releasePattern(predicate: string, object: string): Statement<any> {
-                        return statement(db.v('release'), predicate, object);
-                    }
-                    return searchOpt([
-                        releasePattern('type', mb('release')),
-                        releasePattern(mb('mbid'), encodeString(releaseId)),
-                        releasePattern('tracklist', vTrackList),
-                        statement<any>(vTrackList, 'preferred', db.v('preferred'))
+                    return searchOptMBEntity('release', releaseId, [
+                        statement(db.v('entity'), 'tracklist', vTrackList),
+                        statement(vTrackList, 'preferred', db.v('preferred'))
                     ], () => {
                         log('  Preferred release not set -> skip');
+                        // clear preferred on task
+                        fail();
                         moveToNext();
                         return true;
                     }, fail);
