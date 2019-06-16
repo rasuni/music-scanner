@@ -427,7 +427,9 @@ type SaxEvent = {
 
 type Attributes = Dictionary<string>;
 
-function isDefined(value: any): value is boolean | number | string | object {
+function isDefined(value: any): value is boolean | number | string | {
+    [name: string]: any
+} {
     return value !== undefined;
 }
 
@@ -586,18 +588,16 @@ function expectEntityTag(tagName: string, mbid: string, additionalTags: Sequence
     }, additionalTags);
 }
 
-////
 
 function expectSimpleTag(name: string, inner: Sequence<Predicate<SaxEvent>>): Sequence<Predicate<SaxEvent>> {
     return expectTag(name, {}, inner);
 }
 
-function expectIsoList(id: string, code: string): Sequence<Predicate<SaxEvent>> {
-    return expectSimpleTag(`iso-3166-${id}-code-list`, expectPlainTextTag(`iso-3166-${id}-code`, code));
-}
+
+////
 
 function expectIsoList1(code: string): Sequence<Predicate<SaxEvent>> {
-    return expectIsoList('1', code);
+    return expectSimpleTag(`iso-3166-1-code-list`, expectPlainTextTag(`iso-3166-1-code`, code));
 }
 
 const expectUSIsoList = expectIsoList1('US');
@@ -984,38 +984,6 @@ interface URL extends Entity {
 interface ReleaseGroup extends Entity {
     readonly title: string;
 }
-
-//type ArrayPropertyName<T> = ConformPropertyName<T, any[]>;
-
-//type ElementType<T> = T extends (infer E)[] ? E : never;
-
-//type APRelease = ArrayPropertyNames<Release>;
-
-//type Arelease = Release[APRelease];
-
-/*
-type StringPropertyName<T> = ConformPropertyName<T, string>;
-*/
-
-//type Element<T> = T extends (infer E)[] ? E : never;
-//type A = Element<Entity[]>;
-
-/*
-type ProcessEntityList<T > ={
-    collection: ConformPropertyName<T, any[]>;
-    elementName: ConformPropertyName<ConformPropertyMembers<T, any[]>, Entity>
-};
- 
-//type PELR = ProcessEntityList<Release>;
- 
-const pelr: ProcessEntityList<Release> {
-    collection: ""
-}
-*/
-
-// = (source: T, collection: ConformPropertyName<T, (infer E)[]>, elementName: ConformPropertyName<E, Entity>, type: string) => (() => boolean | undefined)
-//console.log('a+-&&||!(){}[]^"~*?:\\/bcd');
-//console.log('a+-&&||!(){}[]^"~*?:\\/bcd'.replace(/[!"()&+-:]|\||\{|\}|\[|\]|\^|\~|\*|\?|\\|\//g, s => `\\${s}`));
 
 function findTrack(media: Medium, trackId: string): Track | undefined {
     return media.tracks.find(track => track.id === trackId)
@@ -1448,7 +1416,7 @@ function processCurrent(): boolean {
         }
         return searchOpt([
             pattern('type', mb(type)),
-            pattern(mb('mbid'), encodeString(mbid)),
+            pattern('mb:mbid', encodeString(mbid)),
             ...additionalFilter
         ], notFound, found);
     }
@@ -1864,6 +1832,7 @@ function processCurrent(): boolean {
                             return processHandlers([
                                 checkId(acoustid, () => enqueueTypedTopLevelTask(acoustid as string, 'acoustid'), 'acoustid'),
                                 checkId(trackId, () => enqueueMBResourceTask(mbid, 'track', () => undefined), 'trackid'),
+                                fail, // must also provide track property
                                 () => searchMBEntityTask<boolean | undefined>('recording', recordingId(), () => undefined, taskId => updateObject('recording', taskId)),
                                 () => {
                                     const acoustidForRecording: AcoustIdTracks = acoustIdGet('track/list_by_mbid', {
@@ -2036,11 +2005,13 @@ function processCurrent(): boolean {
                         return enqueueNextTask(result.tracks, (rec, handler) => handler(rec.id, 'acoustid'), 'acoustid', undefined, true, () => undefined)
                         //fail();
                     },
-                    /*
+
                     () => {
                         const next = getReferencesToCurrent('recording');
                         const fso1 = next();
                         if (isDefined(fso1)) {
+                            return fail();
+                            /*
                             const fso2 = next();
                             if (isDefined(fso2)) {
                                 // duplicate files for same recording
@@ -2059,11 +2030,13 @@ function processCurrent(): boolean {
                                 //return false;
                             }
                             else {
+                                fail();
  
                                 // found single recording, everything fine, set playlist
                                 return updateObject('playlist', fso1.subject);
                             }
                             //return isUndefined(next()) ? updateObject('playlist', fso1.subject) : fail();
+                            */
                         }
                         else {
                             // no recording found
@@ -2075,7 +2048,7 @@ function processCurrent(): boolean {
                             //return fail();
                         }
                     },
-                    */
+
                     () => {
                         /*
                         const fso = getPropertyFromCurrent('playlist');
@@ -2260,16 +2233,19 @@ function processCurrent(): boolean {
                     return searchOptMBEntity('release', releaseId, [
                         statement(db.v('entity'), 'tracklist', vTrackList),
                         statement(vTrackList, 'preferred', db.v('preferred'))
-                    ], () => {
+                    ], () => undefined, /*() => {
                         log('  Preferred release not set -> skip');
                         // clear preferred on task
                         fail();
                         moveToNext();
                         return true;
-                    }, fail);
+                    }*/ fail);
                     //return fail();
                 },
                 //fail,
+
+
+
 
                 // if preferred track is current track then
                 //   check for music files with current track
@@ -2280,7 +2256,38 @@ function processCurrent(): boolean {
                 //     duplicate found -> delete
                 //   end case
                 // endif
-                fail,
+                () => getObject(currentTask, 'preferred', () => {
+                    const nextFile = getReferencesToCurrent('track');
+                    //const statement = next();
+                    if (isDefined(nextFile())) {
+                        return fail();
+                    }
+                    else {
+                        const fso = db.v('fso');
+                        const recording = db.v('recording');
+                        const nextRFile = prepareDBStream(db.searchStream([
+                            statement(fso, 'type', 'fileSystemEntry'),
+                            statement(fso, 'recording', recording),
+                            statement(recording, 'mb:mbid', encodeString(track.recording.id))
+                        ]));
+                        let data = nextRFile();
+                        if (isDefined(data)) {
+                            log('  missing track couuld be constructed from one of following files:')
+                            for (; ;) {
+                                log(`  * ${getPath((data as any).fso)}`);
+                                data = nextRFile();
+                                if (isUndefined(data)) {
+                                    break;
+                                }
+                            }
+                        }
+                        openMB('track', track.id);
+                        moveToNext();
+                        return false;
+                    }
+                    //                 return fail();
+                }, fail),
+                //fail,
 
                 /*
                 () => {
