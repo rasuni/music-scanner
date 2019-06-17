@@ -600,21 +600,17 @@ function expectIsoList1(code: string): Sequence<Predicate<SaxEvent>> {
 
 ////
 
-
 function expectArea(mbid: string, name: string, additionalTags: Sequence<Predicate<SaxEvent>>): Sequence<Predicate<SaxEvent>> {
     return expectEntityTag('area', mbid, concat(
         nameTags(expectEquals(name), name),
         additionalTags
     ));
-    //return expectAreaRaw('area', mbid, name, additionalTags);
 }
-
 
 
 function getStream(pattern: StatementPattern): Provider<Statement<string>> {
     return prepareDBStream(db.getStream(pattern));
 }
-
 
 function expectCountry(countryCode: string): Sequence<Predicate<SaxEvent>> {
     return expectPlainTextTag('country', countryCode);
@@ -622,12 +618,7 @@ function expectCountry(countryCode: string): Sequence<Predicate<SaxEvent>> {
 
 const expectUsCountry = expectCountry('US');
 
-function expectLifeSpan(begin: string, remaining: Sequence<Predicate<SaxEvent>>): Sequence<Predicate<SaxEvent>> {
-    return expectSimpleTag('life-span', concat(
-        expectPlainTextTag('begin', begin),
-        remaining
-    ));
-}
+////
 
 function expectTiteledEntity(entityType: string, id: string, title: string, others: Sequence<Predicate<SaxEvent>>): Sequence<Predicate<SaxEvent>> {
     return expectEntityTag(entityType, id, concat(
@@ -1971,6 +1962,8 @@ function processCurrent(): boolean {
                     fail,
                     () => {
                         // create tracklist
+                        return fail();
+                        /*
                         const media = release.media;
                         let currentMedia = media.length;
                         if (currentMedia === 0) {
@@ -1983,6 +1976,7 @@ function processCurrent(): boolean {
 
                             return fail();
                         }
+                        */
                     }
                 ])
             });
@@ -2070,10 +2064,17 @@ function processCurrent(): boolean {
 
 
                     expectArea('489ce91b-6658-3307-9877-795b68554c98', 'United States', expectIsoList1('US')),
+                    expectSimpleTag('life-span', concat(
+                        expectPlainTextTag('begin', '1974'),
+                        expectPlainTextTag('end', '2011-10-07'),
+                        expectPlainTextTag('ended', 'true'),
+                    ))
+                    /*
                     expectLifeSpan('1974', concat(
                         expectPlainTextTag('end', '2011-10-07'),
                         expectPlainTextTag('ended', 'true'),
-                    )),
+                    ))
+                    */,
                     expectTag('release-list', {
                         count: '2857'
                     }, concat(
@@ -2396,6 +2397,7 @@ function processCurrent(): boolean {
             //`https://musicbrainz.org/${path}`);
             //const escapedKey = escapeLucene(key);
             failIf(isEmpty(key));
+            /*
             const list: EntityList = mbGetList('area', { query: `tag:${escapeLucene(key)}` });
             const count: number = list.count;
             failIf(count === 0);
@@ -2404,6 +2406,50 @@ function processCurrent(): boolean {
                 assert(count === entities.length);
                 return fail();
             });
+            */
+
+            function tagUsageHandler(type: string): () => boolean | undefined {
+                return () => {
+                    const list: EntityList = mbGetList(type, { query: `tag:${escapeLucene(key)}` });
+                    const count: number = list.count;
+                    failIf(count === 0);
+                    const entities = (list as any)[`${type}s`];
+                    return enqueueNextEntityFromList(entities, type, () => {
+                        assert(count === entities.length);
+                        return undefined;
+                        //return fail();
+                    });
+                }
+
+            }
+            return processHandlers([
+                tagUsageHandler('area'),
+                tagUsageHandler('artist'),
+                /*
+                () => {
+                    const list: EntityList = mbGetList('area', { query: `tag:${escapeLucene(key)}` });
+                    const count: number = list.count;
+                    failIf(count === 0);
+                    const entities = (list as AreaList).areas;
+                    return enqueueNextEntityFromList(entities, 'area', () => {
+                        assert(count === entities.length);
+                        return undefined;
+                        //return fail();
+                    });
+                },
+                () => {
+                    const list: EntityList = mbGetList('artist', { query: `tag:${escapeLucene(key)}` });
+                    const count: number = list.count;
+                    failIf(count === 0);
+                    const entities = (list as ArtistList).artists;
+                    return enqueueNextEntityFromList(entities, 'artist', () => {
+                        assert(count === entities.length);
+                        return undefined;
+                        //return fail();
+                    });
+                }
+                */
+            ])
         case 'mb:release-asin':
             return processDefaultSearch('release', 'asin');
         case 'mb:release-catno':
@@ -2489,6 +2535,10 @@ function processCurrent(): boolean {
             return processMBCoreEntity<ReleaseGroup>('release-group', [processAttributeHandler('title') /*releaseGroup => processAttribute(releaseGroup, 'title', 'release-group') */]);
         //return fail();
         //return getMBCoreEntity<ReleaseGroup>('release-group', [], releaseGroup => processHandlers())
+        case 'mb:mb:tag':
+            deleteCurrentTask('invalid type');
+            return false;
+        //return fail();
         default:
             console.error(type);
             fail();
