@@ -594,25 +594,19 @@ function expectSimpleTag(name: string, inner: Sequence<Predicate<SaxEvent>>): Se
 }
 
 
-////
-
 function expectIsoList1(code: string): Sequence<Predicate<SaxEvent>> {
     return expectSimpleTag(`iso-3166-1-code-list`, expectPlainTextTag(`iso-3166-1-code`, code));
 }
 
-const expectUSIsoList = expectIsoList1('US');
+////
 
 
-function expectAreaRaw(tagName: string, mbid: string, name: string, additionalTags: Sequence<Predicate<SaxEvent>>): Sequence<Predicate<SaxEvent>> {
-    //return expectNamed(tagName, mbid, name, additionalTags);
-    return expectEntityTag(tagName, mbid, concat(
+function expectArea(mbid: string, name: string, additionalTags: Sequence<Predicate<SaxEvent>>): Sequence<Predicate<SaxEvent>> {
+    return expectEntityTag('area', mbid, concat(
         nameTags(expectEquals(name), name),
         additionalTags
     ));
-}
-
-function expectArea(mbid: string, name: string, additionalTags: Sequence<Predicate<SaxEvent>>): Sequence<Predicate<SaxEvent>> {
-    return expectAreaRaw('area', mbid, name, additionalTags);
+    //return expectAreaRaw('area', mbid, name, additionalTags);
 }
 
 
@@ -675,7 +669,7 @@ function expectRelease(id: string, title: string, official: Sequence<Predicate<S
         expectCountry(country),
         expectReleaseEventList([concat(
             expect1975,
-            expectArea(areaId, 'United States', expectUSIsoList)
+            expectArea(areaId, 'United States', expectIsoList1('US'))
         )]),
         barcode
     ));
@@ -1831,8 +1825,8 @@ function processCurrent(): boolean {
 
                             return processHandlers([
                                 checkId(acoustid, () => enqueueTypedTopLevelTask(acoustid as string, 'acoustid'), 'acoustid'),
-                                checkId(trackId, () => enqueueMBResourceTask(mbid, 'track', () => undefined), 'trackid'),
-                                fail, // must also provide track property
+                                checkId(trackId, () => enqueueMBResourceTask(mbid, 'track', (id: string) => updateObject('track', id)), 'trackid'),
+                                //fail, // must also provide track property
                                 () => searchMBEntityTask<boolean | undefined>('recording', recordingId(), () => undefined, taskId => updateObject('recording', taskId)),
                                 () => {
                                     const acoustidForRecording: AcoustIdTracks = acoustIdGet('track/list_by_mbid', {
@@ -1966,7 +1960,6 @@ function processCurrent(): boolean {
                         }
                         return undefined;
                     },
-                    fail, // create tracklist
                     releaseAttributeHandler('status'),
                     attributeHandler(release['text-representation'], 'language', 'release'),
                     attributeHandler(release['text-representation'], 'script', 'release'),
@@ -1975,6 +1968,22 @@ function processCurrent(): boolean {
                     releaseAttributeHandler('barcode'),
                     releaseAttributeHandler('asin'),
                     handleAttributes<Release, LabelInfo>(release, 'label-info', 'catalog-number', 'release', 'catno'),
+                    fail,
+                    () => {
+                        // create tracklist
+                        const media = release.media;
+                        let currentMedia = media.length;
+                        if (currentMedia === 0) {
+                            return fail();
+                        }
+                        else {
+                            currentMedia--;
+                            let currentTrack = media[currentMedia].tracks.length - 1;
+
+
+                            return fail();
+                        }
+                    }
                 ])
             });
 
@@ -2010,33 +2019,8 @@ function processCurrent(): boolean {
                         const next = getReferencesToCurrent('recording');
                         const fso1 = next();
                         if (isDefined(fso1)) {
-                            return fail();
-                            /*
-                            const fso2 = next();
-                            if (isDefined(fso2)) {
-                                // duplicate files for same recording
-                                // check whether acoustid's of the files are the same
-                                // when not same, this would be an indication that the recordings have been merged incorrectly   
-                                return getFileSystemObjectPathFromSubject(fso1, entryPath1 => {
-                                    return getFileSystemObjectPathFromSubject(fso2, entryPath2 => {
-                                        assertSame(getAcoustId(entryPath1), getAcoustId(entryPath2));
-                                        logError('Same recording found in following files:');
-                                        logError(`   ${entryPath1}`);
-                                        logError(`   ${entryPath2}`);
-                                        logError(`Please delete one of them.`);
-                                        return false;
-                                    });
-                                })
-                                //return false;
-                            }
-                            else {
-                                fail();
- 
-                                // found single recording, everything fine, set playlist
-                                return updateObject('playlist', fso1.subject);
-                            }
-                            //return isUndefined(next()) ? updateObject('playlist', fso1.subject) : fail();
-                            */
+                            log(`  recording in file ${getPath(fso1.subject)}`);
+                            return undefined;
                         }
                         else {
                             // no recording found
@@ -2044,25 +2028,13 @@ function processCurrent(): boolean {
                             openRecording(recording.id);
                             moveToNext();
                             return false;
-                            //openBrowser()
-                            //return fail();
                         }
                     },
 
                     () => {
-                        /*
-                        const fso = getPropertyFromCurrent('playlist');
-                        //log(fso);
-                        makePlaylist(fso, path => `  write ${path}`, (comment, entry) => {
-                            comment('recording', recording.id);
-                            entry(fso);
-                        })
-                        */
-
-                        //fail(); // write playlist
                         log('  completed. Please verify!');
                         openRecording(recording.id);
-                        fail();
+                        //fail();
                         moveToNext();
                         return false;
                     }
@@ -2159,7 +2131,7 @@ function processCurrent(): boolean {
                 () => {
                     moveToNext();
                     if (recordings.length === 1) {
-                        log("  pleted: no merge potential");
+                        log("  completed: no merge potential");
                         //openBrowser('acoustid.org', 'track', acoustid);
                         return true;
 
@@ -2258,11 +2230,14 @@ function processCurrent(): boolean {
                 // endif
                 () => getObject(currentTask, 'preferred', () => {
                     const nextFile = getReferencesToCurrent('track');
+                    //log('  ' + currentTask);
                     //const statement = next();
+                    //fail();
                     if (isDefined(nextFile())) {
                         return fail();
                     }
                     else {
+                        //fail();
                         const fso = db.v('fso');
                         const recording = db.v('recording');
                         const nextRFile = prepareDBStream(db.searchStream([
@@ -2280,10 +2255,14 @@ function processCurrent(): boolean {
                                     break;
                                 }
                             }
+                            openMB('track', track.id);
+                            //fail(); // check track
+                            moveToNext();
+                            return false;
                         }
-                        openMB('track', track.id);
-                        moveToNext();
-                        return false;
+                        else {
+                            return undefined;
+                        }
                     }
                     //                 return fail();
                 }, fail),
