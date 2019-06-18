@@ -427,9 +427,7 @@ type SaxEvent = {
 
 type Attributes = Dictionary<string>;
 
-function isDefined(value: any): value is boolean | number | string | {
-    [name: string]: any
-} {
+function isDefined<T>(value: T): value is Exclude<T, undefined> {
     return value !== undefined;
 }
 
@@ -598,7 +596,6 @@ function expectIsoList1(code: string): Sequence<Predicate<SaxEvent>> {
     return expectSimpleTag(`iso-3166-1-code-list`, expectPlainTextTag(`iso-3166-1-code`, code));
 }
 
-////
 
 function expectArea(mbid: string, name: string, additionalTags: Sequence<Predicate<SaxEvent>>): Sequence<Predicate<SaxEvent>> {
     return expectEntityTag('area', mbid, concat(
@@ -620,12 +617,6 @@ const expectUsCountry = expectCountry('US');
 
 ////
 
-function expectTiteledEntity(entityType: string, id: string, title: string, others: Sequence<Predicate<SaxEvent>>): Sequence<Predicate<SaxEvent>> {
-    return expectEntityTag(entityType, id, concat(
-        expectPlainTextTag("title", title),
-        others
-    ));
-}
 
 function expectNamedEntity(tagName: string, id: string, value: string): Sequence<Predicate<SaxEvent>> {
     return expectEntityTag(tagName, id, expectTextEvent(expectEquals(value)));
@@ -652,6 +643,22 @@ function expectReleaseEventList(elements: Sequence<Predicate<SaxEvent>>[]): Sequ
 const expect1975 = expectDate('1975');
 
 function expectRelease(id: string, title: string, official: Sequence<Predicate<SaxEvent>>, country: string, areaId: string, packaging: Sequence<Predicate<SaxEvent>>, barcode: Sequence<Predicate<SaxEvent>>): Sequence<Predicate<SaxEvent>> {
+    return expectEntityTag('release', id, concat(
+        expectPlainTextTag("title", title),
+        concat(
+            official,
+            expectPlainTextTag('quality', 'normal'),
+            packaging,
+            expect1975,
+            expectCountry(country),
+            expectReleaseEventList([concat(
+                expect1975,
+                expectArea(areaId, 'United States', expectIsoList1('US'))
+            )]),
+            barcode
+        )
+    ));
+    /*
     return expectTiteledEntity('release', id, title, concat(
         official,
         expectPlainTextTag('quality', 'normal'),
@@ -664,6 +671,7 @@ function expectRelease(id: string, title: string, official: Sequence<Predicate<S
         )]),
         barcode
     ));
+    */
 }
 
 
@@ -828,6 +836,7 @@ interface Artist {
     readonly 'life-span': Lifespan;
     readonly relations: Relation[];
     readonly disambiguation?: string;
+    readonly "sort-name"?: string;
 }
 
 interface ArtistCredit {
@@ -909,6 +918,7 @@ interface RecordingList extends EntityList {
 interface Work {
     readonly id: string;
     readonly title: string;
+    readonly type: string;
     readonly relations: Relation[];
 }
 
@@ -1893,6 +1903,7 @@ function processCurrent(): boolean {
                 processAttributeHandler('type'), //artist => processAttribute(artist, 'type', 'artist'),
                 processAttributeHandler('name'), //artist => processAttribute(artist, 'name', 'artist'),
                 processAttributeHandler('disambiguation'), //artist => processAttribute(artist, 'disambiguation', 'artist'),
+                processAttributeHandler('sort-name'),
                 artist => enqueueMBEntity(artist, 'area')(),
                 artist => processAttribute(artist['life-span'], 'begin', 'artist'),
                 artist => processRelations(artist.relations)(),
@@ -2328,8 +2339,10 @@ function processCurrent(): boolean {
                 });
             }
         case 'mb:work':
+            /*
             return getMBCoreEntity<Work>('work', [], work => processHandlers([
                 attributeHandler(work, 'title', 'work'),
+                attributeHandler(work, 'type', 'work'),
                 processRelations(work.relations),
                 () => {
                     openMB('work', work.id);
@@ -2337,7 +2350,17 @@ function processCurrent(): boolean {
                     return false;
                 }
             ]));
-
+            */
+            return processMBCoreEntity<Work>('work', [
+                processAttributeHandler('title'),
+                processAttributeHandler('type'),
+                work => processRelations(work.relations)(),
+                work => {
+                    openMB('work', work.id);
+                    completed();
+                    return false;
+                }
+            ]);
         case 'mb:area-type':
             return processDefaultSearch('area', 'type');
         case 'mb:artist-type':
