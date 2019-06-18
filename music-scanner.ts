@@ -627,15 +627,19 @@ const expectTextRepresentation = expectSimpleTag('text-representation', concat(
 
 ////
 
-
+/*
 function expectReleaseEventList(elements: Sequence<Predicate<SaxEvent>>[]): Sequence<Predicate<SaxEvent>> {
     return expectTag(`release-event-list`, { count: `${elements.length}` }, map(sequence(...elements), element => expectSimpleTag('release-event', element)));
 }
-
+*/
 const expect1975 = expectPlainTextTag('date', '1975');
 
 
 function expectRelease(id: string, title: string, official: Sequence<Predicate<SaxEvent>>, country: string, areaId: string, packaging: Sequence<Predicate<SaxEvent>>, barcode: Sequence<Predicate<SaxEvent>>): Sequence<Predicate<SaxEvent>> {
+    const elements = [concat(
+        expect1975,
+        expectArea(areaId, 'United States', expectIsoList1('US'))
+    )];
     return expectEntityTag('release', id, concat(
         expectPlainTextTag("title", title),
         concat(
@@ -644,10 +648,13 @@ function expectRelease(id: string, title: string, official: Sequence<Predicate<S
             packaging,
             expect1975,
             expectCountry(country),
-            expectReleaseEventList([concat(
-                expect1975,
-                expectArea(areaId, 'United States', expectIsoList1('US'))
-            )]),
+            expectTag(`release-event-list`, { count: `${elements.length}` }, map(sequence(...elements), element => expectSimpleTag('release-event', element))),
+            /*
+                        expectReleaseEventList([concat(
+                            expect1975,
+                            expectArea(areaId, 'United States', expectIsoList1('US'))
+                        )]),
+            */
             barcode
         )
     ));
@@ -2552,8 +2559,12 @@ function processCurrent(): boolean {
         //return fail();
         //return getMBCoreEntity<ReleaseGroup>('release-group', [], releaseGroup => processHandlers())
         case 'mb:mb:tag':
+            fail()
             deleteCurrentTask('invalid type');
             return false;
+        //return fail();
+        case 'mb:artist-disambiguation':
+            return processEntitySearch('artist', 'disambiguation', 'comment');
         //return fail();
         default:
             console.error(type);
