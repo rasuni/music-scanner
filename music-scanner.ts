@@ -615,9 +615,6 @@ function expectCountry(countryCode: string): Sequence<Predicate<SaxEvent>> {
 
 const expectUsCountry = expectCountry('US');
 
-////
-
-
 function expectNamedEntity(tagName: string, id: string, value: string): Sequence<Predicate<SaxEvent>> {
     return expectEntityTag(tagName, id, expectTextEvent(expectEquals(value)));
 }
@@ -628,19 +625,15 @@ const expectTextRepresentation = expectSimpleTag('text-representation', concat(
 ));
 
 
-function expectDate(date: string): Sequence<Predicate<SaxEvent>> {
-    return expectPlainTextTag('date', date);
-}
+////
 
-function expectList(name: string, elements: Sequence<Predicate<SaxEvent>>[]): Sequence<Predicate<SaxEvent>> {
-    return expectTag(`${name}-list`, { count: `${elements.length}` }, map(sequence(...elements), element => expectSimpleTag(name, element)));
-}
 
 function expectReleaseEventList(elements: Sequence<Predicate<SaxEvent>>[]): Sequence<Predicate<SaxEvent>> {
-    return expectList('release-event', elements);
+    return expectTag(`release-event-list`, { count: `${elements.length}` }, map(sequence(...elements), element => expectSimpleTag('release-event', element)));
 }
 
-const expect1975 = expectDate('1975');
+const expect1975 = expectPlainTextTag('date', '1975');
+
 
 function expectRelease(id: string, title: string, official: Sequence<Predicate<SaxEvent>>, country: string, areaId: string, packaging: Sequence<Predicate<SaxEvent>>, barcode: Sequence<Predicate<SaxEvent>>): Sequence<Predicate<SaxEvent>> {
     return expectEntityTag('release', id, concat(
@@ -1296,7 +1289,7 @@ function processCurrent(): boolean {
                 case 404:
                     return notFound();
                 case 503:
-                    if (retryCount === 3) {
+                    if (retryCount === 5) {
                         return fail();
                     }
                     retryCount++;
@@ -1786,7 +1779,7 @@ function processCurrent(): boolean {
                         case '.flac':
                         case '.m4a':
                         case '.mp4':
-                            //case '.wma':
+                        case '.wma':
                             /*
  
                             const promise: Promise<mm.IAudioMetadata> = mm.parseFile(entryPath);
@@ -1885,7 +1878,7 @@ function processCurrent(): boolean {
                             return true;
                         default:
                             // *.mkv
-                            logError('unknown file type!');
+                            logError('  unknown file type!');
                             return false;
                     }
                 }, () => handleNotMountedVolume(vPath, () => {
