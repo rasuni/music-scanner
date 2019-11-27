@@ -1,0 +1,218 @@
+https://musicbrainz.org/recording/70b0bdd2-a73f-4da3-b4f8-5b07a208edf6 Lester Bowie's Brass Fantasy - Think
+    https://acoustid.org/track/5fc9d09d-190a-4976-b422-a6b167a3cb90
+    https://acoustid.org/track/f993174a-d09e-45e6-8119-cbf222f0f2e8
+https://musicbrainz.org/recording/70b0bdd2-a73f-4da3-b4f8-5b07a208edf6 Lester Bowie's Brass Fantasy - Think
+
+https://acoustid.org/track/0b6a7803-94cf-4b6e-aa7a-33d3576e48e2 Track "0b6a7803-94cf-4b6e-aa7a-33d3576e48e2"
+
+https://musicbrainz.org/recording/12d0f559-6959-462d-bd28-c370a4b65268 Lester Bowie's Brass Fantasy - Coming Back, Jamaica
+    https://acoustid.org/track/0b6a7803-94cf-4b6e-aa7a-33d3576e48e2
+
+https://musicbrainz.org/recording/de3a59c5-6c55-4e4d-bba9-86e1a77a1050 Lester Bowie's Brass Fantasy - When the Spirit Returns
+
+https://musicbrainz.org/release/b3938c97-7751-43c8-ba27-f9cfe393cfd1 Lester Bowie's Brass Fantasy - I Only Have Eyes For You
+    https://musicbrainz.org/recording/8e3b5ca3-42f7-4c8d-bb5e-672dc0ffd25b
+    https://musicbrainz.org/recording/70b0bdd2-a73f-4da3-b4f8-5b07a208edf6
+    https://musicbrainz.org/recording/12d0f559-6959-462d-bd28-c370a4b65268
+    https://musicbrainz.org/recording/de3a59c5-6c55-4e4d-bba9-86e1a77a1050
+
+https://acoustid.org/track/2412ed54-f166-4cf5-9450-b863d5e28704 Track "2412ed54-f166-4cf5-9450-b863d5e28704"
+https://acoustid.org/track/2412ed54-f166-4cf5-9450-b863d5e28704 Track "2412ed54-f166-4cf5-9450-b863d5e28704"
+
+https://acoustid.org/track/8c185182-7e4a-4747-b0ff-f9fbe7a0b734 Track "8c185182-7e4a-4747-b0ff-f9fbe7a0b734"
+
+https://musicbrainz.org/recording/bd2af45d-eef6-458f-b0cb-5ba87e6ded35 Lester Bowie's Brass Fantasy - Lament
+    https://acoustid.org/track/2412ed54-f166-4cf5-9450-b863d5e28704
+    https://acoustid.org/track/8c185182-7e4a-4747-b0ff-f9fbe7a0b734
+
+https://acoustid.org/track/049925ad-2d3f-4bc4-9a73-96f65c368613 Track "049925ad-2d3f-4bc4-9a73-96f65c368613"
+
+https://musicbrainz.org/recording/618481d1-948a-40a2-9798-499057db9fba Lester Bowie's Brass Fantasy - Nonet
+    https://acoustid.org/track/049925ad-2d3f-4bc4-9a73-96f65c368613
+
+https://musicbrainz.org/url/b6ffe784-5981-4d6c-94d3-c8fd08a2274a https://www.discogs.com/release/2369368
+
+https://musicbrainz.org/release/90c4ca5f-2385-4d63-afda-84c3a333d390 Lester Bowie's Brass Fantasy - I Only Have Eyes For You
+    https://musicbrainz.org/recording/bd2af45d-eef6-458f-b0cb-5ba87e6ded35
+    https://musicbrainz.org/recording/618481d1-948a-40a2-9798-499057db9fba
+    https://musicbrainz.org/url/b6ffe784-5981-4d6c-94d3-c8fd08a2274a
+
+https://www.discogs.com/artist/954055 Lester Bowie's Brass Fantasy
+
+https://www.discogs.com/master/54793 Lester Bowie's Brass Fantasy ‎– I Only Have Eyes For You
+    https://www.discogs.com/artist/954055
+    
+https://musicbrainz.org/url/85c8da99-1442-4de9-b600-f6403d5e0f13 https://www.discogs.com/master/54793
+    https://www.discogs.com/master/54793
+https://musicbrainz.org/url/85c8da99-1442-4de9-b600-f6403d5e0f13 https://www.discogs.com/master/54793
+
+https://musicbrainz.org/release-group/3abd27c3-b4bd-4f7f-a219-2127a315b2cb Lester Bowie's Brass Fantasy - I Only Have Eyes For You
+    https://musicbrainz.org/release/b3938c97-7751-43c8-ba27-f9cfe393cfd1
+    https://musicbrainz.org/release/90c4ca5f-2385-4d63-afda-84c3a333d390
+    https://musicbrainz.org/url/85c8da99-1442-4de9-b600-f6403d5e0f13
+https://musicbrainz.org/release-group/3abd27c3-b4bd-4f7f-a219-2127a315b2cb Lester Bowie's Brass Fantasy - I Only Have Eyes For You
+
+https://musicbrainz.org/artist/1751f9e8-e0b5-4d3c-99b6-d93e0e1f4895 Steve Turre
+
+https://musicbrainz.org/work/2d2df9d1-b67a-4b80-8f9b-b5f6c92c58c8 The Emperor
+    https://musicbrainz.org/artist/1751f9e8-e0b5-4d3c-99b6-d93e0e1f4895
+
+https://acoustid.org/track/b0afbb41-3d14-4bb1-9981-b85556d687c9 Track "b0afbb41-3d14-4bb1-9981-b85556d687c9"
+
+https://musicbrainz.org/recording/563593b0-7fce-4c93-9ce0-ac901c37f335 Lester Bowie's Brass Fantasy - The Emperor
+    https://musicbrainz.org/work/2d2df9d1-b67a-4b80-8f9b-b5f6c92c58c8
+    https://acoustid.org/track/b0afbb41-3d14-4bb1-9981-b85556d687c9
+
+https://musicbrainz.org/work/31ca5ae3-0085-495b-9571-1b9fba95cc09 Saving All My Love for You
+
+https://musicbrainz.org/recording/d178cdb4-fc63-4ebe-9cb4-9cdf47f54497 Lester Bowie's Brass Fantasy - Saving All My Love for You
+    https://musicbrainz.org/work/31ca5ae3-0085-495b-9571-1b9fba95cc09
+
+https://musicbrainz.org/recording/4f1b1e34-c820-4e45-830d-4b601d81ae6a Lester Bowie's Brass Fantasy - B Funk
+
+https://musicbrainz.org/release/92e1c9e8-729a-466d-9a2d-b31bb702ca3d Lester Bowie's Brass Fantasy - Avant Pop
+    https://musicbrainz.org/recording/563593b0-7fce-4c93-9ce0-ac901c37f335
+    https://musicbrainz.org/recording/d178cdb4-fc63-4ebe-9cb4-9cdf47f54497
+    https://musicbrainz.org/recording/4f1b1e34-c820-4e45-830d-4b601d81ae6a
+    
+https://musicbrainz.org/release-group/098d48ee-3d2b-3b0d-8cda-8868b15a0cdb Lester Bowie's Brass Fantasy - Avant Pop
+    https://musicbrainz.org/release/92e1c9e8-729a-466d-9a2d-b31bb702ca3d
+https://musicbrainz.org/release-group/098d48ee-3d2b-3b0d-8cda-8868b15a0cdb Lester Bowie's Brass Fantasy - Avant Pop
+
+https://acoustid.org/track/3b8ad746-20dc-4d6c-bde3-b1a672938c3b Track "3b8ad746-20dc-4d6c-bde3-b1a672938c3b"
+
+https://musicbrainz.org/recording/870ecfcf-2a5e-4e93-af45-ccf9cee9654a Lester Bowie's Brass Fantasy - Papa's Got A Brand New Bag
+    https://acoustid.org/track/3b8ad746-20dc-4d6c-bde3-b1a672938c3b
+
+https://musicbrainz.org/recording/2180bdb7-46e0-4c38-95aa-14a5d93ec94c Lester Bowie's Brass Fantasy - Smooth Operator
+
+https://musicbrainz.org/release/2fd1fd6e-2691-46d7-b5c5-c1deed50ad2b Lester Bowie's Brass Fantasy - Serious Fun
+    https://musicbrainz.org/recording/870ecfcf-2a5e-4e93-af45-ccf9cee9654a
+    https://musicbrainz.org/recording/2180bdb7-46e0-4c38-95aa-14a5d93ec94c
+
+https://musicbrainz.org/recording/1209992f-fb9f-4cd0-babf-fb701a82c5d0 Lester Bowie's Brass Fantasy - Inflated star
+
+https://musicbrainz.org/release/f6ec2cf8-1e5e-4441-9638-78b79e78ff54 Lester Bowie's Brass Fantasy - Serious Fun
+    https://musicbrainz.org/recording/1209992f-fb9f-4cd0-babf-fb701a82c5d0
+
+https://musicbrainz.org/release-group/64165cf2-45f1-43bf-8860-c01fbf19d17b Lester Bowie's Brass Fantasy - Serious Fun
+    https://musicbrainz.org/release/2fd1fd6e-2691-46d7-b5c5-c1deed50ad2b
+    https://musicbrainz.org/release/f6ec2cf8-1e5e-4441-9638-78b79e78ff54
+https://musicbrainz.org/release-group/64165cf2-45f1-43bf-8860-c01fbf19d17b Lester Bowie's Brass Fantasy - Serious Fun
+
+https://musicbrainz.org/recording/37d44c1d-cce7-4a7c-a664-ea2b765e6f3b Lester Bowie's Brass Fantasy - Quasi
+
+https://musicbrainz.org/release/a1aa186c-c3b2-43de-8005-8b1bf095fc9b Lester Bowie's Brass Fantasy - My Way
+    https://musicbrainz.org/recording/37d44c1d-cce7-4a7c-a664-ea2b765e6f3b
+
+https://musicbrainz.org/release-group/62610d4f-e074-351a-b017-613714d49775 Lester Bowie's Brass Fantasy - My Way
+    https://musicbrainz.org/release/a1aa186c-c3b2-43de-8005-8b1bf095fc9b
+https://musicbrainz.org/release-group/62610d4f-e074-351a-b017-613714d49775 Lester Bowie's Brass Fantasy - My Way
+
+https://musicbrainz.org/release/d0734287-06f4-4fd2-9d5b-8fda0145a199 Lester Bowie Brass Fantasy - When the Spirit Returns
+
+https://musicbrainz.org/release-group/b3307bc0-4878-3e4e-af23-54cd0f28f72e Lester Bowie's Brass Fantasy - When the Spirit Returns
+    https://musicbrainz.org/release/d0734287-06f4-4fd2-9d5b-8fda0145a199
+
+https://musicbrainz.org/release-group/4e33fa03-8af2-4e69-907d-f01690781be0 Art Ensemble Of Chicago & Lester Bowie's Brass Fantasy - Live At The 6th Tokyo Music Joy '90
+
+https://musicbrainz.org/artist/76071679-33e8-41ce-90c8-267a3b95c248 Lester Bowie's Brass Fantasy
+    https://musicbrainz.org/release-group/3abd27c3-b4bd-4f7f-a219-2127a315b2cb
+    https://musicbrainz.org/release-group/098d48ee-3d2b-3b0d-8cda-8868b15a0cdb
+    https://musicbrainz.org/release-group/64165cf2-45f1-43bf-8860-c01fbf19d17b
+    https://musicbrainz.org/release-group/62610d4f-e074-351a-b017-613714d49775
+    https://musicbrainz.org/release-group/b3307bc0-4878-3e4e-af23-54cd0f28f72e
+    https://musicbrainz.org/release-group/4e33fa03-8af2-4e69-907d-f01690781be0
+
+https://musicbrainz.org/release-group/364317fc-a27c-47c3-9ca2-160aadc5df0a Lester Bowie's Brass Fantasy - Twilight Dreams
+    https://musicbrainz.org/release/bedd6dbd-d431-479f-9843-95bfa958b40d
+https://musicbrainz.org/release-group/364317fc-a27c-47c3-9ca2-160aadc5df0a Lester Bowie's Brass Fantasy - Twilight Dreams
+
+https://musicbrainz.org/release/f3782080-e2f1-4b7d-ab9c-c609e17df2be Mícheál Ó Súilleabháin - The Dolphin's Way
+
+https://musicbrainz.org/release-group/a7c10755-d612-4766-aaba-2d85ba29a8b5 Mícheál Ó Súilleabháin - The Dolphin's Way
+    https://musicbrainz.org/release/f3782080-e2f1-4b7d-ab9c-c609e17df2be
+
+https://musicbrainz.org/release-group/2549a5f1-08a7-4b50-9a55-ad9f7e1a3144 Mícheál Ó Súilleabháin - Oileán (Island)
+
+https://musicbrainz.org/artist/b607f644-5475-4513-805f-ba68161ae5d1 Mícheál Ó Súilleabháin (pianist and composer)
+    https://musicbrainz.org/release-group/a7c10755-d612-4766-aaba-2d85ba29a8b5
+    https://musicbrainz.org/release-group/2549a5f1-08a7-4b50-9a55-ad9f7e1a3144
+
+https://musicbrainz.org/release-group/a6128f82-c83d-3b13-8c61-5bfce1159f83 Peter de Havilland - Bois de Boulogne
+
+https://musicbrainz.org/artist/ac4153ee-fc97-460b-b424-da8c1b91e95b Peter de Havilland
+    https://musicbrainz.org/release-group/a6128f82-c83d-3b13-8c61-5bfce1159f83
+
+https://musicbrainz.org/artist/57cf7d67-5372-420a-9c89-77c7513d6506 Hans-Joachim Roedelius
+
+https://musicbrainz.org/release/aaa58698-b931-48cd-889c-0d1f6e95a67c Mícheál Ó Súilleabháin, Lester Bowie's Brass Fantasy, Peter de Havilland & Hans-Joachim Roedelius - A Venture Sampler
+    https://musicbrainz.org/artist/b607f644-5475-4513-805f-ba68161ae5d1
+    https://musicbrainz.org/artist/ac4153ee-fc97-460b-b424-da8c1b91e95b
+    https://musicbrainz.org/artist/57cf7d67-5372-420a-9c89-77c7513d6506
+
+https://musicbrainz.org/instrument/b7227963-9456-4b09-98ad-766634ceb51a cylindrical drum
+
+https://musicbrainz.org/instrument/e78b40c0-acc8-4db8-911a-adf991e0c73d bass drum
+    https://musicbrainz.org/instrument/b7227963-9456-4b09-98ad-766634ceb51a
+
+https://musicbrainz.org/instrument/8a4a2afb-609e-4316-b7fa-4a687aada9ee brushes
+
+https://musicbrainz.org/instrument/12092505-6ee1-46af-a15a-b5b468b6b155 drums (drum set) (Set of drums in modern music)
+    https://musicbrainz.org/instrument/e78b40c0-acc8-4db8-911a-adf991e0c73d
+    https://musicbrainz.org/instrument/8a4a2afb-609e-4316-b7fa-4a687aada9ee
+
+https://musicbrainz.org/release-group/bfd33b36-836d-41da-9fa3-4e520217f3f1 Lester Bowie, Phillip Wilson - Duet
+
+https://musicbrainz.org/artist/9d303ae9-118a-4580-affa-c029b7191f79 Phillip Wilson (drummer)
+    https://musicbrainz.org/release-group/bfd33b36-836d-41da-9fa3-4e520217f3f1
+
+https://musicbrainz.org/instrument/f9abcd44-52d6-4424-b3a0-67f003bbbf3d French horn
+
+https://musicbrainz.org/recording/ec0b2bd1-c5e5-48b2-b056-66dc547654dc Lester Bowie's Brass Fantasy - I Am With You
+    https://musicbrainz.org/release/aaa58698-b931-48cd-889c-0d1f6e95a67c
+    https://musicbrainz.org/instrument/12092505-6ee1-46af-a15a-b5b468b6b155
+    https://musicbrainz.org/artist/9d303ae9-118a-4580-affa-c029b7191f79
+    https://musicbrainz.org/instrument/f9abcd44-52d6-4424-b3a0-67f003bbbf3d
+
+https://musicbrainz.org/artist/3e356f2a-3501-4e68-8eff-f77d582c066a Brigitte Fontaine
+
+https://musicbrainz.org/release-group/f957a1aa-81bc-33cd-9009-ee2a75df2dfa Brigitte Fontaine, Areski avec Art Ensemble of Chicago - Comme à la radio
+    https://musicbrainz.org/artist/3e356f2a-3501-4e68-8eff-f77d582c066a
+
+https://musicbrainz.org/release-group/3dcb8bc0-5df5-4ec1-8de1-379116206a29 Art Ensemble of Chicago - A Jackson In Your House
+
+https://musicbrainz.org/artist/ed7156ee-07da-484b-b5a5-be322afa1a34 Art Ensemble of Chicago
+    https://musicbrainz.org/release-group/f957a1aa-81bc-33cd-9009-ee2a75df2dfa
+    https://musicbrainz.org/release-group/3dcb8bc0-5df5-4ec1-8de1-379116206a29
+
+https://musicbrainz.org/url/b82918c5-88ed-40cc-b7ea-8a19440098a3 https://www.allmusic.com/album/mw0003214054
+
+https://musicbrainz.org/release-group/4937d66c-5761-4ff2-85ac-aa8629adcc99 The Art Ensemble of Chicago - The Art Ensemble of Chicago and Associated Ensembles
+    https://musicbrainz.org/url/b82918c5-88ed-40cc-b7ea-8a19440098a3
+
+https://musicbrainz.org/recording/bb647020-0356-4f51-9285-c45e5147d169 Art Ensemble of Chicago - Ja
+
+https://musicbrainz.org/release/a7017fed-4603-4676-8d29-04b05eeccabf The Art Ensemble of Chicago - The Art Ensemble of Chicago and Associated Ensembles
+    https://musicbrainz.org/artist/ed7156ee-07da-484b-b5a5-be322afa1a34
+    https://musicbrainz.org/release-group/4937d66c-5761-4ff2-85ac-aa8629adcc99
+    https://musicbrainz.org/recording/bb647020-0356-4f51-9285-c45e5147d169
+
+https://acoustid.org/track/01d91bbd-42a8-4dba-ab00-5ee3a16cb931 Track "01d91bbd-42a8-4dba-ab00-5ee3a16cb931"
+https://acoustid.org/track/01d91bbd-42a8-4dba-ab00-5ee3a16cb931 Track "01d91bbd-42a8-4dba-ab00-5ee3a16cb931"
+
+https://acoustid.org/track/c0336478-bfec-4a41-9e5a-63599ec161e8 Track "c0336478-bfec-4a41-9e5a-63599ec161e8"
+https://acoustid.org/track/c0336478-bfec-4a41-9e5a-63599ec161e8 Track "c0336478-bfec-4a41-9e5a-63599ec161e8"
+
+https://musicbrainz.org/recording/8e3b5ca3-42f7-4c8d-bb5e-672dc0ffd25b Lester Bowie's Brass Fantasy - I Only Have Eyes For You
+    https://musicbrainz.org/release/a7017fed-4603-4676-8d29-04b05eeccabf
+    https://acoustid.org/track/01d91bbd-42a8-4dba-ab00-5ee3a16cb931
+    https://acoustid.org/track/c0336478-bfec-4a41-9e5a-63599ec161e8
+https://musicbrainz.org/recording/8e3b5ca3-42f7-4c8d-bb5e-672dc0ffd25b Lester Bowie's Brass Fantasy - I Only Have Eyes For You
+
+https://acoustid.org/track/5fc9d09d-190a-4976-b422-a6b167a3cb90 Track "5fc9d09d-190a-4976-b422-a6b167a3cb90"
+https://acoustid.org/track/5fc9d09d-190a-4976-b422-a6b167a3cb90 Track "5fc9d09d-190a-4976-b422-a6b167a3cb90"
+
+https://acoustid.org/track/f993174a-d09e-45e6-8119-cbf222f0f2e8 Track "f993174a-d09e-45e6-8119-cbf222f0f2e8"
+https://acoustid.org/track/f993174a-d09e-45e6-8119-cbf222f0f2e8 Track "f993174a-d09e-45e6-8119-cbf222f0f2e8"
+

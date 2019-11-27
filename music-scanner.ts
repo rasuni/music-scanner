@@ -18,13 +18,15 @@ import format = require('format-duration');
 
 commander.version('0.0.1').description('music-scanner command line tool');
 
-type Function<P, R> = (parameter: P) => R;
+interface Function<P, R> {
+    (parameter: P): R
+};
 
 type Consumer<T> = Function<T, void>;
 
-function getRunner(): Consumer<any> {
+function getRunner<T>(): Consumer<T> {
     const currentFiber = Fiber.current;
-    return (value?: any) => currentFiber.run(value);
+    return (value?: T) => currentFiber.run(value);
 }
 
 const yieldValue = Fiber.yield;
@@ -42,10 +44,14 @@ interface Pair<F, S> {
     readonly second: S
 }
 
-type BiFunction<P1, P2, R> = (p1: P1, p2: P2) => R;
+interface BiFunction<P1, P2, R> {
+    (p1: P1, p2: P2): R
+};
 
-function waitFor2<F, S>(asyncFunction: Consumer<BiFunction<F, S, void>>): Pair<F, S> {
-    return waitFor((consumer: Consumer<Pair<F, S>>) => asyncFunction((first: F, second: S) => consumer({
+type BiConsumer<F, S> = BiFunction<F, S, void>;
+
+function waitFor2<F, S>(asyncFunction: Consumer<BiConsumer<F, S>>): Pair<F, S> {
+    return waitFor(consumer => asyncFunction((first, second) => consumer({
         first: first,
         second: second
     })));
@@ -89,8 +95,8 @@ interface Dictionary<T> {
 
 
 interface CompareValues<T> {
-    actual: any,
-    expected: T
+    readonly actual: any,
+    readonly expected: T
 }
 
 
@@ -120,20 +126,12 @@ function assertEquals(actual: any, expected: any): void {
     if (actual !== expected) {
         assertObject(actual);
         assertObject(expected);
-        const expectedIsNull = isNull(expected);
-        if (isNull(actual)) {
-            assert(expectedIsNull);
-        }
-        else {
-            failIf(expectedIsNull);
-            for (const compareValue of compareObjects(actual, expected)) {
-                assertEquals(compareValue.actual, compareValue.expected);
-            }
+        failIf(isNull(expected));
+        for (const compareValue of compareObjects(actual, expected)) {
+            assertEquals(compareValue.actual, compareValue.expected);
         }
     }
 }
-
-
 
 function isUndefined(value: any): value is undefined {
     return value === undefined;
@@ -146,9 +144,9 @@ function assertUndefined(value: any): void {
 
 
 interface Statement<T> {
-    subject: T;
-    predicate: T;
-    object: T;
+    readonly subject: T;
+    readonly predicate: T;
+    readonly object: T;
 }
 
 
@@ -165,7 +163,7 @@ type StatementPattern = Partial<Statement<string>>;
 type Operation = "put" | "del";
 
 interface UpdateStatement extends Statement<string> {
-    operation: Operation
+    readonly operation: Operation
 }
 
 function updateStatement(action: Operation, subject: string, predicate: string, object: string): UpdateStatement {
@@ -197,7 +195,16 @@ function decodeStringLiteral(stringLiteral: string): string {
     return decodeLiteral(stringLiteral, 's');
 }
 
-type Provider<T> = () => T;
+interface Provider<T> {
+    (): T
+};
+
+
+function isEmpty(array: {
+    readonly length: number;
+}): boolean {
+    return array.length === 0;
+}
 
 function makeBlockingQueue<T>(assignProducers: Visitable<T>): Provider<T> {
     const buffer: T[] = [];
@@ -228,19 +235,24 @@ function makeBlockingQueue<T>(assignProducers: Visitable<T>): Provider<T> {
 
 }
 
-function makeBlockingStream<T>(on: (event: string, consumer: Consumer<T>) => void): Provider<T> {
+type Registrar<T> = BiConsumer<string, Consumer<T>>;
 
-    return makeBlockingQueue((push: Consumer<any>) => {
+function makeBlockingStream<T>(on: Registrar<T>): Provider<T> {
+
+    return makeBlockingQueue(push => {
         on('data', push);
         on('end', push);
     });
 
 }
 
+interface Stream<T> {
+    readonly on: Registrar<T>;
+}
 
-function prepareDBStream(stream: any): Provider<any> {
+function prepareDBStream<T>(stream: Stream<T>): Provider<T> {
 
-    function on(event: string, handler: any): void {
+    function on(event: string, handler: Consumer<T>): void {
         stream.on(event, handler);
     }
     on('error', fail);
@@ -248,26 +260,20 @@ function prepareDBStream(stream: any): Provider<any> {
     return makeBlockingStream(on);
 }
 
+function ifDefined<T, D, U>(value: T, onDefined: Function<Exclude<T, undefined>, D>, onUndefined: Provider<U>): D | U {
+    return isDefined(value) ? onDefined(value) : onUndefined()
+}
 
-function streamOpt<T>(stream: any, onEmpty: Provider<T>, onData: Function<any, T>): T {
+function streamOpt<T, R>(stream: Stream<T>, onEmpty: Provider<R>, onData: Function<T, R>): R {
     const next = prepareDBStream(stream);
     const data = next();
-    if (isUndefined(data)) {
-        return onEmpty();
-    }
-    else {
+    return ifDefined(data, dd => {
         assertUndefined(next());
-        return onData(data);
-    }
+        return onData(dd);
+    }, onEmpty);
 }
 
 const logError = console.error;
-
-/*
-function logError(message: string): void {
-    console.error(message);
-}
-*/
 
 function volumeNotMounted(path: string): void {
     logError(`Volume ${path} not mounted. Please mount!`);
@@ -279,12 +285,12 @@ const dbPath = join(__dirname, 'music-scanner');
 
 let executed = false;
 
-function defineCommand(cmdSyntax: string, description: string, options: string[], action: (...args: any[]) => void) {
+function defineCommand<T>(cmdSyntax: string, description: string, options: string[], action: (...args: T[]) => void) {
     var cmd = commander.command(cmdSyntax).description(description);
     for (const option of options) {
         cmd = cmd.option(option);
     }
-    cmd.action((...args: any[]) => {
+    cmd.action((...args: T[]) => {
         action(...args);
         executed = true;
     });
@@ -298,10 +304,24 @@ function get<T>(pattern: StatementPattern, onEmpty: Provider<T>, onStatement: Fu
     return streamOpt(db.getStream(pattern), onEmpty, onStatement);
 }
 
+
+type StatementEnd = 'subject' | 'object';
+
 function navigate<T>(source: string, predicate: string, isOutDirection: boolean, notFound: Provider<T>, found: Function<string, T>): T {
 
-    const pattern: StatementPattern = { predicate: predicate };
-    const sourceKey = isOutDirection ? 'subject' : 'object';
+    const pattern: {
+        readonly predicate: string;
+        subject?: string;
+        object?: string;
+    } = {
+        predicate: predicate
+    }
+
+    function selectField(outDir: StatementEnd, inDir: StatementEnd): StatementEnd {
+        return isOutDirection ? outDir : inDir;
+    }
+
+    const sourceKey = selectField('subject', 'object');
     pattern[sourceKey] = source;
     return get(pattern, notFound, statement => {
 
@@ -312,7 +332,7 @@ function navigate<T>(source: string, predicate: string, isOutDirection: boolean,
         verify(sourceKey, source);
         verify('predicate', predicate);
 
-        return found(statement[isOutDirection ? 'object' : 'subject']);
+        return found(statement[selectField('object', 'subject')]);
     });
 }
 
@@ -325,11 +345,6 @@ function getProperty(subject: string, name: string): string {
     return getObject(subject, name, fail, obj => obj);
 }
 
-function isEmpty(array: {
-    readonly length: number;
-}): boolean {
-    return array.length === 0;
-}
 
 function persist(type: Operation, statements: Statement<string>[]): void {
     if (!isEmpty(statements)) {
@@ -337,7 +352,7 @@ function persist(type: Operation, statements: Statement<string>[]): void {
     }
 }
 
-type Predicate<T> = (value: T) => boolean;
+type Predicate<T> = Function<T, boolean>;
 
 
 function mapDictionary<F, T>(source: Dictionary<F>, mapper: BiFunction<string, F, T>): T[] {
@@ -352,24 +367,22 @@ function asString(value: any): string {
         case 'symbol':
             return value.toString();
         case 'object':
-            return isUndefined(Object.getOwnPropertyDescriptor(value, "toString")) ? `{${mapDictionary(value, (name, vname) => `${name}:${asString(vname)}`).join(',')}}` : value.toString();
+            return ifDefined(Object.getOwnPropertyDescriptor(value, "toString"), () => value.toString(), () => `{${mapDictionary(value, (name, vname) => `${name}:${asString(vname)}`).join(',')}}`);
         case 'string':
             return `"${value}"`;
         case 'undefined':
             return "undefined";
+        default:
+            return fail();
     }
-    fail();
-    return "";
 }
 
 
 function expectEquals(expected: any): Predicate<any> {
-    const res = (actual: any) => {
+    return actual => {
         assertEquals(actual, expected);
         return false;
     }
-    res.toString = () => `expectEquals(${asString(expected)})`;
-    return res;
 }
 
 
@@ -390,13 +403,11 @@ function update(changeSet: UpdateStatement[]): void {
 }
 
 
-function matchObject<T>(checkers: {
-    readonly [P in keyof T]: Predicate<T[P]>;
-}): Predicate<T> {
-    const res = (object: T) => {
+function matchObject<T>(checkers: Dictionary<Predicate<any>>): Predicate<T> {
+    return object => {
         //return searchMatch(object, checkers, () => true, FALSE);
         for (const compareValue of compareObjects(object, checkers)) {
-            const checker = compareValue.expected as Predicate<any>;
+            const checker: Predicate<any> = compareValue.expected;
             assertType(checker, 'function');
             if (checker(compareValue.actual)) {
                 return true;
@@ -405,11 +416,9 @@ function matchObject<T>(checkers: {
         return false;
 
     }
-    res.toString = () => `matchObject(${asString(checkers)})`;
-    return res;
 }
 
-let lastAccessed: {
+const lastAccessed: {
     [name: string]: number;
 } = {};
 
@@ -440,7 +449,7 @@ function* enumOptional<T>(value: string | undefined, provideMapped: () => T) {
 interface SequenceNode<T> {
     readonly first: T,
     readonly rest: Sequence<T>,
-    readonly toString?: () => string;
+    //readonly toString?: Provider<string>;
 }
 
 type Sequence<T> = SequenceNode<T> | undefined;
@@ -460,29 +469,25 @@ function sequence<T>(...members: T[]): Sequence<T> {
     return getRest(0);
 }
 
-function map<F, T>(sequence: Sequence<F>, mapper: (source: F) => Sequence<T>): Sequence<T> {
+
+function map<F, T>(sequence: Sequence<F>, mapper: Function<F, Sequence<T>>): Sequence<T> {
 
 
-    function nextFromSequence(currentSequence: Sequence<T>, fallback: () => Sequence<T>): Sequence<T> {
-        if (isUndefined(currentSequence)) {
-            return fallback();
-        }
-        const cr = currentSequence;
-        return {
-            get first(): T {
-                return cr.first;
-            },
-            get rest(): Sequence<T> {
-                return nextFromSequence(cr.rest, fallback);
-            },
-            toString(): string {
-                return `nextFromSequence(${asString(currentSequence)}, ${asString(fallback)})`;
+    function nextFromSequence(currentSequence: Sequence<T>, fallback: Provider<Sequence<T>>): Sequence<T> {
+        return ifDefined(currentSequence, cr => {
+            return {
+                get first(): T {
+                    return cr.first;
+                },
+                get rest(): Sequence<T> {
+                    return nextFromSequence(cr.rest, fallback);
+                },
             }
-        }
+        }, fallback);
     }
 
     function nextFromSource(sequence: Sequence<F>): Sequence<T> {
-        return isUndefined(sequence) ? undefined : nextFromSequence(mapper(sequence.first), () => nextFromSource(sequence.rest));
+        return ifDefined(sequence, seq => nextFromSequence(mapper(seq.first), () => nextFromSource(seq.rest)), () => undefined);
     }
 
     return nextFromSource(sequence);
@@ -500,11 +505,11 @@ function append<T>(sequence: Sequence<T>, elem: T): SequenceNode<T> {
 
     const res = {
         get first(): T {
-            return isUndefined(sequence) ? elem : sequence.first
+            return ifDefined(sequence, seq => seq.first, () => elem);
         },
 
         get rest(): Sequence<T> {
-            return isUndefined(sequence) ? undefined : append(sequence.rest, elem);
+            return ifDefined(sequence, seq => append(seq.rest, elem), () => undefined);
         },
 
 
@@ -722,7 +727,7 @@ function appendToPrev(taskId: string): UpdateStatement[] {
     return updateObjectFromCurrent(getPrevious(getCurrentTask()), 'next', taskId);
 }
 
-function searchOpt<T>(query: Statement<any>[], onEmpty: () => T, onData: (data: any) => T) {
+function searchOpt<T>(query: Statement<any>[], onEmpty: () => T, onData: (data: Dictionary<string>) => T): T {
     return streamOpt(db.searchStream(query), onEmpty, onData);
 }
 
@@ -1249,6 +1254,26 @@ function processCurrent(): boolean {
         }
 
         const la = lastAccessed[apiHost];
+        ifDefined(la, lad => {
+            const now = Date.now();
+            const diff = now - lad;
+            if (diff <= minimumDelay) {
+                setTimeout(getRunner(), diff);
+                yieldValue();
+            }
+            update(now);
+        }, () => update(Date.now()));
+
+        ifDefined(la, lad => {
+            const now = Date.now();
+            const diff = now - lad;
+            if (diff <= minimumDelay) {
+                setTimeout(getRunner(), diff);
+                yieldValue();
+            }
+            update(now);
+        }, () => update(Date.now()));
+        /*
         if (isUndefined(la)) {
             update(Date.now());
         }
@@ -1261,6 +1286,7 @@ function processCurrent(): boolean {
             }
             update(now);
         }
+        */
         const run = getRunner();
         https.get({
             hostname: apiHost,
@@ -1326,13 +1352,36 @@ function processCurrent(): boolean {
     }
 
 
-    function getReleaseForTrack(trackId: string, additionalIncs: string): Release {
-        const metaData: ReleaseList = mbGetList('release', {
+
+    function fetchReleaseForTrack<T>(trackId: string, params: Dictionary<string>, found: (release: Release) => T, notFound: () => T) {
+        return mbGet<ReleaseList, T>('release', {
             track: trackId,
+            limit: '2',
+            ...params
+        }, metaData => {
+            assertEquals(metaData["release-count"], 1);
+            return found(metaData.releases[0]);
+        }, notFound, fail);
+    }
+
+    function getReleaseForTrack<T>(trackId: string, additionalIncs: string, found: (release: Release) => T, notFound: () => T): T {
+        return fetchReleaseForTrack(trackId, {
             inc: `artist-credits${additionalIncs}`
-        });
+        }, found, notFound);
+        /*
+        return mbGet<ReleaseList, T>('release', {
+            track: trackId,
+            inc: `artist-credits${additionalIncs}`,
+            limit: '1'
+        }, metaData => {
+            assertEquals(metaData["release-count"], 1);
+            return found(metaData.releases[0]);
+        }, notFound, fail);
+        */
+        /*
         assertEquals(metaData["release-count"], 1);
         return metaData.releases[0];
+        */
     }
 
     function deleteCurrent(reason: string): () => true {
@@ -1394,7 +1443,7 @@ function processCurrent(): boolean {
 
     function processAttribute<T>(record: T, attribute: LiteralPropertyName<T>, type: string): undefined | boolean {
         const value = record[attribute] as any as string | number | null | undefined;
-        return isNull(value) || isUndefined(value) ? undefined : enqueueTypedTopLevelTask(value, mb(`${type}-${attribute}`));
+        return isNull(value) || ifDefined(value, dvalue => enqueueTypedTopLevelTask(dvalue, mb(`${type}-${attribute}`)), () => undefined);
     }
 
     function attributeHandler<T>(record: T, attribute: LiteralPropertyName<T>, type: string): () => undefined | boolean {
@@ -1426,7 +1475,7 @@ function processCurrent(): boolean {
     }
 
     function processSearch(type: 'area' | 'artist' | 'release' | 'recording' | 'work', field: string, literalType: string, searchField: string, taskType: string): boolean {
-        const escapedKey = escapeLucene(decodeLiteral(getPropertyFromCurrent(mb(`${taskType}-${field}`)), literalType));
+        const escapedKey = `"${escapeLucene(decodeLiteral(getPropertyFromCurrent(mb(`${taskType}-${field}`)), literalType))}"`;
         /*
         return handleSearch(`search?query=${searchField}%3A${encodeURIComponent(escapedKey)}&type=${type}&method=advanced`, escapedKey, type, searchField, entities => {
             entities.forEach(entity => withPlaylistForEntity(type, entity, () => undefined, fail));
@@ -1453,6 +1502,11 @@ function processCurrent(): boolean {
                 return true;
             }
             else {
+                //fail();
+                // too much search results, date:2013\-05\-21 does also match 2013
+                // see https://community.metabrainz.org/t/searching-by-release-date/414017
+                // release:Beyond Limits matches to Beyond the Limits
+                //https://musicbrainz.org/doc/Indexed_Search_Syntax
                 function process(entities: Entity[]): boolean {
                     return enqueueNextEntityFromList(entities, type, () => {
                         assertSame(count, entities.length);
@@ -1565,7 +1619,7 @@ function processCurrent(): boolean {
     }
 
     function processList<T>(items: T[] | undefined, entity: (item: T) => Entity | null, type: (item: T) => string): () => undefined | boolean {
-        return () => isUndefined(items) ? undefined : enqueueNextEntityTask(items, entity, type, () => undefined);
+        return () => ifDefined(items, ditems => enqueueNextEntityTask(ditems, entity, type, () => undefined), () => undefined);
     }
 
 
@@ -1766,6 +1820,12 @@ function processCurrent(): boolean {
         }, () => notFoundResult);
     }
 
+
+    function processEntityTypeSearch(type: 'area' | 'artist' | 'release' | 'recording' | 'work', field: string): boolean {
+        return processEntitySearch(type, field, type);
+    }
+
+
     const type = getPropertyFromCurrent('type');
     switch (type) {
         case 'root':
@@ -1804,7 +1864,7 @@ function processCurrent(): boolean {
                             let recordingIdResult: string | undefined = undefined;
                             const recordingId = () => {
                                 if (isUndefined(recordingIdResult)) {
-                                    const release = getReleaseForTrack(mbid, '');
+                                    const release = getReleaseForTrack(mbid, '', release => release, fail);
                                     const medium = getMediumForTrack(release, mbid);
                                     const track = getTrack(medium, mbid);
                                     recordingIdResult = track.recording.id;
@@ -1812,20 +1872,23 @@ function processCurrent(): boolean {
                                 return recordingIdResult;
                             }
 
-                            function checkId(id: string | undefined, enqueue: () => boolean | undefined, idName: string): () => boolean | undefined {
-                                return () => {
-                                    if (isDefined(id)) {
-                                        return enqueue();
-                                    }
-                                    else {
-                                        logError(`  ${idName} is missing!`);
-                                        return false;
-                                    };
-                                }
+                            function checkId(id: string | undefined, enqueue: (id: string) => boolean | undefined, idName: string): () => boolean | undefined {
+                                return () => ifDefined(id, enqueue, () => {
+                                    logError(`  ${idName} is missing!`);
+                                    return false;
+                                });
+
+
                             }
 
                             return processHandlers([
                                 checkId(acoustid, () => enqueueTypedTopLevelTask(acoustid as string, 'acoustid'), 'acoustid'),
+                                checkId(trackId, (id) => fetchReleaseForTrack(id, {}, fail, () => {
+                                    logError('  Track-id is invalid. Please re-tag file!');
+                                    return false;
+                                }), 'trackid'),
+                                // fail, must check whether or not tack id is still valid, getReleaseForTrack must be successfull, if not then re-tagging is required.
+                                // otherwhise newly added track will be removed as next, and readded --> in a loop
                                 checkId(trackId, () => enqueueMBResourceTask(mbid, 'track', (id: string) => updateObject('track', id)), 'trackid'),
                                 //fail, // must also provide track property
                                 () => searchMBEntityTask<boolean | undefined>('recording', recordingId(), () => undefined, taskId => updateObject('recording', taskId)),
@@ -1853,16 +1916,13 @@ function processCurrent(): boolean {
                                             return recordings.length !== 1;
                                         }
                                     })
-                                    if (isDefined(invalidTrack)) {
+                                    return ifDefined(invalidTrack, dit => {
                                         const rid = recordingId();
-                                        log(`  acoustid ${invalidTrack.id} is possibly incorrectly assigned to recording ${rid}. Correct acoustid is ${acoustid}`);
+                                        log(`  acoustid ${dit.id} is possibly incorrectly assigned to recording ${rid}. Correct acoustid is ${acoustid}`);
                                         openRecording(`${rid}/fingerprints`);
                                         moveToNext();
                                         return false;
-                                    }
-                                    else {
-                                        return undefined;
-                                    }
+                                    }, () => undefined);
                                 },
                                 () => {
 
@@ -1889,13 +1949,11 @@ function processCurrent(): boolean {
                             return false;
                     }
                 }, () => handleNotMountedVolume(vPath, () => {
-                    if (isDefined(getReferencesToCurrent('directory')())) {
+                    ifDefined(getReferencesToCurrent('directory')(), () => {
                         log('  keeping missing entry, still referenced');
                         moveToNext();
-                    }
-                    else {
-                        deleteCurrentTask('missing');
-                    }
+                    }, () => deleteCurrentTask('missing'));
+
                 }))
             );
         case 'mb:artist':
@@ -1983,8 +2041,8 @@ function processCurrent(): boolean {
                         else {
                             currentMedia--;
                             let currentTrack = media[currentMedia].tracks.length - 1;
-
-
+            
+            
                             return fail();
                         }
                         */
@@ -2023,17 +2081,16 @@ function processCurrent(): boolean {
                     () => {
                         const next = getReferencesToCurrent('recording');
                         const fso1 = next();
-                        if (isDefined(fso1)) {
+                        return ifDefined(fso1, () => {
                             log(`  recording in file ${getPath(fso1.subject)}`);
                             return undefined;
-                        }
-                        else {
+                        }, () => {
                             // no recording found
                             logError(`  missing recording ${url('musicbrainz.org', 'recording', recording.id)}!`);
                             openRecording(recording.id);
                             moveToNext();
                             return false;
-                        }
+                        });
                     },
 
                     () => {
@@ -2159,149 +2216,127 @@ function processCurrent(): boolean {
         case 'mb:track': {
             const mbid = getStringProperty('mb:mbid');
             log(url('musicbrainz.org', 'track', mbid));
+            return getReleaseForTrack(mbid, '+discids', release => {
+                const releaseId = release.id;
+                const medium = getMediumForTrack(release, mbid);
+                const position = (medium as Medium).position;
+                const track = findTrack(medium as Medium, mbid) as Track;
+                return processHandlers([
 
-            const release = getReleaseForTrack(mbid, '+discids');
-            const releaseId = release.id;
-
-            const medium = getMediumForTrack(release, mbid);
-            const position = (medium as Medium).position;
-            const track = findTrack(medium as Medium, mbid) as Track;
-            return processHandlers([
-
-                () => enqueueMedium(releaseId, position, undefined),
-                /*
-                tryAddKeyedTaskIndent<boolean | undefined>('mb:medium', {
-                    "mb:release-id": encodeString(releaseId),
-                    "mb:position": encodeNumber(position)
-                }, () => `${releaseId}/${position}`, () => {
-                    moveToNext();
-                    return true;
-                }, () => undefined)
-                */
-
-                enqueueMBEntity(track, 'recording'),
-                () => {
-                    const discs = medium.discs;
-                    if (discs.length === 0) {
-                        return undefined;
-                    }
-                    else {
-                        //assertEquals(discs.length, 1);
-                        let lengthSum = 0;
-                        const position = track.position;
-                        for (const disc of discs) {
-                            const offsets = disc.offsets;
-                            lengthSum += (position === offsets.length ? disc.sectors : offsets[position]) - offsets[position - 1];
-                        }
-                        //const disc = discs[0];
-                        //const offsets = disc.offsets;
-                        const length = div(lengthSum, 75 * discs.length);
-                        if (div(track.length, 1000) === length) {
-                            return undefined
+                    () => enqueueMedium(releaseId, position, undefined),
+                    enqueueMBEntity(track, 'recording'),
+                    () => {
+                        const discs = medium.discs;
+                        if (discs.length === 0) {
+                            return undefined;
                         }
                         else {
-                            logError(`  Inaccurate track length. Track length according discid's should be ${format(length * 1000)}.`);
-                            openMB('track', mbid);
-                            //moveToNext();
-                            return false;
+                            let lengthSum = 0;
+                            const position = track.position;
+                            for (const disc of discs) {
+                                const offsets = disc.offsets;
+                                lengthSum += (position === offsets.length ? disc.sectors : offsets[position]) - offsets[position - 1];
+                            }
+                            const length = div(lengthSum, 75 * discs.length);
+                            if (div(track.length, 1000) === length) {
+                                return undefined
+                            }
+                            else {
+                                logError(`  Inaccurate track length. Track length according discid's should be ${format(length * 1000)}.`);
+                                openMB('track', mbid);
+                                return false;
+                            }
                         }
-                    }//}
 
-                },
-                // determine preferred track list, by medium.release.tracklist.preferred
-                // get corresponding preferred track from prefered track list
-                // set preferred
-                () => {
-                    //const vRelease = db.v('release');
-                    const vTrackList = db.v('tracklist');
-                    return searchOptMBEntity('release', releaseId, [
-                        statement(db.v('entity'), 'tracklist', vTrackList),
-                        statement(vTrackList, 'preferred', db.v('preferred'))
-                    ], () => undefined, /*() => {
+                    },
+                    // determine preferred track list, by medium.release.tracklist.preferred
+                    // get corresponding preferred track from prefered track list
+                    // set preferred
+                    () => {
+                        //const vRelease = db.v('release');
+                        const vTrackList = db.v('tracklist');
+                        return searchOptMBEntity('release', releaseId, [
+                            statement(db.v('entity'), 'tracklist', vTrackList),
+                            statement(vTrackList, 'preferred', db.v('preferred'))
+                        ], () => undefined, /*() => {
                         log('  Preferred release not set -> skip');
                         // clear preferred on task
                         fail();
                         moveToNext();
                         return true;
                     }*/ fail);
-                    //return fail();
-                },
-                //fail,
+                        //return fail();
+                    },
+                    //fail,
 
 
 
 
-                // if preferred track is current track then
-                //   check for music files with current track
-                //   case number of found music files
-                //   0: find musicfile with same recording, duiplicate and retag
-                //   1: // everithing ok
-                //   default:
-                //     duplicate found -> delete
-                //   end case
-                // endif
-                () => getObject(currentTask, 'preferred', () => {
-                    const nextFile = getReferencesToCurrent('track');
-                    //log('  ' + currentTask);
-                    //const statement = next();
-                    //fail();
-                    if (isDefined(nextFile())) {
-                        return fail();
-                    }
-                    else {
-                        //fail();
-                        const fso = db.v('fso');
-                        const recording = db.v('recording');
-                        const nextRFile = prepareDBStream(db.searchStream([
-                            statement(fso, 'type', 'fileSystemEntry'),
-                            statement(fso, 'recording', recording),
-                            statement(recording, 'mb:mbid', encodeString(track.recording.id))
-                        ]));
-                        let data = nextRFile();
-                        if (isDefined(data)) {
-                            log('  missing track couuld be constructed from one of following files:')
-                            for (; ;) {
-                                log(`  * ${getPath((data as any).fso)}`);
-                                data = nextRFile();
-                                if (isUndefined(data)) {
-                                    break;
+                    // if preferred track is current track then
+                    //   check for music files with current track
+                    //   case number of found music files
+                    //   0: find musicfile with same recording, duiplicate and retag
+                    //   1: // everithing ok
+                    //   default:
+                    //     duplicate found -> delete
+                    //   end case
+                    // endif
+                    () => getObject(currentTask, 'preferred', () => {
+                        const nextFile = getReferencesToCurrent('track');
+                        return ifDefined(nextFile(), fail, () => {
+                            const fso = db.v('fso');
+                            const recording = db.v('recording');
+                            const nextRFile = prepareDBStream(db.searchStream([
+                                statement(fso, 'type', 'fileSystemEntry'),
+                                statement(fso, 'recording', recording),
+                                statement(recording, 'mb:mbid', encodeString(track.recording.id))
+                            ]));
+                            let data = nextRFile();
+                            return ifDefined(data, () => {
+                                log('  missing track couuld be constructed from one of following files:')
+                                for (; ;) {
+                                    log(`  * ${getPath((data as any).fso)}`);
+                                    data = nextRFile();
+                                    if (isUndefined(data)) {
+                                        break;
+                                    }
                                 }
-                            }
-                            openMB('track', track.id);
-                            //fail(); // check track
-                            moveToNext();
-                            return false;
+                                openMB('track', track.id);
+                                //fail(); // check track
+                                moveToNext();
+                                return false;
+                            }, () => undefined);
+                        });
+                    }, fail),
+
+                    /*
+                    () => {
+                        // check multiple files for track
+                        assertUndefined(getReferencesToCurrent("track")());
+                        // ensure file exist if preferred
+                        getObject(currentTask, "preferred", fail, fail);
+                        
+                        if (isDefined(getReferencesToCurrent("track")())) {
+                            fail();
+         
                         }
                         else {
-                            return undefined;
+                            fail();
                         }
-                    }
-                    //                 return fail();
-                }, fail),
-                //fail,
+                        //next()
+                        
+         
+                        return fail();
+                    },
+                    */
+                    COMPLETED_HANDLER
+                ]);
 
-                /*
-                () => {
-                    // check multiple files for track
-                    assertUndefined(getReferencesToCurrent("track")());
-                    // ensure file exist if preferred
-                    getObject(currentTask, "preferred", fail, fail);
-                    
-                    if (isDefined(getReferencesToCurrent("track")())) {
-                        fail();
- 
-                    }
-                    else {
-                        fail();
-                    }
-                    //next()
-                    
- 
-                    return fail();
-                },
-                */
-                COMPLETED_HANDLER
-            ]);
+            }, () => {
+                deleteCurrentTask("track does not exist anymore in musicbrainz database");
+                return true;
+            });
+
         }
         case 'mb:medium':
             {
@@ -2372,13 +2407,13 @@ function processCurrent(): boolean {
         case 'mb:release-title':
             return processDefaultSearch('release', 'title');
         case 'mb:recording-title':
-            return processDefaultSearch('recording', 'title');
+            return processEntityTypeSearch('recording', 'title');
         case 'mb:artist-name':
             //fail();
             // should search artist field and not name field
             // search string needs quote
             //return processDefaultSearch('artist', 'name');
-            return processEntitySearch('artist', 'name', 'artist');
+            return processEntityTypeSearch('artist', 'name');
         case 'mb:area-name':
             return processDefaultSearch('area', 'name');
         case 'mb:release-language':
@@ -2386,7 +2421,7 @@ function processCurrent(): boolean {
         case 'mb:medium-format':
             return processStringSearch('release', 'format', 'format', 'medium');
         case 'mb:work-title':
-            return processEntitySearch('work', 'title', 'work');
+            return processEntityTypeSearch('work', 'title');
         case 'mb:recording-length':
             return processSearch('recording', 'length', 'n', 'dur', 'recording');
         case 'mb:release-script':
@@ -2508,16 +2543,16 @@ function processCurrent(): boolean {
             var m3uOut = fs.createWriteStream(m3uPath);
             const item = statement.subject;
             assertSameProp(item, 'type', 'mb:medium');
- 
+             
             function writeLine(line: string): void {
                 m3uOut.write(`${line}\n`);
             }
- 
+             
             writeLine(`# https://musicbrainz.org/release/${decodeStringLiteral(getProperty(item, 'mb:release-id'))}/disc/${decodeLiteral(getProperty(item, 'mb:position'), 'n')}`);
- 
+             
             let fse = getPropertyFromCurrent('first');
             assertSameProp(fse, 'type', 'fileSystemEntry');
- 
+             
             function listEntry(fse: string): void {
                 writeLine(withVolumeAndEntryPath(fse, (name, path) => `${name}\\${path}`, (vPath, ePath) => {
                     assertSame(vPath, '/Volumes/Musik');
@@ -2525,14 +2560,14 @@ function processCurrent(): boolean {
                 }));
             }
             listEntry(fse);
- 
+             
             const rest = getPropertyFromCurrent('rest');
             assertSameProp(rest, 'type', 'fileSystemEntry');
             listEntry(rest);
- 
- 
+             
+             
             m3uOut.end();
- 
+             
             waitFor(cb => m3uOut.on('finish', cb));
             */
             log('  written');
@@ -2588,7 +2623,7 @@ function getAll(subject: string | undefined, predicate: string | undefined, obje
 }
 
 
-defineCommand("get", "retrieve triples from database", ["-s, --subject <IRI>", "-p, --predicate <IRI>", "-o, --object <IRI>"], options => {
+defineCommand<StatementPattern>("get", "retrieve triples from database", ["-s, --subject <IRI>", "-p, --predicate <IRI>", "-o, --object <IRI>"], options => {
     getAll(options.subject, options.predicate, options.object, log);
 });
 
@@ -2619,7 +2654,7 @@ tripleCommand("delete", "removes a triple from the database", "del");
 
 
 function specCommand(cmdName: string, description: string, specHandler: (content: any) => void) {
-    defineCommand(`${cmdName} <${cmdName}spec>`, description, [], (spec) => {
+    defineCommand<string>(`${cmdName} <${cmdName}spec>`, description, [], (spec) => {
         const res: Pair<NodeJS.ErrnoException, string> = waitFor2(callback => fs.readFile(spec, 'utf8', callback));
         assertUndefined(res.first);
         specHandler(JSON.parse(res.second));
@@ -2760,10 +2795,6 @@ defineCommand('dump', 'dump database to text format', [], () => {
         }
     }
 
-    function getLiteral(name: string): string | number {
-        return decodeLiteral(getPropertyFromCurrent(name));
-    }
-
     /*
     function getString(name: string): string {
         return getLiteral(name, 's');
@@ -2774,6 +2805,9 @@ defineCommand('dump', 'dump database to text format', [], () => {
         log(`https://${domain}/${path}`);
     }
 
+    function getLiteral(name: string): string | number {
+        return decodeLiteral(getPropertyFromCurrent(name));
+    }
 
     function resource(domain: string, type: string, predicate: string): void {
         url(domain, `${type}/${getLiteral(predicate)}`);
@@ -2789,7 +2823,7 @@ defineCommand('dump', 'dump database to text format', [], () => {
     }
 
     function searchBase(field: string, prefix: string, suffix: string, type: string) {
-        url('musicbrainz.org', `search?query=${field}%3A${encodeURIComponent(escapeLucene(getLiteral(`mb:${prefix}-${suffix}`)))}&type=${type}&method=advanced`);
+        url('musicbrainz.org', `search?query=${encodeURIComponent(`${field}:"${escapeLucene(getLiteral(`mb:${prefix}-${suffix}`))}"`)}&type=${type}&method=advanced`);
     }
 
     function searchMB(field: string, type: string, suffix: string) {
@@ -2930,6 +2964,19 @@ defineCommand('dump', 'dump database to text format', [], () => {
                 search('disambiguation', 'artist');
                 break;
 
+            case 'url':
+                log(getLiteral('url'));
+                //                fail();
+                break;
+            case 'mb:release-group-title':
+                search('title', 'release-group');
+                break;
+            case 'mb:artist-sort-name':
+                search('sort-name', 'artist');
+                break;
+            case 'mb:work-type':
+                search('type', 'work');
+                break;
             default:
                 console.error(`Cannot dump type ${type}!`);
                 fail();
@@ -2941,6 +2988,48 @@ defineCommand('dump', 'dump database to text format', [], () => {
         }
         current = next;
     }
+});
+
+
+// To include
+// /Volumes/Musik/2/2 Unlimited/No Limit_ Complete Best of 2 Unlimited/f67a9109-95f3-417a-9c7e-7c9be1e3f303/04 Workaholic (vocal edit).flac
+
+defineCommand<string>("include <path>", "include url into database", [], givenPath => {
+    function pattern(predicate: string, object: string): Statement<any> {
+        return statement(db.v('item'), predicate, object);
+    }
+    let pn = givenPath;
+    let segments: string[] = [];
+    for (; ;) {
+        if (searchOpt([pattern('type', 'volume'), pattern('path', encodeString(pn))], () => false, res => {
+            let currentResult = res;
+            for (; ;) {
+
+                failIf(segments.length === 0);
+                const name = segments[0];
+
+                const newResult = searchOpt([pattern('type', 'fileSystemEntry'), pattern('directory', res.item), pattern('name', encodeString(name))], () => undefined, res => res);
+                if (isUndefined(currentResult)) {
+                    log(name);
+                    fail();
+                }
+                segments = segments.slice(1);
+                currentResult = newResult!;
+
+            }
+
+        })) {
+            fail();
+        }
+        //pn = path.dirname(pn);
+        segments = [path.basename(pn), ...segments];
+        pn = path.dirname(pn);
+        //fail();
+
+    }
+    fail();
+
+
 });
 
 Fiber(() => {

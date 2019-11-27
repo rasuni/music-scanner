@@ -10,7 +10,9 @@
             "name": "Programm starten",
             "program": "${workspaceFolder}/music-scanner.js",
             "args": [
-                "run"
+                //"run",
+                "include",
+                "/Volumes/Musik/2/2 Unlimited/No Limit_ Complete Best of 2 Unlimited/f67a9109-95f3-417a-9c7e-7c9be1e3f303/04 Workaholic (vocal edit).flac"
             ],
             "outFiles": [
                 "${workspaceFolder}/**/*.js"
