@@ -496,35 +496,26 @@ function map<F, T>(sequence: Sequence<F>, mapper: Function<F, Sequence<T>>): Seq
 
 function concat<T>(...sequences: Sequence<T>[]): Sequence<T> {
     return map(sequence(...sequences), seq => seq);
-
 }
 
 
 function append<T>(sequence: Sequence<T>, elem: T): SequenceNode<T> {
 
 
-    const res = {
+    function ifDefinedSequence<R, D>(then: Function<SequenceNode<T>, R>, defaultValue: D): R | D {
+        return ifDefined(sequence, then, () => defaultValue);
+    }
+
+    return {
         get first(): T {
-            return ifDefined(sequence, seq => seq.first, () => elem);
+            return ifDefinedSequence(seq => seq.first, elem);
         },
 
         get rest(): Sequence<T> {
-            return ifDefined(sequence, seq => append(seq.rest, elem), () => undefined);
+            return ifDefinedSequence(seq => append(seq.rest, elem), undefined);
         },
 
-
-
     }
-    res.toString = () => {
-        const members: string[] = [];
-        let sequence: SequenceNode<T> | undefined = res;
-        while (sequence != undefined) {
-            members.push(asString(sequence.first));
-            sequence = sequence.rest;
-        }
-        return members.join(',');
-    };
-    return res;
 
 }
 
@@ -731,7 +722,7 @@ function searchOpt<T>(query: Statement<any>[], onEmpty: () => T, onData: (data: 
     return streamOpt(db.searchStream(query), onEmpty, onData);
 }
 
-function tryAddKeyedTask<T>(type: string, keys: Dictionary<string>, path: () => string, prefix: string, linkPredicate: string | undefined, enqueued: (taskId: string) => T, alreadyAdded: (found: any) => T): T {
+function tryAddKeyedTask<T>(type: string, keys: Dictionary<string>, path: Provider<string>, prefix: string, linkPredicate: string | undefined, enqueued: Function<string, T>, alreadyAdded: Function<any, T>): T {
 
     const currentTask = getCurrentTask();
 
@@ -745,6 +736,9 @@ function tryAddKeyedTask<T>(type: string, keys: Dictionary<string>, path: () => 
     }
 
     return searchOpt(mapAttributeValues(statement, db.v('s')), () => {
+
+        // TODO add  is something like this
+
         log(`${prefix}adding ${type} ${path()}`);
         const taskId = `task/${uuid()}`;
         update([
@@ -753,6 +747,7 @@ function tryAddKeyedTask<T>(type: string, keys: Dictionary<string>, path: () => 
             ...appendToPrev(taskId),
             ...enumOptional(linkPredicate, () => put(currentTask, linkPredicate as string, taskId))
         ]);
+
         return enqueued(taskId);
     }, alreadyAdded);
 }
@@ -1119,6 +1114,33 @@ function assertSameProp(o: string, name: string, expected: string) {
 }
 
 
+function searchSubject<R>(attributes: Dictionary<string>, additionalFilter: Statement<any>[], notFound: () => R, found: (result: any) => R) {
+
+    return searchOpt([
+        ...mapDictionary(attributes, (predicate, object) => statement(db.v('entity'), predicate, object)),
+        ...additionalFilter
+    ], notFound, found);
+
+}
+function searchOptMBEntity<R>(type: string, mbid: string, additionalFilter: Statement<any>[], notFound: () => R, found: (result: any) => R) {
+
+    return searchSubject({
+        type: mb(type),
+        'mb:mbid': encodeString(mbid)
+    }, additionalFilter, notFound, found);
+    /*
+    function pattern(predicate: string, object: string): Statement<any> {
+        return statement(db.v('entity'), predicate, object);
+    }
+    return searchOpt([
+        pattern('type', mb(type)),
+        pattern('mb:mbid', encodeString(mbid)),
+        ...additionalFilter
+    ], notFound, found);
+    */
+}
+
+
 function processCurrent(): boolean {
     const currentTask = getCurrentTask();
 
@@ -1454,6 +1476,7 @@ function processCurrent(): boolean {
         return enqueueNextEntityTask(entities, entity => entity, () => entityType, completed);
     }
 
+    /*
     function searchOptMBEntity<R>(type: string, mbid: string, additionalFilter: Statement<any>[], notFound: () => R, found: (result: any) => R) {
         function pattern(predicate: string, object: string): Statement<any> {
             return statement(db.v('entity'), predicate, object);
@@ -1464,6 +1487,7 @@ function processCurrent(): boolean {
             ...additionalFilter
         ], notFound, found);
     }
+    */
 
     function searchMBEntityTask<R>(type: string, mbid: string, notFound: () => R, found: (taskId: string) => R) {
         return searchOptMBEntity(type, mbid, [], notFound, result => found(result.entity));
@@ -2995,31 +3019,57 @@ defineCommand('dump', 'dump database to text format', [], () => {
 // /Volumes/Musik/2/2 Unlimited/No Limit_ Complete Best of 2 Unlimited/f67a9109-95f3-417a-9c7e-7c9be1e3f303/04 Workaholic (vocal edit).flac
 
 defineCommand<string>("include <path>", "include url into database", [], givenPath => {
-    function pattern(predicate: string, object: string): Statement<any> {
-        return statement(db.v('item'), predicate, object);
-    }
     let pn = givenPath;
+    //log(givenPath);
     let segments: string[] = [];
     for (; ;) {
-        if (searchOpt([pattern('type', 'volume'), pattern('path', encodeString(pn))], () => false, res => {
+        if (searchSubject({ type: 'volume', path: encodeString(pn) }, [], () => false, res => {
             let currentResult = res;
+            let currentPath = pn;
             for (; ;) {
 
                 failIf(segments.length === 0);
                 const name = segments[0];
+                currentPath = path.join(currentPath, name);
 
-                const newResult = searchOpt([pattern('type', 'fileSystemEntry'), pattern('directory', res.item), pattern('name', encodeString(name))], () => undefined, res => res);
+
+                function mapAttributeValues<T>(mapper: BiFunction<string, string, T>): T[] {
+                    return mapDictionary({
+                        type: 'fileSystemEntry',
+                        directory: res.entity,
+                        name: encodeString(name),
+                    }, (key, value) => mapper(key, value));
+                }
+                const newResult = searchOpt(mapAttributeValues((predicate, object) => statement(db.v('entity'), predicate, object)), () => undefined, res => res);
                 if (isUndefined(currentResult)) {
+                    // TODO enqueue name
+                    log('must enque: ')
                     log(name);
-                    fail();
+                    //fail();
+
+                    log(`adding fileSystemEntry ${currentPath}`);
+                    const taskId = `task/${uuid()}`;
+
+
+                    const currentTask = getCurrentTask();
+
+                    update([
+                        ...mapAttributeValues((key, value) => put(taskId, key, value)),
+                        link(taskId, currentTask),
+                        ...appendToPrev(taskId),
+                    ]);
+                    break;
+
+
                 }
                 segments = segments.slice(1);
                 currentResult = newResult!;
 
             }
+            return true;
 
         })) {
-            fail();
+            break;
         }
         //pn = path.dirname(pn);
         segments = [path.basename(pn), ...segments];
@@ -3027,7 +3077,7 @@ defineCommand<string>("include <path>", "include url into database", [], givenPa
         //fail();
 
     }
-    fail();
+    //fail();
 
 
 });
