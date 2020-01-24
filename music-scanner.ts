@@ -10,7 +10,6 @@ import * as fs from 'fs';
 import * as rimraf from 'rimraf';
 import * as mm from 'music-metadata';
 import * as https from 'https';
-import * as sax from 'sax';
 import * as readline from 'readline';
 import opn = require('opn');
 import * as http from 'http';
@@ -352,38 +351,11 @@ function persist(type: Operation, statements: Statement<string>[]): void {
     }
 }
 
-type Predicate<T> = Function<T, boolean>;
-
 
 function mapDictionary<F, T>(source: Dictionary<F>, mapper: BiFunction<string, F, T>): T[] {
     return Object.getOwnPropertyNames(source).map(key => mapper(key, source[key]));
 }
 
-function asString(value: any): string {
-    switch (typeof value) {
-        case 'boolean':
-        case 'function':
-        case 'number':
-        case 'symbol':
-            return value.toString();
-        case 'object':
-            return ifDefined(Object.getOwnPropertyDescriptor(value, "toString"), () => value.toString(), () => `{${mapDictionary(value, (name, vname) => `${name}:${asString(vname)}`).join(',')}}`);
-        case 'string':
-            return `"${value}"`;
-        case 'undefined':
-            return "undefined";
-        default:
-            return fail();
-    }
-}
-
-
-function expectEquals(expected: any): Predicate<any> {
-    return actual => {
-        assertEquals(actual, expected);
-        return false;
-    }
-}
 
 
 function update(changeSet: UpdateStatement[]): void {
@@ -403,38 +375,10 @@ function update(changeSet: UpdateStatement[]): void {
 }
 
 
-function matchObject<T>(checkers: Dictionary<Predicate<any>>): Predicate<T> {
-    return object => {
-        //return searchMatch(object, checkers, () => true, FALSE);
-        for (const compareValue of compareObjects(object, checkers)) {
-            const checker: Predicate<any> = compareValue.expected;
-            assertType(checker, 'function');
-            if (checker(compareValue.actual)) {
-                return true;
-            }
-        }
-        return false;
-
-    }
-}
-
 const lastAccessed: {
     [name: string]: number;
 } = {};
 
-
-type SaxEvent = {
-    readonly type: 'openTag';
-    readonly tag: sax.Tag;
-} | {
-    readonly type: 'text';
-    readonly text: string;
-} | {
-    readonly type: 'closeTag';
-    readonly name: string;
-};
-
-type Attributes = Dictionary<string>;
 
 function isDefined<T>(value: T): value is Exclude<T, undefined> {
     return value !== undefined;
@@ -454,232 +398,13 @@ interface SequenceNode<T> {
 
 type Sequence<T> = SequenceNode<T> | undefined;
 
-function sequence<T>(...members: T[]): Sequence<T> {
-
-    function getRest(index: number): Sequence<T> {
-        return members.length === index ? undefined : {
-            get first(): T {
-                return members[index];
-            },
-            get rest(): Sequence<T> {
-                return getRest(index + 1);
-            },
-        }
-    }
-    return getRest(0);
-}
-
-
-function map<F, T>(sequence: Sequence<F>, mapper: Function<F, Sequence<T>>): Sequence<T> {
-
-
-    function nextFromSequence(currentSequence: Sequence<T>, fallback: Provider<Sequence<T>>): Sequence<T> {
-        return ifDefined(currentSequence, cr => {
-            return {
-                get first(): T {
-                    return cr.first;
-                },
-                get rest(): Sequence<T> {
-                    return nextFromSequence(cr.rest, fallback);
-                },
-            }
-        }, fallback);
-    }
-
-    function nextFromSource(sequence: Sequence<F>): Sequence<T> {
-        return ifDefined(sequence, seq => nextFromSequence(mapper(seq.first), () => nextFromSource(seq.rest)), () => undefined);
-    }
-
-    return nextFromSource(sequence);
-
-}
-
-function concat<T>(...sequences: Sequence<T>[]): Sequence<T> {
-    return map(sequence(...sequences), seq => seq);
-}
-
-
-function append<T>(sequence: Sequence<T>, elem: T): SequenceNode<T> {
-
-
-    function ifDefinedSequence<R, D>(then: Function<SequenceNode<T>, R>, defaultValue: D): R | D {
-        return ifDefined(sequence, then, () => defaultValue);
-    }
-
-    return {
-        get first(): T {
-            return ifDefinedSequence(seq => seq.first, elem);
-        },
-
-        get rest(): Sequence<T> {
-            return ifDefinedSequence(seq => append(seq.rest, elem), undefined);
-        },
-
-    }
-
-}
-
-type SaxEventMatchers = Sequence<Predicate<SaxEvent>>;
-
-function matchTag(name: string, attributes: Predicate<any>, inner: SaxEventMatchers): SaxEventMatchers {
-
-    return {
-        first: matchObject<SaxEvent>({
-            type: expectEquals('openTag'),
-            tag: matchObject({
-                name: expectEquals(name),
-                attributes: attributes,
-                isSelfClosing: expectEquals(isUndefined(inner))
-            })
-        }),
-        rest: append(
-            inner,
-            expectEquals({
-                type: 'closeTag',
-                name: name
-            }),
-        )
-
-    }
-}
-
-function matchTagAndAttributes(name: string, attributes: Attributes, inner: SaxEventMatchers): SaxEventMatchers {
-    return matchTag(name, expectEquals(attributes), inner);
-}
-
-function expectTag(name: string, attributes: Attributes, inner: SaxEventMatchers): SaxEventMatchers {
-    return matchTagAndAttributes(name, attributes, inner);
-}
-
-
-function expectTextEvent(value: Predicate<string>): SaxEventMatchers {
-    return sequence(matchObject<SaxEvent>({ type: expectEquals('text'), text: value }));
-}
-
-function matchTextTag(name: string, attributes: Attributes, value: Predicate<string>): SaxEventMatchers {
-    return expectTag(name, attributes, expectTextEvent(value));
-}
-
-
-function matchPlainTextTag(name: string, value: Predicate<string>): SaxEventMatchers {
-    return matchTextTag(name, {}, value);
-}
-
-function expectPlainTextTag(name: string, value: string): Sequence<Predicate<SaxEvent>> {
-    return matchPlainTextTag(name, expectEquals(value));
-}
-
-function nameTags(name: Predicate<string>, sortName: string): Sequence<Predicate<SaxEvent>> {
-    return concat(
-        matchPlainTextTag('name', name),
-        expectPlainTextTag('sort-name', sortName)
-    )
-}
-
-function expectEntityTag(tagName: string, mbid: string, additionalTags: Sequence<Predicate<SaxEvent>>): Sequence<Predicate<SaxEvent>> {
-    return expectTag(tagName, {
-        id: mbid
-    }, additionalTags);
-}
-
-
-function expectSimpleTag(name: string, inner: Sequence<Predicate<SaxEvent>>): Sequence<Predicate<SaxEvent>> {
-    return expectTag(name, {}, inner);
-}
-
-
-function expectIsoList1(code: string): Sequence<Predicate<SaxEvent>> {
-    return expectSimpleTag(`iso-3166-1-code-list`, expectPlainTextTag(`iso-3166-1-code`, code));
-}
-
-
-function expectArea(mbid: string, name: string, additionalTags: Sequence<Predicate<SaxEvent>>): Sequence<Predicate<SaxEvent>> {
-    return expectEntityTag('area', mbid, concat(
-        nameTags(expectEquals(name), name),
-        additionalTags
-    ));
-}
 
 
 function getStream(pattern: StatementPattern): Provider<Statement<string>> {
     return prepareDBStream(db.getStream(pattern));
 }
 
-function expectCountry(countryCode: string): Sequence<Predicate<SaxEvent>> {
-    return expectPlainTextTag('country', countryCode);
-}
 
-const expectUsCountry = expectCountry('US');
-
-function expectNamedEntity(tagName: string, id: string, value: string): Sequence<Predicate<SaxEvent>> {
-    return expectEntityTag(tagName, id, expectTextEvent(expectEquals(value)));
-}
-
-const expectTextRepresentation = expectSimpleTag('text-representation', concat(
-    expectPlainTextTag('language', 'eng'),
-    expectPlainTextTag('script', 'Latn')
-));
-
-
-////
-
-/*
-function expectReleaseEventList(elements: Sequence<Predicate<SaxEvent>>[]): Sequence<Predicate<SaxEvent>> {
-    return expectTag(`release-event-list`, { count: `${elements.length}` }, map(sequence(...elements), element => expectSimpleTag('release-event', element)));
-}
-*/
-const expect1975 = expectPlainTextTag('date', '1975');
-
-
-function expectRelease(id: string, title: string, official: Sequence<Predicate<SaxEvent>>, country: string, areaId: string, packaging: Sequence<Predicate<SaxEvent>>, barcode: Sequence<Predicate<SaxEvent>>): Sequence<Predicate<SaxEvent>> {
-    const elements = [concat(
-        expect1975,
-        expectArea(areaId, 'United States', expectIsoList1('US'))
-    )];
-    return expectEntityTag('release', id, concat(
-        expectPlainTextTag("title", title),
-        concat(
-            official,
-            expectPlainTextTag('quality', 'normal'),
-            packaging,
-            expect1975,
-            expectCountry(country),
-            expectTag(`release-event-list`, { count: `${elements.length}` }, map(sequence(...elements), element => expectSimpleTag('release-event', element))),
-            /*
-                        expectReleaseEventList([concat(
-                            expect1975,
-                            expectArea(areaId, 'United States', expectIsoList1('US'))
-                        )]),
-            */
-            barcode
-        )
-    ));
-    /*
-    return expectTiteledEntity('release', id, title, concat(
-        official,
-        expectPlainTextTag('quality', 'normal'),
-        packaging,
-        expect1975,
-        expectCountry(country),
-        expectReleaseEventList([concat(
-            expect1975,
-            expectArea(areaId, 'United States', expectIsoList1('US'))
-        )]),
-        barcode
-    ));
-    */
-}
-
-
-const expectOfficial = expectNamedEntity('status', '4e304316-386d-3409-af2e-78857eec5cfe', 'Official');
-
-
-const expectBarcode = matchTagAndAttributes('barcode', {}, undefined);
-
-const expectCardboard = concat(
-    expectNamedEntity('packaging', 'f7101ce3-0384-39ce-9fde-fbbd0044d35f', 'Cardboard/Paper Sleeve'),
-    expectTextRepresentation,
-)
 
 const log = console.log;
 
@@ -1140,7 +865,9 @@ function searchOptMBEntity<R>(type: string, mbid: string, additionalFilter: Stat
     */
 }
 
-
+function failIfSame(value1: any, value2: any): void {
+    failIf(value1 === value2);
+}
 function processCurrent(): boolean {
     const currentTask = getCurrentTask();
 
@@ -1465,7 +1192,16 @@ function processCurrent(): boolean {
 
     function processAttribute<T>(record: T, attribute: LiteralPropertyName<T>, type: string): undefined | boolean {
         const value = record[attribute] as any as string | number | null | undefined;
+        return isNull(value) || isUndefined(value) ? undefined : enqueueTypedTopLevelTask(value, mb(`${type}-${attribute}`));
+        /*
+        if (isNull(value) ) {
+            return undefined;
+        }
+        else {
+            return ifDefined(value, dvalue => enqueueTypedTopLevelTask(dvalue, mb(`${type}-${attribute}`))
+        }
         return isNull(value) || ifDefined(value, dvalue => enqueueTypedTopLevelTask(dvalue, mb(`${type}-${attribute}`)), () => undefined);
+        */
     }
 
     function attributeHandler<T>(record: T, attribute: LiteralPropertyName<T>, type: string): () => undefined | boolean {
@@ -1902,12 +1638,11 @@ function processCurrent(): boolean {
                                     return false;
                                 });
 
-
                             }
 
                             return processHandlers([
                                 checkId(acoustid, () => enqueueTypedTopLevelTask(acoustid as string, 'acoustid'), 'acoustid'),
-                                checkId(trackId, (id) => fetchReleaseForTrack(id, {}, fail, () => {
+                                checkId(trackId, id => fetchReleaseForTrack(id, {}, () => undefined, () => {
                                     logError('  Track-id is invalid. Please re-tag file!');
                                     return false;
                                 }), 'trackid'),
@@ -2127,6 +1862,7 @@ function processCurrent(): boolean {
                 ]));
         case 'mb:label':
             fail();
+            /*
             const mbid = getStringProperty('mb:mbid');
             const resourcePath = `/ws/2/${type}/${mbid}?inc=releases`;
             log(`https://musicbrainz.org${resourcePath}`);
@@ -2160,13 +1896,7 @@ function processCurrent(): boolean {
                         expectPlainTextTag('begin', '1974'),
                         expectPlainTextTag('end', '2011-10-07'),
                         expectPlainTextTag('ended', 'true'),
-                    ))
-                    /*
-                    expectLifeSpan('1974', concat(
-                        expectPlainTextTag('end', '2011-10-07'),
-                        expectPlainTextTag('ended', 'true'),
-                    ))
-                    */,
+                    )),
                     expectTag('release-list', {
                         count: '2857'
                     }, concat(
@@ -2180,6 +1910,7 @@ function processCurrent(): boolean {
                 )
             )));
 
+
             for (; ;) {
                 if (isUndefined(predicates)) {
                     enqueueMBResourceTask('489ce91b-6658-3307-9877-795b68554c98', 'area', fail);
@@ -2191,6 +1922,7 @@ function processCurrent(): boolean {
                 }
                 predicates = predicates.rest;
             }
+            */
 
             //}
             return true;
@@ -2317,7 +2049,7 @@ function processCurrent(): boolean {
                             ]));
                             let data = nextRFile();
                             return ifDefined(data, () => {
-                                log('  missing track couuld be constructed from one of following files:')
+                                log('  missing track could be constructed from one of following files:')
                                 for (; ;) {
                                     log(`  * ${getPath((data as any).fso)}`);
                                     data = nextRFile();
@@ -2494,7 +2226,7 @@ function processCurrent(): boolean {
                 return () => {
                     const list: EntityList = mbGetList(type, { query: `tag:${escapeLucene(key)}` });
                     const count: number = list.count;
-                    failIf(count === 0);
+                    failIfSame(count, 0);
                     const entities = (list as any)[`${type}s`];
                     return enqueueNextEntityFromList(entities, type, () => {
                         assert(count === entities.length);
@@ -3028,7 +2760,7 @@ defineCommand<string>("include <path>", "include url into database", [], givenPa
             let currentPath = pn;
             for (; ;) {
 
-                failIf(segments.length === 0);
+                failIfSame(segments.length, 0);
                 const name = segments[0];
                 currentPath = path.join(currentPath, name);
 
@@ -3036,12 +2768,12 @@ defineCommand<string>("include <path>", "include url into database", [], givenPa
                 function mapAttributeValues<T>(mapper: BiFunction<string, string, T>): T[] {
                     return mapDictionary({
                         type: 'fileSystemEntry',
-                        directory: res.entity,
+                        directory: currentResult.entity,
                         name: encodeString(name),
                     }, (key, value) => mapper(key, value));
                 }
                 const newResult = searchOpt(mapAttributeValues((predicate, object) => statement(db.v('entity'), predicate, object)), () => undefined, res => res);
-                if (isUndefined(currentResult)) {
+                if (isUndefined(newResult)) {
                     // TODO enqueue name
                     log('must enque: ')
                     log(name);
@@ -3063,7 +2795,8 @@ defineCommand<string>("include <path>", "include url into database", [], givenPa
 
                 }
                 segments = segments.slice(1);
-                currentResult = newResult!;
+                //res = newResult;
+                currentResult = newResult;
 
             }
             return true;
@@ -3074,7 +2807,7 @@ defineCommand<string>("include <path>", "include url into database", [], givenPa
         //pn = path.dirname(pn);
         segments = [path.basename(pn), ...segments];
         pn = path.dirname(pn);
-        //fail();
+        failIfSame(pn, '.');//fail();
 
     }
     //fail();
