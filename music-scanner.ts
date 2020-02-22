@@ -80,12 +80,8 @@ function assertSame(actual: any, expected: any) {
     assert(actual === expected);
 }
 
-function assertType(value: any, expectedType: string) {
-    assertSame(typeof value, expectedType);
-}
-
 function assertObject(value: any) {
-    assertType(value, 'object');
+    assertSame(typeof value, 'object');
 }
 
 interface Dictionary<T> {
@@ -259,8 +255,11 @@ function prepareDBStream<T>(stream: Stream<T>): Provider<T> {
     return makeBlockingStream(on);
 }
 
-function ifDefined<T, D, U>(value: T, onDefined: Function<Exclude<T, undefined>, D>, onUndefined: Provider<U>): D | U {
+function ifDefined<T, D, U>(value: T | undefined, onDefined: Function<T, D>, onUndefined: Provider<U>): D | U {
     return isDefined(value) ? onDefined(value) : onUndefined()
+}
+function onDefined<T, D,>(value: T | undefined, onDefined: Function<T, D>): D | undefined {
+    return ifDefined(value, onDefined, () => undefined)
 }
 
 function streamOpt<T, R>(stream: Stream<T>, onEmpty: Provider<R>, onData: Function<T, R>): R {
@@ -535,7 +534,7 @@ interface Area {
     readonly id: string;
     readonly type: string;
     readonly name: string;
-    readonly 'iso-3166-1-codes': string[];
+    readonly 'iso-3166-1-codes'?: string[];
     readonly aliases: Alias[];
     readonly tags: Tag[];
     readonly relations: Relation[];
@@ -628,6 +627,7 @@ interface Release {
     readonly asin: string;
     readonly "label-info": LabelInfo[];
     readonly 'release-group': Entity;
+    readonly country?: string;
 }
 
 interface ReleaseList extends EntityList {
@@ -886,6 +886,12 @@ function processCurrent(): boolean {
     function moveToNext(): void {
         update(moveToNextStatements());
     }
+
+    function openTrack(mbid: string): void {
+        openMB('track', mbid);
+        moveToNext();
+    }
+
 
     function fsOp(removeMethod: 'unlink' | 'rmdir', path: string) {
         assertSame(waitFor(cb => fs[removeMethod](path, cb)), null);
@@ -1379,7 +1385,7 @@ function processCurrent(): boolean {
     }
 
     function processList<T>(items: T[] | undefined, entity: (item: T) => Entity | null, type: (item: T) => string): () => undefined | boolean {
-        return () => ifDefined(items, ditems => enqueueNextEntityTask(ditems, entity, type, () => undefined), () => undefined);
+        return () => onDefined(items, ditems => enqueueNextEntityTask(ditems, entity, type, () => undefined));
     }
 
 
@@ -1675,13 +1681,13 @@ function processCurrent(): boolean {
                                             return recordings.length !== 1;
                                         }
                                     })
-                                    return ifDefined(invalidTrack, dit => {
+                                    return onDefined(invalidTrack, dit => {
                                         const rid = recordingId();
                                         log(`  acoustid ${dit.id} is possibly incorrectly assigned to recording ${rid}. Correct acoustid is ${acoustid}`);
                                         openRecording(`${rid}/fingerprints`);
                                         moveToNext();
                                         return false;
-                                    }, () => undefined);
+                                    });
                                 },
                                 () => {
 
@@ -1738,7 +1744,8 @@ function processCurrent(): boolean {
             return getMBCoreEntity<Area>('area', ['aliases', 'tags'], area => processHandlers([
                 attributeHandler(area, 'type', 'area'),
                 attributeHandler(area, 'name', 'area'),
-                () => enqueueNextItemTask(area["iso-3166-1-codes"], 'mb:area-iso1', 'mb:area-iso1', undefined, true, () => undefined),
+                /// TODO: Common code
+                () => onDefined(area["iso-3166-1-codes"], codes => enqueueNextItemTask(codes, 'mb:area-iso1', 'mb:area-iso1', undefined, true, () => undefined)),
                 handleAttributes<Area, Alias>(area, 'aliases', 'name', 'area', 'alias'),
                 //() => enqueueNextTypedTask(area.aliases, alias => alias.name, 'mb:area-alias', 'mb:area-alias', undefined, true, () => undefined),
                 processRelations(area.relations)
@@ -1787,6 +1794,7 @@ function processCurrent(): boolean {
                     releaseAttributeHandler('barcode'),
                     releaseAttributeHandler('asin'),
                     handleAttributes<Release, LabelInfo>(release, 'label-info', 'catalog-number', 'release', 'catno'),
+                    releaseAttributeHandler('country'),
                     fail,
                     () => {
                         // create tracklist
@@ -1802,7 +1810,7 @@ function processCurrent(): boolean {
                             let currentTrack = media[currentMedia].tracks.length - 1;
             
             
-                            return fail();
+                            return fxail();
                         }
                         */
                     }
@@ -1943,7 +1951,7 @@ function processCurrent(): boolean {
                 () => {
                     for (const item of recordings) {
                         const recordingId = item.id;
-                        if (mbGet(`recording/${item.id}`, {}, () => false, () => true, fail)) {
+                        if (mbGet(`recording/${item.id}`, {}, () => false, () => true, () => false)) {
                             log(`  please deactivate deleted recording ${recordingId}`);
                             openBrowser('acoustid.org', 'track', acoustid);
                             moveToNext();
@@ -1999,7 +2007,8 @@ function processCurrent(): boolean {
                             }
                             else {
                                 logError(`  Inaccurate track length. Track length according discid's should be ${format(length * 1000)}.`);
-                                openMB('track', mbid);
+                                openTrack(mbid);
+                                //moveToNext();
                                 return false;
                             }
                         }
@@ -2057,9 +2066,7 @@ function processCurrent(): boolean {
                                         break;
                                     }
                                 }
-                                openMB('track', track.id);
-                                //fail(); // check track
-                                moveToNext();
+                                openTrack(track.id);
                                 return false;
                             }, () => undefined);
                         });
