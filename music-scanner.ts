@@ -262,7 +262,7 @@ function onDefined<T, D,>(value: T | undefined, onDefined: Function<T, D>): D | 
     return ifDefined(value, onDefined, () => undefined)
 }
 
-function streamOpt<T, R>(stream: Stream<T>, onEmpty: Provider<R>, onData: Function<T, R>): R {
+function streamOpt<T, NF, R>(stream: Stream<T>, onEmpty: Provider<NF>, onData: Function<T, R>): NF | R {
     const next = prepareDBStream(stream);
     const data = next();
     return ifDefined(data, dd => {
@@ -442,7 +442,7 @@ function appendToPrev(taskId: string): UpdateStatement[] {
     return updateObjectFromCurrent(getPrevious(getCurrentTask()), 'next', taskId);
 }
 
-function searchOpt<T>(query: Statement<any>[], onEmpty: () => T, onData: (data: Dictionary<string>) => T): T {
+function searchOpt<NF, T>(query: Statement<any>[], onEmpty: () => NF, onData: (data: Dictionary<string>) => T): NF | T {
     return streamOpt(db.searchStream(query), onEmpty, onData);
 }
 
@@ -839,20 +839,20 @@ function assertSameProp(o: string, name: string, expected: string) {
 }
 
 
-function searchSubject<R>(attributes: Dictionary<string>, additionalFilter: Statement<any>[], notFound: () => R, found: (result: any) => R) {
+function searchSubject<NF, R>(attributes: Dictionary<string>, additionalFilter: Statement<any>[], notFoundResult: NF, found: (result: any) => R): NF | R {
 
     return searchOpt([
         ...mapDictionary(attributes, (predicate, object) => statement(db.v('entity'), predicate, object)),
         ...additionalFilter
-    ], notFound, found);
+    ], () => notFoundResult, found);
 
 }
-function searchOptMBEntity<R>(type: string, mbid: string, additionalFilter: Statement<any>[], notFound: () => R, found: (result: any) => R) {
+function searchOptMBEntity<R>(type: string, mbid: string, additionalFilter: Statement<any>[], found: (result: any) => R): R | undefined {
 
     return searchSubject({
         type: mb(type),
         'mb:mbid': encodeString(mbid)
-    }, additionalFilter, notFound, found);
+    }, additionalFilter, undefined, found);
     /*
     function pattern(predicate: string, object: string): Statement<any> {
         return statement(db.v('entity'), predicate, object);
@@ -1230,15 +1230,18 @@ function processCurrent(): boolean {
         ], notFound, found);
     }
     */
+    /*
+ 
+     function searchMBEntityTask<R>(type: string, mbid: string, notFound: () => R, found: (taskId: string) => R) {
+         return searchOptMBEntity(type, mbid, [], notFound, result => found(result.entity));
+     }
+ */
 
-    function searchMBEntityTask<R>(type: string, mbid: string, notFound: () => R, found: (taskId: string) => R) {
-        return searchOptMBEntity(type, mbid, [], notFound, result => found(result.entity));
-    }
-
-
+    /*
     function withPlaylistForEntity<T>(type: string, entity: Entity, missing: () => T, existing: (playlistTask: string) => T): T {
         return searchMBEntityTask(type, entity.id, fail, taskId => getObject(taskId, 'playlist', missing, existing));
     }
+    */
 
     function processSearch(type: 'area' | 'artist' | 'release' | 'recording' | 'work', field: string, literalType: string, searchField: string, taskType: string): boolean {
         const escapedKey = `"${escapeLucene(decodeLiteral(getPropertyFromCurrent(mb(`${taskType}-${field}`)), literalType))}"`;
@@ -1276,7 +1279,8 @@ function processCurrent(): boolean {
                 function process(entities: Entity[]): boolean {
                     return enqueueNextEntityFromList(entities, type, () => {
                         assertSame(count, entities.length);
-                        entities.forEach(entity => withPlaylistForEntity(type, entity, () => undefined, fail));
+                        // do not know why this is there
+                        //entities.forEach(entity => withPlaylistForEntity(type, entity, () => undefined, fail));
                         //fail();
                         log('  complete: all search results enqueued');
                         browser(url);
@@ -1646,6 +1650,12 @@ function processCurrent(): boolean {
 
                             }
 
+                            /*
+
+                            function searchMBEntityTask1<R>(type: string, mbid: string, notFound: () => R, found: (taskId: string) => R) {
+                                return searchOptMBEntity(type, mbid, [], notFound, result => found(result.entity));
+                            }
+                            */
                             return processHandlers([
                                 checkId(acoustid, () => enqueueTypedTopLevelTask(acoustid as string, 'acoustid'), 'acoustid'),
                                 checkId(trackId, id => fetchReleaseForTrack(id, {}, () => undefined, () => {
@@ -1656,7 +1666,7 @@ function processCurrent(): boolean {
                                 // otherwhise newly added track will be removed as next, and readded --> in a loop
                                 checkId(trackId, () => enqueueMBResourceTask(mbid, 'track', (id: string) => updateObject('track', id)), 'trackid'),
                                 //fail, // must also provide track property
-                                () => searchMBEntityTask<boolean | undefined>('recording', recordingId(), () => undefined, taskId => updateObject('recording', taskId)),
+                                () => searchOptMBEntity('recording', recordingId(), [], result => updateObject('recording', result.entity)),
                                 () => {
                                     const acoustidForRecording: AcoustIdTracks = acoustIdGet('track/list_by_mbid', {
                                         mbid: recordingId()
@@ -1693,7 +1703,7 @@ function processCurrent(): boolean {
 
                                     return searchOptMBEntity('track', mbid, [
                                         statement(db.v('entity'), 'preferred', db.v('preferred'))
-                                    ], () => undefined, fail);
+                                    ], fail);
                                 },
                                 //fail, // check file associated track is preferred track, if not re-tag with preferred track
                                 () => {
@@ -2023,13 +2033,7 @@ function processCurrent(): boolean {
                         return searchOptMBEntity('release', releaseId, [
                             statement(db.v('entity'), 'tracklist', vTrackList),
                             statement(vTrackList, 'preferred', db.v('preferred'))
-                        ], () => undefined, /*() => {
-                        log('  Preferred release not set -> skip');
-                        // clear preferred on task
-                        fail();
-                        moveToNext();
-                        return true;
-                    }*/ fail);
+                        ], fail);
                         //return fail();
                     },
                     //fail,
@@ -2762,7 +2766,7 @@ defineCommand<string>("include <path>", "include url into database", [], givenPa
     //log(givenPath);
     let segments: string[] = [];
     for (; ;) {
-        if (searchSubject({ type: 'volume', path: encodeString(pn) }, [], () => false, res => {
+        if (searchSubject({ type: 'volume', path: encodeString(pn) }, [], false, res => {
             let currentResult = res;
             let currentPath = pn;
             for (; ;) {
