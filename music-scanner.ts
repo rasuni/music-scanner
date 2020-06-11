@@ -611,6 +611,7 @@ interface ReleaseEvent {
 
 interface LabelInfo {
     readonly "catalog-number": string | null;
+    readonly 'label': Entity | null;
 }
 
 interface Release {
@@ -823,21 +824,9 @@ function getAudioMetaData(filePath: string): mm.IAudioMetadata {
     return r.metaData;
 }
 
-/*
-function getAcoustId(filePath: string): string {
-    const acoustId = getAudioMetaData(filePath).common.acoustid_id;
-    assertDefined(acoustId);
-    return acoustId as string;
-}
-*/
 function excludeNull<T>(data: T | null, predicate: (data: T) => boolean): boolean {
     return data !== null && predicate(data);
 }
-
-function assertSameProp(o: string, name: string, expected: string) {
-    assertSame(getProperty(o, name), expected);
-}
-
 
 function searchSubject<NF, R>(attributes: Dictionary<string>, additionalFilter: Statement<any>[], notFoundResult: NF, found: (result: any) => R): NF | R {
 
@@ -853,21 +842,24 @@ function searchOptMBEntity<R>(type: string, mbid: string, additionalFilter: Stat
         type: mb(type),
         'mb:mbid': encodeString(mbid)
     }, additionalFilter, undefined, found);
-    /*
-    function pattern(predicate: string, object: string): Statement<any> {
-        return statement(db.v('entity'), predicate, object);
-    }
-    return searchOpt([
-        pattern('type', mb(type)),
-        pattern('mb:mbid', encodeString(mbid)),
-        ...additionalFilter
-    ], notFound, found);
-    */
 }
 
 function failIfSame(value1: any, value2: any): void {
     failIf(value1 === value2);
 }
+
+function failIfZero(value: number): void {
+    failIfSame(value, 0);
+}
+
+interface LengthHolder {
+    readonly length: number;
+}
+
+function failIfEmpty(lengthHolder: LengthHolder): void {
+    failIfZero(lengthHolder.length)
+}
+
 function processCurrent(): boolean {
     const currentTask = getCurrentTask();
 
@@ -1534,44 +1526,6 @@ function processCurrent(): boolean {
     */
 
 
-
-    function makePlaylist(fso: string, format: (path: string) => string, contents: (comment: (type: string, path: string) => void, entry: (fso: string) => void) => void): void {
-        let dir = getProperty(fso, 'directory');
-        assertSameProp(dir, 'type', 'fileSystemEntry');
-        const parts = currentTask.split('/');
-        assertSame(parts.length, 2);
-        assertSame(parts[0], 'task');
-        const m3uPath = join(getPath(dir), `${parts[1]}.m3u8`);
-
-        log(format(m3uPath));
-        var m3uOut = fs.createWriteStream(m3uPath);
-
-        function writeLine(line: string): void {
-            m3uOut.write(`${line}\n`);
-        }
-
-        contents((type, path) => {
-            writeLine(`# https://musicbrainz.org/${type}/${path}`);
-        }, fso => {
-            writeLine(withVolumeAndEntryPath(fso, (name, path) => `${name}\\${path}`, (vPath, ePath) => {
-                assertSame(vPath, '/Volumes/Musik');
-                return `D:\\Musik\\${ePath}`;
-            }));
-        })
-        /*
-        writeLine(`# https://musicbrainz.org/recording/${recording.id}`);
- 
-        writeLine(withVolumeAndEntryPath(fso, (name, path) => `${name}\\${path}`, (vPath, ePath) => {
-            assertSame(vPath, '/Volumes/Musik');
-            return `D:\\Musik\\${ePath}`;
-        }));
-        */
-        m3uOut.end();
-
-        waitFor(cb => m3uOut.on('finish', cb));
-
-    }
-
     function processMBCoreEntity<T extends Entity>(type: string, handlers: ((entity: T, type: string) => undefined | boolean)[]): boolean {
         return getMBCoreEntity<T>(type, [], entity => processHandlers(handlers.map(handler => (() => handler(entity, type)))));
     }
@@ -1595,6 +1549,10 @@ function processCurrent(): boolean {
         return processEntitySearch(type, field, type);
     }
 
+
+    function notInCollection() {
+        updateObject('in-collection', 'false');
+    };
 
     const type = getPropertyFromCurrent('type');
     switch (type) {
@@ -1666,7 +1624,11 @@ function processCurrent(): boolean {
                                 // otherwhise newly added track will be removed as next, and readded --> in a loop
                                 checkId(trackId, () => enqueueMBResourceTask(mbid, 'track', (id: string) => updateObject('track', id)), 'trackid'),
                                 //fail, // must also provide track property
-                                () => searchOptMBEntity('recording', recordingId(), [], result => updateObject('recording', result.entity)),
+                                () => {
+                                    return fail();  // track shall be updated in addition to recording
+                                    // return searchOptMBEntity('recording', recordingId(), [], result => updateObject('recording', result.entity)),
+                                },
+                                //searchOptMBEntity('recording', recordingId(), [], result => updateObject('recording', result.entity)),
                                 () => {
                                     const acoustidForRecording: AcoustIdTracks = acoustIdGet('track/list_by_mbid', {
                                         mbid: recordingId()
@@ -1700,6 +1662,7 @@ function processCurrent(): boolean {
                                     });
                                 },
                                 () => {
+                                    fail();
 
                                     return searchOptMBEntity('track', mbid, [
                                         statement(db.v('entity'), 'preferred', db.v('preferred'))
@@ -1719,7 +1682,7 @@ function processCurrent(): boolean {
                             remove('deleting file', 'unlink', entryPath);
                             return true;
                         default:
-                            // *.mkv
+                            // *.m3u8
                             logError('  unknown file type!');
                             return false;
                     }
@@ -1762,7 +1725,7 @@ function processCurrent(): boolean {
             ]));
         case 'mb:release':
 
-            return getMBCoreEntity<Release>('release', ['artists', 'release-groups', 'media', 'labels'], release => {
+            return getMBCoreEntity<Release>('release', ['artists', 'release-groups', 'media', 'labels', 'recordings'], release => {
 
                 function releaseAttributeHandler(attribute: LiteralPropertyName<Release>): () => boolean | undefined {
                     return attributeHandler(release, attribute, 'release')
@@ -1774,28 +1737,22 @@ function processCurrent(): boolean {
                     enqueueMBEntity(release, 'release-group'),
                     () => {
                         for (const medium of release.media) {
-
-                            //fail();
-
                             if (enqueueMedium<boolean>(release.id, medium.position, false)) {
                                 return true;
                             }
-                            /*
-                            'mb:medium', {
-                                "mb:release-id": encodeString(release.id),
-                                "mb:position": encodeNumber(medium.position)
-                            }, () => `${release.id}/${medium.position}`, () => {
-                                fail();
-                                moveToNext();
-                                return true;
-                            }, () => false)) {
-                                return true;
-                            }
-                            */
-
                         }
                         return undefined;
                     },
+                    /*ç
+                    () => {
+                        failIfEmpty(release.media);
+                        const mapped = release.media.reduce((reduction: string[], media: Medium) => reduction.concat(media.tracks.map(t => t.recording.id)), []).join(',');
+                        //tryAddKeyedTask6
+                        fail();
+                        return undefined;
+                    },
+                    */
+                    // enqueue track list
                     releaseAttributeHandler('status'),
                     attributeHandler(release['text-representation'], 'language', 'release'),
                     attributeHandler(release['text-representation'], 'script', 'release'),
@@ -1804,6 +1761,8 @@ function processCurrent(): boolean {
                     releaseAttributeHandler('barcode'),
                     releaseAttributeHandler('asin'),
                     handleAttributes<Release, LabelInfo>(release, 'label-info', 'catalog-number', 'release', 'catno'),
+                    processEntityList<Release, LabelInfo>(release, 'label-info', 'label'),
+                    // enqueu label
                     releaseAttributeHandler('country'),
                     fail,
                     () => {
@@ -2024,10 +1983,47 @@ function processCurrent(): boolean {
                         }
 
                     },
+
+                    // search file system entry for track
+                    () => {
+                        const fso = db.v('fso');
+                        const nextFile = prepareDBStream(db.searchStream([
+                            statement(fso, 'type', 'fileSystemEntry'),
+                            statement(fso, 'track', mbid),
+                            //statement(recording, 'mb:mbid', encodeString(track.recording.id))
+                        ]));
+                        return ifDefined(nextFile(), fail, () => {
+                            // no file found, let's see if we can restruct one from another track
+                            notInCollection();
+                            const recording = db.v('recording');
+                            const nextRFile = prepareDBStream(db.searchStream([
+                                statement(fso, 'type', 'fileSystemEntry'),
+                                statement(fso, 'recording', recording),
+                                statement(recording, 'mb:mbid', encodeString(track.recording.id))
+                            ]));
+                            return ifDefined(nextRFile(), (data) => {
+                                // found at least one file with same recording
+                                log('  missing track could be constructed from one of following files:')
+                                for (; ;) {
+                                    log(`  * ${getPath((data as any).fso)}`);
+                                    data = nextRFile();
+                                    if (isUndefined(data)) {
+                                        break;
+                                    }
+                                }
+                                openTrack(track.id);
+                                return false;
+                            }, fail);
+                        });
+                    },
+
+
                     // determine preferred track list, by medium.release.tracklist.preferred
                     // get corresponding preferred track from prefered track list
                     // set preferred
+                    /*
                     () => {
+                        fail();
                         //const vRelease = db.v('release');
                         const vTrackList = db.v('tracklist');
                         return searchOptMBEntity('release', releaseId, [
@@ -2036,6 +2032,7 @@ function processCurrent(): boolean {
                         ], fail);
                         //return fail();
                     },
+                    */
                     //fail,
 
 
@@ -2050,31 +2047,34 @@ function processCurrent(): boolean {
                     //     duplicate found -> delete
                     //   end case
                     // endif
-                    () => getObject(currentTask, 'preferred', () => {
-                        const nextFile = getReferencesToCurrent('track');
-                        return ifDefined(nextFile(), fail, () => {
-                            const fso = db.v('fso');
-                            const recording = db.v('recording');
-                            const nextRFile = prepareDBStream(db.searchStream([
-                                statement(fso, 'type', 'fileSystemEntry'),
-                                statement(fso, 'recording', recording),
-                                statement(recording, 'mb:mbid', encodeString(track.recording.id))
-                            ]));
-                            let data = nextRFile();
-                            return ifDefined(data, () => {
-                                log('  missing track could be constructed from one of following files:')
-                                for (; ;) {
-                                    log(`  * ${getPath((data as any).fso)}`);
-                                    data = nextRFile();
-                                    if (isUndefined(data)) {
-                                        break;
+                    () => {
+                        fail();
+                        return getObject(currentTask, 'preferred', () => {
+                            const nextFile = getReferencesToCurrent('track');
+                            return ifDefined(nextFile(), fail, () => {
+                                const fso = db.v('fso');
+                                const recording = db.v('recording');
+                                const nextRFile = prepareDBStream(db.searchStream([
+                                    statement(fso, 'type', 'fileSystemEntry'),
+                                    statement(fso, 'recording', recording),
+                                    statement(recording, 'mb:mbid', encodeString(track.recording.id))
+                                ]));
+                                let data = nextRFile();
+                                return ifDefined(data, () => {
+                                    log('  missing track could be constructed from one of following files:')
+                                    for (; ;) {
+                                        log(`  * ${getPath((data as any).fso)}`);
+                                        data = nextRFile();
+                                        if (isUndefined(data)) {
+                                            break;
+                                        }
                                     }
-                                }
-                                openTrack(track.id);
-                                return false;
-                            }, () => undefined);
-                        });
-                    }, fail),
+                                    openTrack(track.id);
+                                    return false;
+                                }, () => undefined);
+                            });
+                        }, fail)
+                    },
 
                     /*
                     () => {
@@ -2096,6 +2096,7 @@ function processCurrent(): boolean {
                         return fail();
                     },
                     */
+                    fail,
                     COMPLETED_HANDLER
                 ]);
 
@@ -2119,23 +2120,23 @@ function processCurrent(): boolean {
                         attributeHandler(medium, 'format', 'medium'),
                         processListAttribute<Medium, Disc>(medium, "discs", disc => disc, 'discid'),
                         processListAttribute<Medium, Track>(medium, "tracks", track => track, 'track'),
-                        /*
                         () => {
-                            const tracks = medium.tracks;
-                            let index = tracks.length;
-                            let plist: string | undefined = undefined;
-                            while (index != 0) {
-                                index--;
-                                plist = withPlaylistForEntity('recording', tracks[index].recording, () => plist, playlist => {
-                                    return isUndefined(plist) ? playlist : tryAddKeyedTaskIndent('playlist', {
-                                        first: playlist,
-                                        rest: plist as string
-                                    }, () => `${playlist} -> ${plist}`, taskId => taskId, fail);
-                                });
+                            // check completeness
+                            for (const track of medium.tracks) {
+                                const tr = db.v('track)')
+                                if (searchOpt([
+                                    statement(tr, 'type', 'mb:track'),
+                                    statement(tr, 'mb:mbid', track.id),
+                                    statement(tr, 'in-collection', 'true')
+                                ], () => true, fail)) {
+                                    notInCollection();
+                                    log('  medium incomplete');
+                                    return true;
+                                }
                             }
-                            return updateObject('playlist', plist);
+                            return fail();
                         },
-                        */
+                        fail,
                         COMPLETED_HANDLER
                     ]);
                 });
@@ -2204,10 +2205,17 @@ function processCurrent(): boolean {
         case 'mb:release-barcode':
             return processDefaultSearch('release', 'barcode');
         case 'mb:discid':
-            return getTypedMBEntity<Disc>('mb:mbid', 'cdtoc', 'discid', {}, id => id, disc => processHandlers([
-                () => processNextEntityFromList(disc.releases, 'release'),
-                COMPLETED_HANDLER
-            ]));
+            return getTypedMBEntity<Disc>('mb:mbid', 'cdtoc', 'discid', {}, id => id, disc => {
+                const releases = disc.releases;
+                return processHandlers([
+                    () => processNextEntityFromList(releases, 'release'),
+                    () => {
+                        failIf(disc.releases.length != 1);
+                        return undefined;
+                    },
+                    COMPLETED_HANDLER
+                ]);
+            });
         case 'mb:tag':
             //console.log(getPropertyFromCurrent('mb:tag'));
             //const tag = decodeLiteral(getPropertyFromCurrent(mb(`tag`)), 's');
@@ -2237,7 +2245,7 @@ function processCurrent(): boolean {
                 return () => {
                     const list: EntityList = mbGetList(type, { query: `tag:${escapeLucene(key)}` });
                     const count: number = list.count;
-                    failIfSame(count, 0);
+                    failIfZero(count);
                     const entities = (list as any)[`${type}s`];
                     return enqueueNextEntityFromList(entities, type, () => {
                         assert(count === entities.length);
@@ -2285,60 +2293,8 @@ function processCurrent(): boolean {
             return true;
             */
         case 'playlist':
-            const next = getReferencesToCurrent('playlist');
-            let stmt = next();
-            const fso = getPropertyFromCurrent('first');
-            const item = stmt.subject;
-            makePlaylist(fso, p => p, (comment, entry) => {
-                comment('release', `${decodeStringLiteral(getProperty(item, 'mb:release-id'))}/disc/${decodeLiteral(getProperty(item, 'mb:position'), 'n')}`);
-                entry(getPropertyFromCurrent('first'));
-
-                const rest = getPropertyFromCurrent('rest');
-                assertSameProp(rest, 'type', 'fileSystemEntry');
-                entry(rest);
-
-            });
-
-            /*
-            let dir = getProperty(fso, 'directory');
-            assertSameProp(dir, 'type', 'fileSystemEntry');
-            const parts = currentTask.split('/');
-            assertSame(parts.length, 2);
-            assertSame(parts[0], 'task');
-            const m3uPath = join(getPath(dir), `${parts[1]}.m3u8`);
-            log(m3uPath);
-            var m3uOut = fs.createWriteStream(m3uPath);
-            const item = statement.subject;
-            assertSameProp(item, 'type', 'mb:medium');
-             
-            function writeLine(line: string): void {
-                m3uOut.write(`${line}\n`);
-            }
-             
-            writeLine(`# https://musicbrainz.org/release/${decodeStringLiteral(getProperty(item, 'mb:release-id'))}/disc/${decodeLiteral(getProperty(item, 'mb:position'), 'n')}`);
-             
-            let fse = getPropertyFromCurrent('first');
-            assertSameProp(fse, 'type', 'fileSystemEntry');
-             
-            function listEntry(fse: string): void {
-                writeLine(withVolumeAndEntryPath(fse, (name, path) => `${name}\\${path}`, (vPath, ePath) => {
-                    assertSame(vPath, '/Volumes/Musik');
-                    return `D:\\Musik\\${ePath}`;
-                }));
-            }
-            listEntry(fse);
-             
-            const rest = getPropertyFromCurrent('rest');
-            assertSameProp(rest, 'type', 'fileSystemEntry');
-            listEntry(rest);
-             
-             
-            m3uOut.end();
-             
-            waitFor(cb => m3uOut.on('finish', cb));
-            */
-            log('  written');
-            moveToNext();
+            log('playlist');
+            deleteCurrentTask("not anymore used");
             return true;
         //return fail();
         case 'mb:url':
@@ -2721,6 +2677,10 @@ defineCommand('dump', 'dump database to text format', [], () => {
             case 'mb:release-group':
                 mbResource('release-group');
                 break;
+            case 'mb:label':
+                mbResource('label');
+                break;
+
             /*
             case 'mb:mb:tag':
             console.log ('mb:mb:tag');
@@ -2743,6 +2703,9 @@ defineCommand('dump', 'dump database to text format', [], () => {
                 break;
             case 'mb:work-type':
                 search('type', 'work');
+                break;
+            case 'mb:release-country':
+                search('country', 'release');
                 break;
             default:
                 console.error(`Cannot dump type ${type}!`);
@@ -2771,7 +2734,7 @@ defineCommand<string>("include <path>", "include url into database", [], givenPa
             let currentPath = pn;
             for (; ;) {
 
-                failIfSame(segments.length, 0);
+                failIfEmpty(segments);
                 const name = segments[0];
                 currentPath = path.join(currentPath, name);
 
