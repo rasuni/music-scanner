@@ -575,6 +575,7 @@ interface Recording {
     readonly length: number;
     readonly "artist-credit": ArtistCredit[];
     readonly relations: Relation[];
+    readonly isrcs: string[];
 }
 
 interface Track {
@@ -629,6 +630,7 @@ interface Release {
     readonly "label-info": LabelInfo[];
     readonly 'release-group': Entity;
     readonly country?: string;
+    readonly relations: Relation[];
 }
 
 interface ReleaseList extends EntityList {
@@ -661,13 +663,18 @@ interface ArtistList extends EntityList {
     readonly artists: Entity[];
 }
 
+
+interface ReleaseGroupList extends EntityList {
+    readonly "release-groups": Entity[];
+}
+
 interface AcoustIdRecording {
     readonly id: string;
 }
 
 interface AcoustIdTrack {
     readonly id: string;
-    readonly recordings: AcoustIdRecording[];
+    readonly recordings: AcoustIdRecording[] | undefined;
 }
 
 interface AcoustIdResult {
@@ -704,6 +711,9 @@ interface URL extends Entity {
 }
 interface ReleaseGroup extends Entity {
     readonly title: string;
+    readonly "artist-credit": ArtistCredit[];
+    readonly "releases": Release[];
+    readonly relations: Relation[];
 }
 
 function findTrack(media: Medium, trackId: string): Track | undefined {
@@ -860,24 +870,74 @@ function failIfEmpty(lengthHolder: LengthHolder): void {
     failIfZero(lengthHolder.length)
 }
 
+function assertMissing(pattern: StatementPattern): void {
+    get(pattern, () => { }, fail);
+}
+
+function setCurrent(newCurrent: string): UpdateStatement[] {
+    return updateObjectFromCurrent('root', 'current', newCurrent);
+}
+
+function removeCurrent(): void {
+    const currentTask = getCurrentTask();
+    const next = getProperty(currentTask, 'next');
+    const nextStatement = getStream({ subject: currentTask });
+    const updateStatements: UpdateStatement[] = [];
+    for (; ;) {
+        const statement = nextStatement();
+        if (isUndefined(statement)) {
+            break;
+        }
+        assertEquals(statement.subject, currentTask);
+        updateStatements.push(del(currentTask, statement.predicate, statement.object));
+    }
+    assertMissing({ predicate: currentTask });
+    update([
+        ...appendToPrev(next),
+        ...setCurrent(next),
+        ...updateStatements
+    ]);
+    assertMissing({ subject: currentTask });
+}
+
+function getPropertyFromCurrent(name: string): string {
+    return getProperty(getCurrentTask(), name);
+}
+
+function moveToNextStatements(): UpdateStatement[] {
+    return setCurrent(getPropertyFromCurrent('next'));
+}
+
+function moveToNext(): void {
+    update(moveToNextStatements());
+}
+
+function enqueueTask<T>(key: string | number, type: string, namePredicate: string, parentPredicate: string | undefined, linkPredicate: string | undefined, enqueued: T, alreadyAdded: (id: string) => T): T {
+    return tryAdd(key, type, namePredicate, parentPredicate, '  ', linkPredicate, () => {
+        moveToNext();
+        return enqueued;
+    }, (found: any) => alreadyAdded(found.s))
+}
+
+
+function enqueueUnlinkedTask<T>(key: string | number, type: string, namePredicate: string, parentPredicate: string | undefined, alreadyAdded: (id: string) => T): boolean | T {
+    return enqueueTask<boolean | T>(key, type, namePredicate, parentPredicate, undefined, true, alreadyAdded);
+}
+
+function enqueueTopLevelTask<T>(key: string | number, type: string, namePredicate: string, alreadyAdded: (id: string) => T): boolean | T {
+    return enqueueUnlinkedTask(key, type, namePredicate, undefined, alreadyAdded);
+}
+
+function enqueueTypedTopLevelTask(key: string | number, type: string, alreadyAdded: () => void): boolean | undefined {
+    return enqueueTopLevelTask(key, type, type, () => {
+        alreadyAdded();
+        return undefined
+    });
+}
+
 function processCurrent(): boolean {
     const currentTask = getCurrentTask();
 
-    function getPropertyFromCurrent(name: string): string {
-        return getProperty(currentTask, name);
-    }
-
-    function setCurrent(newCurrent: string): UpdateStatement[] {
-        return updateObjectFromCurrent('root', 'current', newCurrent);
-    }
-
-    function moveToNextStatements(): UpdateStatement[] {
-        return setCurrent(getPropertyFromCurrent('next'));
-    }
-
-    function moveToNext(): void {
-        update(moveToNextStatements());
-    }
 
     function openTrack(mbid: string): void {
         openMB('track', mbid);
@@ -896,19 +956,6 @@ function processCurrent(): boolean {
         moveToNext();
     }
 
-
-
-    function enqueueTask<T>(key: string | number, type: string, namePredicate: string, parentPredicate: string | undefined, linkPredicate: string | undefined, enqueued: T, alreadyAdded: (id: string) => T): T {
-        return tryAdd(key, type, namePredicate, parentPredicate, '  ', linkPredicate, () => {
-            moveToNext();
-            return enqueued;
-        }, (found: any) => alreadyAdded(found.s))
-    }
-
-    function enqueueUnlinkedTask<T>(key: string | number, type: string, namePredicate: string, parentPredicate: string | undefined, alreadyAdded: (id: string) => T): boolean | T {
-        return enqueueTask<boolean | T>(key, type, namePredicate, parentPredicate, undefined, true, alreadyAdded);
-    }
-
     function enqueueNextTask<T, R>(items: T[], processTypedItem: (item: T, handler: (name: string, type: string) => boolean) => boolean, predicate: string, parentPredicate: string | undefined, foundResult: R, completed: () => R): R {
         for (const item of items) {
             //            console.log(item);
@@ -919,13 +966,6 @@ function processCurrent(): boolean {
         return completed();
     }
 
-    function enqueueTopLevelTask<T>(key: string | number, type: string, namePredicate: string, alreadyAdded: (id: string) => T): boolean | T {
-        return enqueueUnlinkedTask(key, type, namePredicate, undefined, alreadyAdded);
-    }
-
-    function enqueueTypedTopLevelTask(key: string | number, type: string): boolean | undefined {
-        return enqueueTopLevelTask(key, type, type, () => undefined);
-    }
 
     function completed(): void {
         log('  completed');
@@ -948,10 +988,6 @@ function processCurrent(): boolean {
         enqueueNextItemTask(items, type, predicate, parentPredicate, undefined, completed)
     }
 
-
-    function assertMissing(pattern: StatementPattern): void {
-        get(pattern, () => { }, fail);
-    }
 
 
     function processDirectory(path: string): boolean {
@@ -1188,9 +1224,13 @@ function processCurrent(): boolean {
         return result as T;
     }
 
+    function tryEnqueueTypedTopLevelTask(key: string | number, type: string): boolean | undefined {
+        return enqueueTypedTopLevelTask(key, type, () => { });
+    }
+
     function processAttribute<T>(record: T, attribute: LiteralPropertyName<T>, type: string): undefined | boolean {
         const value = record[attribute] as any as string | number | null | undefined;
-        return isNull(value) || isUndefined(value) ? undefined : enqueueTypedTopLevelTask(value, mb(`${type}-${attribute}`));
+        return isNull(value) || isUndefined(value) ? undefined : tryEnqueueTypedTopLevelTask(value, mb(`${type}-${attribute}`));
         /*
         if (isNull(value) ) {
             return undefined;
@@ -1235,19 +1275,8 @@ function processCurrent(): boolean {
     }
     */
 
-    function processSearch(type: 'area' | 'artist' | 'release' | 'recording' | 'work', field: string, literalType: string, searchField: string, taskType: string): boolean {
+    function processSearch(type: 'area' | 'artist' | 'release' | 'recording' | 'work' | 'release-group', field: string, literalType: string, searchField: string, taskType: string): boolean {
         const escapedKey = `"${escapeLucene(decodeLiteral(getPropertyFromCurrent(mb(`${taskType}-${field}`)), literalType))}"`;
-        /*
-        return handleSearch(`search?query=${searchField}%3A${encodeURIComponent(escapedKey)}&type=${type}&method=advanced`, escapedKey, type, searchField, entities => {
-            entities.forEach(entity => withPlaylistForEntity(type, entity, () => undefined, fail));
-            //fail();
-            log('  complete: all search results enqueued');
-            moveToNext();
-            return true;
- 
-        })
-        */
-
         const url = `https://musicbrainz.org/search?query=${searchField}%3A${encodeURIComponent(escapedKey)}&type=${type}&method=advanced`;
         log(url);
         //const escapedKey = escapeLucene(key);
@@ -1291,6 +1320,8 @@ function processCurrent(): boolean {
                         return process((list as RecordingList).recordings);
                     case 'work':
                         return process((list as WorkList).works);
+                    case 'release-group':
+                        return process((list as ReleaseGroupList)["release-groups"]);
                     default:
                         return fail();
                 }
@@ -1353,31 +1384,13 @@ function processCurrent(): boolean {
 
     }
 
-    function processStringSearch(type: 'area' | 'artist' | 'release' | 'recording' | 'work', field: string, queryField: string, taskType: string): boolean {
+    function processStringSearch(type: 'area' | 'artist' | 'release' | 'recording' | 'work' | 'release-group', field: string, queryField: string, taskType: string): boolean {
         return processSearch(type, field, 's', queryField, taskType);
     }
 
     function deleteCurrentTask(msg: string): void {
-        const next = getPropertyFromCurrent('next');
-        const nextStatement = getStream({ subject: currentTask });
-        const updateStatements: UpdateStatement[] = [];
-        for (; ;) {
-            const statement = nextStatement();
-            if (isUndefined(statement)) {
-                break;
-            }
-            assertEquals(statement.subject, currentTask);
-            updateStatements.push(del(currentTask, statement.predicate, statement.object));
-        }
-        assertMissing({ predicate: currentTask });
         log(`  ${msg} -> remove entry`);
-        update([
-            ...appendToPrev(next),
-            ...setCurrent(next),
-            ...updateStatements
-        ]);
-        //assertMissing({ object: currentTask });
-        assertMissing({ subject: currentTask });
+        removeCurrent();
     }
 
     function processList<T>(items: T[] | undefined, entity: (item: T) => Entity | null, type: (item: T) => string): () => undefined | boolean {
@@ -1416,11 +1429,11 @@ function processCurrent(): boolean {
     }
 
 
-    function updateObject(predicate: string, object: string | undefined): true | undefined {
+    function updateObject<T>(predicate: string, object: string | undefined, alreadyUpToDateRes: () => T): true | T {
 
-        function checkUpdateRequired(alreadyUpToDate: boolean, from: string, extend: (statements: UpdateStatement[]) => UpdateStatement[]): true | undefined {
+        function checkUpdateRequired(alreadyUpToDate: boolean, from: string, extend: (statements: UpdateStatement[]) => UpdateStatement[]): true | T {
             if (alreadyUpToDate) {
-                return undefined;
+                return alreadyUpToDateRes();
             }
             else {
                 log(`  ${predicate}: ${from} --> ${object}`);
@@ -1433,49 +1446,35 @@ function processCurrent(): boolean {
         }
 
 
-        return getObject<true | undefined>(currentTask, predicate, () => {
-            return checkUpdateRequired(isUndefined(object), 'undefined', stms => stms);
-            /*
-            if (isUndefined(object)) {
-                return undefined;
-            }
-            else {
-                //assertDefined(object);
-                log(`  ${predicate}: undefined --> ${object}`);
-                update([
-                    put(currentTask, predicate, object as string),
-                    ...moveToNextStatements(),
-                ]);
-                return true;
-            }
-            */
-        }, (existingObject: string) => {
-            assertDefined(object);
-            return checkUpdateRequired(object === existingObject, existingObject, statements => [
-                del(currentTask, predicate, existingObject),
-                ...statements
-            ]);
-            /*
-            if (object === existingObject) {
-                return undefined;
-            }
-            else {
+        return getObject<true | T>(currentTask, predicate, () =>
+            // not found
+            checkUpdateRequired(isUndefined(object), 'undefined', stms => stms), (existingObject: string) => {
                 assertDefined(object);
-                fail();
-                log(`  ${predicate}: ${existingObject} --> ${object}`);
-                update([
+                return checkUpdateRequired(object === existingObject, existingObject, statements => [
                     del(currentTask, predicate, existingObject),
-                    put(currentTask, predicate, object as string),
-                    ...moveToNextStatements(),
+                    ...statements
                 ]);
-                return true;
-            }
-            */
-            /*
-            assertSame(object, existingObject);
-            return undefined;
-            */
-        })
+                /*
+                if (object === existingObject) {
+                    return undefined;
+                }
+                else {
+                    assertDefined(object);
+                    fail();
+                    log(`  ${predicate}: ${existingObject} --> ${object}`);
+                    update([
+                        del(currentTask, predicate, existingObject),
+                        put(currentTask, predicate, object as string),
+                        ...moveToNextStatements(),
+                    ]);
+                    return true;
+                }
+                */
+                /*
+                assertSame(object, existingObject);
+                return undefined;
+                */
+            })
     }
 
     function openRecording(path: string): void {
@@ -1493,11 +1492,11 @@ function processCurrent(): boolean {
         return true;
     }
 
-    function processEntitySearch(type: 'area' | 'artist' | 'release' | 'recording' | 'work', field: string, queryField: string): boolean {
+    function processEntitySearch(type: 'area' | 'artist' | 'release' | 'recording' | 'work' | 'release-group', field: string, queryField: string): boolean {
         return processStringSearch(type, field, queryField, type);
     }
 
-    function processDefaultSearch(type: 'area' | 'artist' | 'release' | 'recording' | 'work', field: string): boolean {
+    function processDefaultSearch(type: 'area' | 'artist' | 'release' | 'recording' | 'work' | 'release-group', field: string): boolean {
         return processEntitySearch(type, field, field);
     }
 
@@ -1516,18 +1515,13 @@ function processCurrent(): boolean {
         });
     }
 
-    /*
-    function getFileSystemObjectPathFromSubject(statement: Statement<string>, found: (entryPath: string) => boolean): boolean {
-        return withFileSystemObjectPath(statement.subject, (entryPath, vPath) => stat(entryPath, () => found(entryPath), () => handleNotMountedVolume(vPath, () => {
-            log(`  recording file ${entryPath} has been deleted.`);
-            moveToNext();
-        })));
-    }
-    */
 
+    function processMBCoreEntityInc<T extends Entity>(type: string, incs: string[], handlers: ((entity: T, type: string) => undefined | boolean)[]): boolean {
+        return getMBCoreEntity<T>(type, incs, entity => processHandlers(handlers.map(handler => (() => handler(entity, type)))));
+    }
 
     function processMBCoreEntity<T extends Entity>(type: string, handlers: ((entity: T, type: string) => undefined | boolean)[]): boolean {
-        return getMBCoreEntity<T>(type, [], entity => processHandlers(handlers.map(handler => (() => handler(entity, type)))));
+        return processMBCoreEntityInc<T>(type, [], handlers);
     }
 
     function processAttributeHandler<T>(field: LiteralPropertyName<T>): (record: T, type: string) => undefined | boolean {
@@ -1550,9 +1544,33 @@ function processCurrent(): boolean {
     }
 
 
-    function notInCollection() {
-        updateObject('in-collection', 'false');
+    function notInCollection<T>(alreadyUpToDate: () => T): true | T {
+        return updateObject('in-collection', 'false', alreadyUpToDate);
     };
+
+    interface ArtistCreditsHolder {
+        readonly "artist-credit": ArtistCredit[];
+    };
+
+    function processArtistCredits(creditHolder: ArtistCreditsHolder): () => boolean | undefined {
+        return processEntityList<ArtistCreditsHolder, ArtistCredit>(creditHolder, 'artist-credit', 'artist');
+    }
+
+    function browse(type: string, linkedType: string, entity: Entity): boolean | undefined {
+        let filter: any = {};
+        filter[linkedType] = entity.id;
+        const list: any = mbGetList(type, filter);
+        const items = list[`${type}s`];
+        //assertEquals(releaseList["release-count"], releases.length);
+        return enqueueNextEntityFromList(items, type, () => {
+            assertEquals(list[`${type}-count`], items.length);
+            return undefined;
+        });
+    }
+
+    function enqueueNextIdTask<T, M>(obj: T, arrayProp: ConformPropertyName<T, M[]>, id: (member: M) => string, type: string): boolean | undefined {
+        return enqueueNextTask(obj[arrayProp] as any as M[], (member: M, handler: (name: string, type: string) => boolean) => handler(id(member), type), type, undefined, true, () => undefined);
+    }
 
     const type = getPropertyFromCurrent('type');
     switch (type) {
@@ -1588,10 +1606,11 @@ function processCurrent(): boolean {
                             const common = metaData.common;
                             const acoustid = common.acoustid_id;
                             const trackId = common.musicbrainz_trackid;
-                            const mbid = trackId as string;
+                            //const mbid = trackId as string;
                             let recordingIdResult: string | undefined = undefined;
                             const recordingId = () => {
                                 if (isUndefined(recordingIdResult)) {
+                                    const mbid = trackId as string;
                                     const release = getReleaseForTrack(mbid, '', release => release, fail);
                                     const medium = getMediumForTrack(release, mbid);
                                     const track = getTrack(medium, mbid);
@@ -1615,20 +1634,39 @@ function processCurrent(): boolean {
                             }
                             */
                             return processHandlers([
-                                checkId(acoustid, () => enqueueTypedTopLevelTask(acoustid as string, 'acoustid'), 'acoustid'),
-                                checkId(trackId, id => fetchReleaseForTrack(id, {}, () => undefined, () => {
-                                    logError('  Track-id is invalid. Please re-tag file!');
-                                    return false;
-                                }), 'trackid'),
-                                // fail, must check whether or not tack id is still valid, getReleaseForTrack must be successfull, if not then re-tagging is required.
-                                // otherwhise newly added track will be removed as next, and readded --> in a loop
-                                checkId(trackId, () => enqueueMBResourceTask(mbid, 'track', (id: string) => updateObject('track', id)), 'trackid'),
-                                //fail, // must also provide track property
+
+                                // verify tag for acoustid does exit
+                                checkId(acoustid,
+                                    // if tag exist, try to enque acoustid trask 
+                                    id => tryEnqueueTypedTopLevelTask(id, 'acoustid'),
+                                    'acoustid'
+                                ),
+
+                                // verify tag for track-id does exit
+                                checkId(trackId,
+                                    // tag exists
+                                    // check if track-id exists in mb database
+                                    // must check whether or not tack id is still valid, getReleaseForTrack must be successfull, if not then re-tagging is required.
+                                    // otherwhise newly added track will be removed as next, and readded --> in a loop
+                                    tid => fetchReleaseForTrack(tid, {},
+                                        // track-id is valid
+                                        // now try to enqueue track task
+                                        () => enqueueMBResourceTask(tid, 'track',
+                                            // already enqueued, set track
+                                            () => updateObject('track', tid, () => undefined)
+                                        ),
+                                        // invalid track id
+                                        () => {
+                                            logError('  Track-id is invalid. Please re-tag file!');
+                                            return false;
+                                        }
+                                    ),
+                                    'trackid'
+                                ),
+
                                 () => {
-                                    return fail();  // track shall be updated in addition to recording
-                                    // return searchOptMBEntity('recording', recordingId(), [], result => updateObject('recording', result.entity)),
+                                    return fail();  // track recordinf shall be updated in addition to track
                                 },
-                                //searchOptMBEntity('recording', recordingId(), [], result => updateObject('recording', result.entity)),
                                 () => {
                                     const acoustidForRecording: AcoustIdTracks = acoustIdGet('track/list_by_mbid', {
                                         mbid: recordingId()
@@ -1648,9 +1686,10 @@ function processCurrent(): boolean {
                                             const firstResult = results[0];
                                             assertEquals(firstResult.id, id);
                                             const recordings = firstResult.recordings;
-                                            const rlen = recordings.length;
+                                            assertDefined(recordings);
+                                            const rlen = recordings!.length;
                                             assert(rlen !== 0);
-                                            return recordings.length !== 1;
+                                            return rlen !== 1;
                                         }
                                     })
                                     return onDefined(invalidTrack, dit => {
@@ -1663,7 +1702,7 @@ function processCurrent(): boolean {
                                 },
                                 () => {
                                     fail();
-
+                                    const mbid = trackId as string;
                                     return searchOptMBEntity('track', mbid, [
                                         statement(db.v('entity'), 'preferred', db.v('preferred'))
                                     ], fail);
@@ -1703,14 +1742,6 @@ function processCurrent(): boolean {
                 artist => enqueueMBEntity(artist, 'area')(),
                 artist => processAttribute(artist['life-span'], 'begin', 'artist'),
                 artist => processRelations(artist.relations)(),
-                artist => {
-                    const recordingList: RecordingList = mbGetList('recording', {
-                        artist: artist.id
-                    });
-                    const recordings = recordingList.recordings;
-                    assertEquals(recordingList["recording-count"], recordings.length);
-                    return processNextEntityFromList(recordings, 'recording');
-                },
             ]);
         // TODO: browse recoring?artist=
         case 'mb:area':
@@ -1733,7 +1764,7 @@ function processCurrent(): boolean {
 
                 return processHandlers([
                     releaseAttributeHandler('title'),
-                    processEntityList<Release, ArtistCredit>(release, 'artist-credit', 'artist'),
+                    processArtistCredits(release),
                     enqueueMBEntity(release, 'release-group'),
                     () => {
                         for (const medium of release.media) {
@@ -1743,16 +1774,8 @@ function processCurrent(): boolean {
                         }
                         return undefined;
                     },
-                    /*ç
-                    () => {
-                        failIfEmpty(release.media);
-                        const mapped = release.media.reduce((reduction: string[], media: Medium) => reduction.concat(media.tracks.map(t => t.recording.id)), []).join(',');
-                        //tryAddKeyedTask6
-                        fail();
-                        return undefined;
-                    },
-                    */
-                    // enqueue track list
+                    processRelations(release.relations),
+
                     releaseAttributeHandler('status'),
                     attributeHandler(release['text-representation'], 'language', 'release'),
                     attributeHandler(release['text-representation'], 'script', 'release'),
@@ -1762,7 +1785,7 @@ function processCurrent(): boolean {
                     releaseAttributeHandler('asin'),
                     handleAttributes<Release, LabelInfo>(release, 'label-info', 'catalog-number', 'release', 'catno'),
                     processEntityList<Release, LabelInfo>(release, 'label-info', 'label'),
-                    // enqueu label
+                    // enqueue label
                     releaseAttributeHandler('country'),
                     fail,
                     () => {
@@ -1788,32 +1811,23 @@ function processCurrent(): boolean {
 
         case 'mb:recording':
 
-            return getMBCoreEntity<Recording>('recording', ['artist-credits'], recording =>
+            return getMBCoreEntity<Recording>('recording', ['artist-credits', 'isrcs'], recording =>
 
                 processHandlers([
                     attributeHandler(recording, 'title', 'recording'),
-                    attributeHandler(recording, 'length', 'recording'),
-                    processEntityList<Recording, ArtistCredit>(recording, 'artist-credit', 'artist'),
+                    processArtistCredits(recording),
+                    () => browse('release', 'recording', recording),
                     processRelations(recording.relations),
-                    () => {
-                        const releaseList: ReleaseList = mbGetList('release', {
-                            recording: recording.id
-                        });
-                        const releases = releaseList.releases;
-                        //assertEquals(releaseList["release-count"], releases.length);
-                        return enqueueNextEntityFromList(releaseList.releases, 'release', () => {
-                            assertEquals(releaseList["release-count"], releases.length);
-                            return undefined;
-                        });
-                    },
+                    //processEntityList<Recording, ArtistCredit>(recording, 'artist-credit', 'artist'),
                     () => {
                         const result: AcoustIdTracks = acoustIdGet(`track/list_by_mbid`, {
                             mbid: recording.id
                         });
-                        return enqueueNextTask(result.tracks, (rec, handler) => handler(rec.id, 'acoustid'), 'acoustid', undefined, true, () => undefined)
+                        return enqueueNextIdTask<AcoustIdTracks, AcoustIdRecording>(result, "tracks", rec => rec.id, 'acoustid')
                         //fail();
                     },
-
+                    attributeHandler(recording, 'length', 'recording'),
+                    () => enqueueNextIdTask<Recording, string>(recording, "isrcs", isrc => isrc, 'isrc'),
                     () => {
                         const next = getReferencesToCurrent('recording');
                         const fso1 = next();
@@ -1914,38 +1928,43 @@ function processCurrent(): boolean {
             assertEquals(results.length, 1);
             const firstResult = results[0];
             assertEquals(firstResult.id, acoustid);
-            const recordings = firstResult.recordings;
-            failIf(isEmpty(recordings));
-            return processHandlers([
-                () => {
-                    for (const item of recordings) {
-                        const recordingId = item.id;
-                        if (mbGet(`recording/${item.id}`, {}, () => false, () => true, () => false)) {
-                            log(`  please deactivate deleted recording ${recordingId}`);
+            //const recordings = firstResult.recordings;
+            return ifDefined(firstResult.recordings, recordings => {
+                failIf(isEmpty(recordings));
+                return processHandlers([
+                    () => {
+                        for (const item of recordings) {
+                            const recordingId = item.id;
+                            if (mbGet(`recording/${item.id}`, {}, () => false, () => true, () => false)) {
+                                log(`  please deactivate deleted recording ${recordingId}`);
+                                openBrowser('acoustid.org', 'track', acoustid);
+                                moveToNext();
+                                return false;
+                            }
+                        }
+                        return undefined;
+                    },
+                    () => processNextEntityFromList(recordings, 'recording'),
+                    () => {
+                        moveToNext();
+                        if (recordings.length === 1) {
+                            log("  completed: no merge potential");
+                            //openBrowser('acoustid.org', 'track', acoustid);
+                            return true;
+
+                        }
+                        else {
+                            //fail();
+                            log("  check possible merges");
                             openBrowser('acoustid.org', 'track', acoustid);
-                            moveToNext();
                             return false;
                         }
                     }
-                    return undefined;
-                },
-                () => processNextEntityFromList(recordings, 'recording'),
-                () => {
-                    moveToNext();
-                    if (recordings.length === 1) {
-                        log("  completed: no merge potential");
-                        //openBrowser('acoustid.org', 'track', acoustid);
-                        return true;
-
-                    }
-                    else {
-                        //fail();
-                        log("  check possible merges");
-                        openBrowser('acoustid.org', 'track', acoustid);
-                        return false;
-                    }
-                }
-            ]);
+                ]);
+            }, () => {
+                deleteCurrentTask("no recordings associated to acoustid");
+                return true;
+            });
         case 'mb:track': {
             const mbid = getStringProperty('mb:mbid');
             log(url('musicbrainz.org', 'track', mbid));
@@ -1958,6 +1977,8 @@ function processCurrent(): boolean {
 
                     () => enqueueMedium(releaseId, position, undefined),
                     enqueueMBEntity(track, 'recording'),
+                    processArtistCredits(track),
+                    //fail, // enqueue track-artists, track-title?
                     () => {
                         const discs = medium.discs;
                         if (discs.length === 0) {
@@ -1993,47 +2014,38 @@ function processCurrent(): boolean {
                             //statement(recording, 'mb:mbid', encodeString(track.recording.id))
                         ]));
                         return ifDefined(nextFile(), fail, () => {
-                            // no file found, let's see if we can restruct one from another track
-                            notInCollection();
-                            const recording = db.v('recording');
-                            const nextRFile = prepareDBStream(db.searchStream([
-                                statement(fso, 'type', 'fileSystemEntry'),
-                                statement(fso, 'recording', recording),
-                                statement(recording, 'mb:mbid', encodeString(track.recording.id))
-                            ]));
-                            return ifDefined(nextRFile(), (data) => {
-                                // found at least one file with same recording
-                                log('  missing track could be constructed from one of following files:')
-                                for (; ;) {
-                                    log(`  * ${getPath((data as any).fso)}`);
-                                    data = nextRFile();
-                                    if (isUndefined(data)) {
-                                        break;
+                            // no file found, mark as not in collection
+
+                            return notInCollection(() => {
+
+                                // already marked as not in collection
+                                // let's see if we can restruct one from another track
+                                const recording = db.v('recording');
+                                const nextRFile = prepareDBStream(db.searchStream([
+                                    statement(fso, 'type', 'fileSystemEntry'),
+                                    statement(fso, 'recording', recording),
+                                    statement(recording, 'mb:mbid', encodeString(track.recording.id))
+                                ]));
+                                return ifDefined(nextRFile(), (data) => {
+                                    // found at least one file with same recording
+                                    log('  missing track could be constructed from one of following files:')
+                                    for (; ;) {
+                                        log(`  * ${getPath((data as any).fso)}`);
+                                        data = nextRFile();
+                                        if (isUndefined(data)) {
+                                            break;
+                                        }
                                     }
-                                }
-                                openTrack(track.id);
-                                return false;
-                            }, fail);
+                                    openTrack(track.id);
+                                    return false;
+                                }, () => undefined // no recording found => ignore, since recording task already enqueued
+                                );
+
+                            });
                         });
                     },
 
 
-                    // determine preferred track list, by medium.release.tracklist.preferred
-                    // get corresponding preferred track from prefered track list
-                    // set preferred
-                    /*
-                    () => {
-                        fail();
-                        //const vRelease = db.v('release');
-                        const vTrackList = db.v('tracklist');
-                        return searchOptMBEntity('release', releaseId, [
-                            statement(db.v('entity'), 'tracklist', vTrackList),
-                            statement(vTrackList, 'preferred', db.v('preferred'))
-                        ], fail);
-                        //return fail();
-                    },
-                    */
-                    //fail,
 
 
 
@@ -2129,9 +2141,10 @@ function processCurrent(): boolean {
                                     statement(tr, 'mb:mbid', track.id),
                                     statement(tr, 'in-collection', 'true')
                                 ], () => true, fail)) {
-                                    notInCollection();
-                                    log('  medium incomplete');
-                                    return true;
+                                    notInCollection(() => {
+                                        log('  medium incomplete');
+                                        return true;
+                                    });
                                 }
                             }
                             return fail();
@@ -2142,21 +2155,19 @@ function processCurrent(): boolean {
                 });
             }
         case 'mb:work':
-            /*
-            return getMBCoreEntity<Work>('work', [], work => processHandlers([
-                attributeHandler(work, 'title', 'work'),
-                attributeHandler(work, 'type', 'work'),
-                processRelations(work.relations),
-                () => {
-                    openMB('work', work.id);
-                    completed();
-                    return false;
-                }
-            ]));
-            */
             return processMBCoreEntity<Work>('work', [
                 processAttributeHandler('title'),
                 processAttributeHandler('type'),
+                work => browse('recording', 'work', work)
+                /*
+                 {
+                    const recordingList: RecordingList = mbGetList('recording', {
+                        work: work.id
+                    });
+                    const recordings = recordingList.recordings;
+                    assertEquals(recordingList["recording-count"], recordings.length);
+                    return processNextEntityFromList(recordings, 'recording');
+                }*/,
                 work => processRelations(work.relations)(),
                 work => {
                     openMB('work', work.id);
@@ -2299,21 +2310,18 @@ function processCurrent(): boolean {
         //return fail();
         case 'mb:url':
             return processMBCoreEntity<URL>('url', [
-                url => enqueueTypedTopLevelTask(url.resource, 'url')
-                /*
-                attributeHandler(work, 'title', 'work'),
-                processRelations(work.relations),
-                () => {
-                    openMB('work', work.id);
-                    completed();
-                    return false;
-                }
-                */
+                url => tryEnqueueTypedTopLevelTask(url.resource, 'url')
             ]);
         //fail();
         //return false;
         case 'mb:release-group':
-            return processMBCoreEntity<ReleaseGroup>('release-group', [processAttributeHandler('title') /*releaseGroup => processAttribute(releaseGroup, 'title', 'release-group') */]);
+            return processMBCoreEntityInc<ReleaseGroup>('release-group', ["artists", "releases"], [
+                processAttributeHandler('title'),
+                releaseGroup => processArtistCredits(releaseGroup)(),
+                releaseGroup => processNextEntityFromList(releaseGroup.releases, 'release'),
+                releaseGroup => processRelations(releaseGroup.relations)(),
+
+            ]);
         //return fail();
         //return getMBCoreEntity<ReleaseGroup>('release-group', [], releaseGroup => processHandlers())
         case 'mb:mb:tag':
@@ -2324,6 +2332,13 @@ function processCurrent(): boolean {
         case 'mb:artist-disambiguation':
             return processEntitySearch('artist', 'disambiguation', 'comment');
         //return fail();
+        case 'url':
+            const urlp = getStringProperty('url');
+            log(urlp);
+            browser(urlp);
+            return false;
+        case 'mb:release-group-title':
+            return processDefaultSearch('release-group', 'title');
         default:
             console.error(type);
             fail();
@@ -2716,6 +2731,7 @@ defineCommand('dump', 'dump database to text format', [], () => {
         if (next === first) {
             break;
         }
+
         current = next;
     }
 });
@@ -2724,70 +2740,81 @@ defineCommand('dump', 'dump database to text format', [], () => {
 // To include
 // /Volumes/Musik/2/2 Unlimited/No Limit_ Complete Best of 2 Unlimited/f67a9109-95f3-417a-9c7e-7c9be1e3f303/04 Workaholic (vocal edit).flac
 
-defineCommand<string>("include <path>", "include url into database", [], givenPath => {
-    let pn = givenPath;
-    //log(givenPath);
-    let segments: string[] = [];
-    for (; ;) {
-        if (searchSubject({ type: 'volume', path: encodeString(pn) }, [], false, res => {
-            let currentResult = res;
-            let currentPath = pn;
-            for (; ;) {
+defineCommand<string>("include <path | url>", "include path or url into database", [], givenPath => {
+    if (givenPath.startsWith("https:")) {
+        log(`including url: ${givenPath}`);
+        enqueueTypedTopLevelTask(givenPath, 'url', () => log('already added'))
+    }
+    else {
+        let pn = givenPath;
 
-                failIfEmpty(segments);
-                const name = segments[0];
-                currentPath = path.join(currentPath, name);
+        //log(givenPath);
+        let segments: string[] = [];
+        for (; ;) {
+            if (searchSubject({ type: 'volume', path: encodeString(pn) }, [], false, res => {
+                let currentResult = res;
+                let currentPath = pn;
+                for (; ;) {
+
+                    failIfEmpty(segments);
+                    const name = segments[0];
+                    currentPath = path.join(currentPath, name);
 
 
-                function mapAttributeValues<T>(mapper: BiFunction<string, string, T>): T[] {
-                    return mapDictionary({
-                        type: 'fileSystemEntry',
-                        directory: currentResult.entity,
-                        name: encodeString(name),
-                    }, (key, value) => mapper(key, value));
+                    function mapAttributeValues<T>(mapper: BiFunction<string, string, T>): T[] {
+                        return mapDictionary({
+                            type: 'fileSystemEntry',
+                            directory: currentResult.entity,
+                            name: encodeString(name),
+                        }, (key, value) => mapper(key, value));
+                    }
+                    const newResult = searchOpt(mapAttributeValues((predicate, object) => statement(db.v('entity'), predicate, object)), () => undefined, res => res);
+                    if (isUndefined(newResult)) {
+                        // TODO enqueue name
+                        log('must enque: ')
+                        log(name);
+                        //fail();
+
+                        log(`adding fileSystemEntry ${currentPath}`);
+                        const taskId = `task/${uuid()}`;
+
+
+                        const currentTask = getCurrentTask();
+
+                        update([
+                            ...mapAttributeValues((key, value) => put(taskId, key, value)),
+                            link(taskId, currentTask),
+                            ...appendToPrev(taskId),
+                        ]);
+                        break;
+
+
+                    }
+                    segments = segments.slice(1);
+                    //res = newResult;
+                    currentResult = newResult;
+
                 }
-                const newResult = searchOpt(mapAttributeValues((predicate, object) => statement(db.v('entity'), predicate, object)), () => undefined, res => res);
-                if (isUndefined(newResult)) {
-                    // TODO enqueue name
-                    log('must enque: ')
-                    log(name);
-                    //fail();
+                return true;
 
-                    log(`adding fileSystemEntry ${currentPath}`);
-                    const taskId = `task/${uuid()}`;
-
-
-                    const currentTask = getCurrentTask();
-
-                    update([
-                        ...mapAttributeValues((key, value) => put(taskId, key, value)),
-                        link(taskId, currentTask),
-                        ...appendToPrev(taskId),
-                    ]);
-                    break;
-
-
-                }
-                segments = segments.slice(1);
-                //res = newResult;
-                currentResult = newResult;
-
+            })) {
+                break;
             }
-            return true;
+            //pn = path.dirname(pn);
+            segments = [path.basename(pn), ...segments];
+            pn = path.dirname(pn);
+            failIfSame(pn, '.');//fail();
 
-        })) {
-            break;
         }
-        //pn = path.dirname(pn);
-        segments = [path.basename(pn), ...segments];
-        pn = path.dirname(pn);
-        failIfSame(pn, '.');//fail();
+        //fail();
 
     }
-    //fail();
-
-
 });
+
+defineCommand('remove', 'remove current task from queue', [], () => {
+    removeCurrent();
+});
+
 
 Fiber(() => {
 
