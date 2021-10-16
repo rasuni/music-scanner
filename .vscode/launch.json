@@ -11,8 +11,9 @@
             "program": "${workspaceFolder}/music-scanner.js",
             "args": [
                 "run",
+                //"dump",
                 //"include",
-                //"/Volumes/Musik/2/2 Unlimited/The Complete History/1-04 Let the Beat Control Your Body.mp4"
+                //"/Volumes/Musik/3/3T/I Need You/03 3T - I Need You (Linslee Campbell Breakdown remix).flac"
             ],
             "outFiles": [
                 "${workspaceFolder}/**/*.js"

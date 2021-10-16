@@ -11,7 +11,7 @@ import * as rimraf from 'rimraf';
 import * as mm from 'music-metadata';
 import * as https from 'https';
 import * as readline from 'readline';
-import opn = require('opn');
+import opn = require('open');
 import * as http from 'http';
 import format = require('format-duration');
 
@@ -25,7 +25,7 @@ type Consumer<T> = Function<T, void>;
 
 function getRunner<T>(): Consumer<T> {
     const currentFiber = Fiber.current;
-    return (value?: T) => currentFiber.run(value);
+    return (value?: T) => currentFiber!.run(value);
 }
 
 const yieldValue = Fiber.yield;
@@ -55,7 +55,6 @@ function waitFor2<F, S>(asyncFunction: Consumer<BiConsumer<F, S>>): Pair<F, S> {
         second: second
     })));
 }
-
 
 function fail(): never {
     debugger;
@@ -88,50 +87,48 @@ interface Dictionary<T> {
     readonly [name: string]: T;
 }
 
-
-interface CompareValues<T> {
-    readonly actual: any,
-    readonly expected: T
-}
-
-
-function* compareObjects<T>(actual: Dictionary<any>, expected: Dictionary<T>): IterableIterator<CompareValues<T>> {
-
-    function compareValue(key: string): CompareValues<T> {
-        return {
-            actual: actual[key],
-            expected: expected[key]
-        }
-    }
-
-    const visited = new Set();
-    for (const key in actual) {
-        yield compareValue(key);
-        visited.add(key);
-    }
-    for (const key in expected) {
-        if (!visited.has(key)) {
-            yield compareValue(key)
-        }
-    }
-}
-
-
-function assertEquals(actual: any, expected: any): void {
-    if (actual !== expected) {
-        assertObject(actual);
-        assertObject(expected);
-        failIf(isNull(expected));
-        for (const compareValue of compareObjects(actual, expected)) {
-            assertEquals(compareValue.actual, compareValue.expected);
-        }
-    }
-}
-
 function isUndefined(value: any): value is undefined {
     return value === undefined;
 }
 
+
+function assertEquals(actual: any, expected: any): void {
+    const queue: {
+        readonly actual: any,
+        readonly expected: any;
+    }[] = [];
+    for (; ;) {
+        if (actual !== expected) {
+            assertObject(actual);
+            assertObject(expected);
+            failIf(isNull(expected));
+
+            function push(key: string): void {
+                queue.push({
+                    actual: actual[key],
+                    expected: expected[key]
+                });
+            }
+
+            const visited = new Set();
+            for (const key in actual) {
+                push(key);
+                visited.add(key);
+            }
+            for (const key in expected) {
+                if (!visited.has(key)) {
+                    push(key)
+                }
+            }
+        }
+        const next = queue.pop();
+        if (isUndefined(next)) {
+            break;
+        }
+        actual = next.actual;
+        expected = next.expected;
+    }
+}
 
 function assertUndefined(value: any): void {
     assert(isUndefined(value));
@@ -185,7 +182,6 @@ function decodeLiteral(literal: string, tag: string): string {
     return decodeURIComponent(segments[1]);
 }
 
-
 function decodeStringLiteral(stringLiteral: string): string {
     return decodeLiteral(stringLiteral, 's');
 }
@@ -194,18 +190,18 @@ interface Provider<T> {
     (): T
 };
 
-
 function isEmpty(array: {
     readonly length: number;
 }): boolean {
     return array.length === 0;
 }
 
+
 function makeBlockingQueue<T>(assignProducers: Visitable<T>): Provider<T> {
     const buffer: T[] = [];
     let waiting: boolean = false;
     const run = getRunner();
-    assignProducers((item: T) => {
+    assignProducers(item => {
         if (waiting) {
             assertEquals(buffer.length, 0);
             run(item);
@@ -214,7 +210,6 @@ function makeBlockingQueue<T>(assignProducers: Visitable<T>): Provider<T> {
             buffer.push(item);
         }
     });
-
     return () => {
         if (isEmpty(buffer)) {
             failIf(waiting);
@@ -227,18 +222,23 @@ function makeBlockingQueue<T>(assignProducers: Visitable<T>): Provider<T> {
             return buffer.shift();
         }
     }
-
 }
+
+
+/////////////
 
 type Registrar<T> = BiConsumer<string, Consumer<T>>;
 
 function makeBlockingStream<T>(on: Registrar<T>): Provider<T> {
-
     return makeBlockingQueue(push => {
-        on('data', push);
-        on('end', push);
-    });
 
+        function register(event: string): void {
+            on(event, push);
+        }
+
+        register('data');
+        register('end');
+    });
 }
 
 interface Stream<T> {
@@ -250,8 +250,8 @@ function prepareDBStream<T>(stream: Stream<T>): Provider<T> {
     function on(event: string, handler: Consumer<T>): void {
         stream.on(event, handler);
     }
-    on('error', fail);
 
+    on('error', fail);
     return makeBlockingStream(on);
 }
 
@@ -538,6 +538,7 @@ interface Area {
     readonly aliases: Alias[];
     readonly tags: Tag[];
     readonly relations: Relation[];
+    //readonly iso1: string;
 }
 
 interface Lifespan {
@@ -561,6 +562,7 @@ interface Artist {
     readonly relations: Relation[];
     readonly disambiguation?: string;
     readonly "sort-name"?: string;
+
 }
 
 interface ArtistCredit {
@@ -589,7 +591,7 @@ interface Track {
 
 interface Disc {
     readonly id: string;
-    readonly releases: Entity[];
+    readonly releases: Release[];
     readonly offsets: number[];
     readonly sectors: number;
 }
@@ -648,6 +650,7 @@ interface Work {
     readonly title: string;
     readonly type: string;
     readonly relations: Relation[];
+    readonly languages: string[];
 }
 
 interface WorkList extends EntityList {
@@ -700,9 +703,9 @@ function processHandlers(handlers: (() => undefined | boolean)[]): boolean {
     return false;
 }
 
-type ConformMembers<T, C> = { [K in keyof T]: T[K] extends C ? K : never };
+type ConformMembers<T, C> = { [K in keyof T]: T[K] extends C ? any : never };
 
-type ConformPropertyName<T, C> = ConformMembers<T, C>[keyof T];
+type ConformPropertyName<T, C> = keyof ConformMembers<T, C>;
 
 type LiteralPropertyName<T> = ConformPropertyName<T, string | number | null | undefined>;
 
@@ -812,7 +815,7 @@ function getPath(entryId: string): string {
 
 
 function stat<T>(path: string, success: (stats: fs.Stats) => T, missing: () => T): T {
-    const result: Pair<NodeJS.ErrnoException, fs.Stats> = waitFor2((consumer: (first: NodeJS.ErrnoException, second: fs.Stats) => void) => fs.stat(path, consumer));
+    const result: Pair<NodeJS.ErrnoException | null, fs.Stats> = waitFor2((consumer: (first: NodeJS.ErrnoException | null, second: fs.Stats) => void) => fs.stat(path, consumer));
     const err = result.first;
     if (isNull(err)) {
         return success(result.second);
@@ -826,7 +829,7 @@ function stat<T>(path: string, success: (stats: fs.Stats) => T, missing: () => T
 function getAudioMetaData(filePath: string): mm.IAudioMetadata {
     const promise: Promise<mm.IAudioMetadata> = mm.parseFile(filePath);
     const fiber = Fiber.current;
-    promise.then((value: mm.IAudioMetadata) => fiber.run({ type: "metadata", metaData: value }), (err: any) => fiber.run({ type: "error", error: err }));
+    promise.then((value: mm.IAudioMetadata) => fiber!.run({ type: "metadata", metaData: value }), (err: any) => fiber!.run({ type: "error", error: err }));
     const r = yieldValue();
 
     assertEquals(r.type, 'metadata');
@@ -991,7 +994,7 @@ function processCurrent(): boolean {
 
 
     function processDirectory(path: string): boolean {
-        const result: Pair<object, string[]> = waitFor2(consumer => fs.readdir(path, consumer));
+        const result: Pair<object | null, string[]> = waitFor2((consumer: BiConsumer<object | null, string[]>) => fs.readdir(path, consumer));
         assertEquals(result.first, null);
         const allFiles = result.second;
         const files = allFiles.filter(name => !name.startsWith('.'));
@@ -1127,10 +1130,11 @@ function processCurrent(): boolean {
         }, 'musicbrainz.org', found, notFound, moved);
     }
 
-    function mbGetList<T>(resource: string, params: Dictionary<string>): T {
+    function mbGetList<T>(resource: string, params: Dictionary<string>, offset: number): T {
         return mbGet<T, T>(resource, {
             ...params,
-            limit: "100"
+            limit: "100",
+            offset: `${offset}`
         }, data => data, fail, fail);
     }
 
@@ -1197,7 +1201,7 @@ function processCurrent(): boolean {
 
 
     function getMBCoreEntity<T extends Entity>(type: string, incs: string[], found: (data: T) => boolean): boolean {
-        return getMBEntity(type, { inc: `artist-rels+recording-rels+work-rels+url-rels${incs.map(inc => `+${inc}`).join('')}` }, 'mb:mbid', path => path, found);
+        return getMBEntity(type, { inc: `artist-rels+recording-rels+work-rels+url-rels+series-rels${incs.map(inc => `+${inc}`).join('')}` }, 'mb:mbid', path => path, found);
     }
 
     function enqueueNextEntityTask<T, R>(items: T[], entity: (item: T) => Entity | null, type: (item: T) => string, completed: () => R): boolean | R {
@@ -1275,8 +1279,9 @@ function processCurrent(): boolean {
     }
     */
 
-    function processSearch(type: 'area' | 'artist' | 'release' | 'recording' | 'work' | 'release-group', field: string, literalType: string, searchField: string, taskType: string): boolean {
-        const escapedKey = `"${escapeLucene(decodeLiteral(getPropertyFromCurrent(mb(`${taskType}-${field}`)), literalType))}"`;
+    function processSearch<LT extends EntityList, ET extends Entity>(type: string, fieldName: string, literalType: string, searchField: string, taskType: string, entities: ConformPropertyName<LT, ET[]>, match: (entity: ET, searchValue: string) => boolean): boolean {
+        const searchValue = decodeLiteral(getPropertyFromCurrent(mb(`${taskType}-${fieldName}`)), literalType);
+        const escapedKey = `"${escapeLucene(searchValue)}"`;
         const url = `https://musicbrainz.org/search?query=${searchField}%3A${encodeURIComponent(escapedKey)}&type=${type}&method=advanced`;
         log(url);
         //const escapedKey = escapeLucene(key);
@@ -1285,47 +1290,82 @@ function processCurrent(): boolean {
             return true;
         }
         else {
-            const list: EntityList = mbGetList(type, { query: `${searchField}:${escapedKey}` });
-            const count: number = list.count;
-            if (count === 0) {
-                deleteCurrentTask('no search results');
+            let empty: boolean = true;
+            let offset = 0;
+            for (; ;) {
+                const list: LT = mbGetList(type, { query: `${searchField}:${escapedKey}` }, offset);
+                const entityValues: ET[] = list[entities] as any;
+                for (const item of entityValues) {
+                    if (match(item, searchValue) /*item[field] === compareValue(searchValue)*/) {
+                        empty = false;
+                        if (enqueueUnlinkedTask(item.id, mb(type), 'mb:mbid', undefined, () => false)) {
+                            return true;
+                        }
+
+                    }
+                }
+                offset += entityValues.length;
+                if (list.count <= offset) {
+                    break;
+                }
+            }
+            //assertSame(list.count, offset);
+            // do not know why this is there
+            //entities.forEach(entity => withPlaylistForEntity(type, entity, () => undefined, fail));
+            if (empty) {
+                deleteCurrentTask('no matching search results');
                 return true;
             }
             else {
-                //fail();
-                // too much search results, date:2013\-05\-21 does also match 2013
-                // see https://community.metabrainz.org/t/searching-by-release-date/414017
-                // release:Beyond Limits matches to Beyond the Limits
-                //https://musicbrainz.org/doc/Indexed_Search_Syntax
-                function process(entities: Entity[]): boolean {
-                    return enqueueNextEntityFromList(entities, type, () => {
-                        assertSame(count, entities.length);
-                        // do not know why this is there
-                        //entities.forEach(entity => withPlaylistForEntity(type, entity, () => undefined, fail));
-                        //fail();
-                        log('  complete: all search results enqueued');
-                        browser(url);
-                        moveToNext();
-                        return false;
-                    });
-                }
-                switch (type) {
-                    case 'area':
-                        return process((list as AreaList).areas);
-                    case 'artist':
-                        return process((list as ArtistList).artists);
-                    case 'release':
-                        return process((list as ReleaseList).releases);
-                    case 'recording':
-                        return process((list as RecordingList).recordings);
-                    case 'work':
-                        return process((list as WorkList).works);
-                    case 'release-group':
-                        return process((list as ReleaseGroupList)["release-groups"]);
-                    default:
-                        return fail();
-                }
+                log('  complete: all search results enqueued');
+                browser(url);
+                moveToNext();
+                return false;
             }
+
+
+
+            //                    return enqueueNextTask();
+            /*
+            return enqueueNextEntityFromList(filtered, type, () => {
+                assertSame(list.count, entities.length);
+                // do not know why this is there
+                //entities.forEach(entity => withPlaylistForEntity(type, entity, () => undefined, fail));
+                //fail();
+                log('  complete: all search results enqueued');
+                browser(url);
+                moveToNext();
+                return false;
+            });
+            */
+            //              }
+            //}
+            /*
+ 
+            switch (type) {
+                case 'area':
+                    return process((list as AreaList).areas);
+                case 'artist':
+                    return process((list as ArtistList).artists);
+                case 'release':
+                    return process((list as ReleaseList).releases);
+                case 'recording':
+                    // No differentiation between
+                    // https://musicbrainz.org/search?query=recording%3A%22Anything%20%5C(2B3%20instrumental%20mix%5C)%22&type=recording&method=advanced
+                    // Anything (2B3 Instrumental Mix) and
+                    // Anything (2B3 instrumental mix)
+                    // need to filter recordings according title
+ 
+                    return process((list as RecordingList).recordings);
+                case 'work':
+                    return process((list as WorkList).works);
+                case 'release-group':
+                    return process((list as ReleaseGroupList)["release-groups"]);
+                default:
+                    return fail();
+            }
+            */
+            //}
         }
 
         /*
@@ -1384,8 +1424,9 @@ function processCurrent(): boolean {
 
     }
 
-    function processStringSearch(type: 'area' | 'artist' | 'release' | 'recording' | 'work' | 'release-group', field: string, queryField: string, taskType: string): boolean {
-        return processSearch(type, field, 's', queryField, taskType);
+
+    function processStringSearch<LT extends EntityList, ET extends Entity>(type: string, fieldName: string, queryField: string, taskType: string, list: ConformPropertyName<LT, ET[]>, matcher: (entity: ET, searchValue: string) => boolean): boolean {
+        return processSearch(type, fieldName, 's', queryField, taskType, list, matcher);
     }
 
     function deleteCurrentTask(msg: string): void {
@@ -1492,12 +1533,12 @@ function processCurrent(): boolean {
         return true;
     }
 
-    function processEntitySearch(type: 'area' | 'artist' | 'release' | 'recording' | 'work' | 'release-group', field: string, queryField: string): boolean {
-        return processStringSearch(type, field, queryField, type);
+    function processEntitySearch<LT extends EntityList, ET extends Entity>(type: string, fieldName: string, queryField: string, list: ConformPropertyName<LT, ET[]>, matcher: (entity: ET, searchValue: string) => boolean): boolean {
+        return processStringSearch(type, fieldName, queryField, type, list, matcher);
     }
 
-    function processDefaultSearch(type: 'area' | 'artist' | 'release' | 'recording' | 'work' | 'release-group', field: string): boolean {
-        return processEntitySearch(type, field, field);
+    function processDefaultSearch<LT extends EntityList, ET extends Entity>(type: string, fieldName: string, list: ConformPropertyName<LT, ET[]>, matcher: BiFunction<ET, string, boolean>): boolean {
+        return processEntitySearch(type, fieldName, fieldName, list, matcher);
     }
 
 
@@ -1539,8 +1580,8 @@ function processCurrent(): boolean {
     }
 
 
-    function processEntityTypeSearch(type: 'area' | 'artist' | 'release' | 'recording' | 'work', field: string): boolean {
-        return processEntitySearch(type, field, type);
+    function processEntityTypeSearch<LT extends EntityList, ET extends Entity>(type: string, fieldName: string, list: ConformPropertyName<LT, ET[]>, matcher: (entity: ET, searchValue: string) => boolean): boolean {
+        return processEntitySearch(type, fieldName, type, list, matcher);
     }
 
 
@@ -1559,7 +1600,7 @@ function processCurrent(): boolean {
     function browse(type: string, linkedType: string, entity: Entity): boolean | undefined {
         let filter: any = {};
         filter[linkedType] = entity.id;
-        const list: any = mbGetList(type, filter);
+        const list: any = mbGetList(type, filter, 0);
         const items = list[`${type}s`];
         //assertEquals(releaseList["release-count"], releases.length);
         return enqueueNextEntityFromList(items, type, () => {
@@ -1628,7 +1669,7 @@ function processCurrent(): boolean {
                             }
 
                             /*
-
+ 
                             function searchMBEntityTask1<R>(type: string, mbid: string, notFound: () => R, found: (taskId: string) => R) {
                                 return searchOptMBEntity(type, mbid, [], notFound, result => found(result.entity));
                             }
@@ -1709,7 +1750,7 @@ function processCurrent(): boolean {
                                 },
                                 //fail, // check file associated track is preferred track, if not re-tag with preferred track
                                 () => {
-                                    if (metaData.format.dataformat !== 'flac') {
+                                    if (metaData.format.container !== 'flac') {
                                         logError('  Not flac encoding! Consider to replace file with lossless flac encoding')
                                     }
                                     log('  Please check tagging in picard');
@@ -1868,7 +1909,7 @@ function processCurrent(): boolean {
                 parser.onclosetag = name => push({ type: 'closeTag', name: name });
                 parser.ontext = text => push({ type: "text", text: text });
             });
-
+ 
             let predicates = matchTagAndAttributes('metadata', {
                 xmlns: "http://musicbrainz.org/ns/mmd-2.0#"
             }, matchTag(type, matchObject({
@@ -1880,8 +1921,8 @@ function processCurrent(): boolean {
                 concat(
                     expectPlainTextTag('label-code', '3484'),
                     expectUsCountry,
-
-
+ 
+ 
                     expectArea('489ce91b-6658-3307-9877-795b68554c98', 'United States', expectIsoList1('US')),
                     expectSimpleTag('life-span', concat(
                         expectPlainTextTag('begin', '1974'),
@@ -1891,7 +1932,7 @@ function processCurrent(): boolean {
                     expectTag('release-list', {
                         count: '2857'
                     }, concat(
-
+ 
                         expectRelease('00991de5-3dc9-32c3-830b-baeeec1757af', 'The Monty Python Matching Tie and Handkerchief', expectOfficial, 'US', '489ce91b-6658-3307-9877-795b68554c98', expectCardboard, expectBarcode),
                         expectRelease('0681f65c-302a-462e-9bff-7c25cdcf4188', 'Under the Sun', undefined, 'US', '489ce91b-6658-3307-9877-795b68554c98', undefined, undefined),
                         expectRelease('1f77f98f-a010-4b13-8b11-bdc6df39adc9', "Tryin' to Get the Feeling", expectOfficial, 'US', '489ce91b-6658-3307-9877-795b68554c98', expectCardboard, expectBarcode),
@@ -1900,8 +1941,8 @@ function processCurrent(): boolean {
                     ))
                 )
             )));
-
-
+ 
+ 
             for (; ;) {
                 if (isUndefined(predicates)) {
                     enqueueMBResourceTask('489ce91b-6658-3307-9877-795b68554c98', 'area', fail);
@@ -2061,6 +2102,8 @@ function processCurrent(): boolean {
                     // endif
                     () => {
                         fail();
+                        return false;
+                        /*
                         return getObject(currentTask, 'preferred', () => {
                             const nextFile = getReferencesToCurrent('track');
                             return ifDefined(nextFile(), fail, () => {
@@ -2073,7 +2116,7 @@ function processCurrent(): boolean {
                                 ]));
                                 let data = nextRFile();
                                 return ifDefined(data, () => {
-                                    log('  missing track could be constructed from one of following files:')
+                                    log('  missing track could be constructed from one of following files:');
                                     for (; ;) {
                                         log(`  * ${getPath((data as any).fso)}`);
                                         data = nextRFile();
@@ -2086,6 +2129,7 @@ function processCurrent(): boolean {
                                 }, () => undefined);
                             });
                         }, fail)
+                        */
                     },
 
                     /*
@@ -2108,7 +2152,10 @@ function processCurrent(): boolean {
                         return fail();
                     },
                     */
-                    fail,
+                    () => {
+                        fail();
+                        return false;
+                    },
                     COMPLETED_HANDLER
                 ]);
 
@@ -2124,6 +2171,7 @@ function processCurrent(): boolean {
                 //assertType (mposition, "number");
                 return getMBEntity<Release>('release', {
                     inc: 'recordings+discids'
+
                 }, 'mb:release-id', mbid => `${mbid}/disc/${mposition}`, rel => {
                     const medium: Medium = rel.media.find(m => m.position == mposition) as Medium;
                     assertDefined(medium);
@@ -2135,19 +2183,21 @@ function processCurrent(): boolean {
                         () => {
                             // check completeness
                             for (const track of medium.tracks) {
-                                const tr = db.v('track)')
+                                //fail();
+                                const tr = db.v('track')
                                 if (searchOpt([
                                     statement(tr, 'type', 'mb:track'),
                                     statement(tr, 'mb:mbid', track.id),
                                     statement(tr, 'in-collection', 'true')
                                 ], () => true, fail)) {
-                                    notInCollection(() => {
-                                        log('  medium incomplete');
+                                    if (notInCollection(() => false)) {
                                         return true;
-                                    });
+                                    };
                                 }
                             }
-                            return fail();
+                            //updateObject('in-collection', 'true', fail)
+                            fail();
+                            return undefined;
                         },
                         fail,
                         COMPLETED_HANDLER
@@ -2158,17 +2208,16 @@ function processCurrent(): boolean {
             return processMBCoreEntity<Work>('work', [
                 processAttributeHandler('title'),
                 processAttributeHandler('type'),
-                work => browse('recording', 'work', work)
-                /*
-                 {
-                    const recordingList: RecordingList = mbGetList('recording', {
-                        work: work.id
-                    });
-                    const recordings = recordingList.recordings;
-                    assertEquals(recordingList["recording-count"], recordings.length);
-                    return processNextEntityFromList(recordings, 'recording');
-                }*/,
                 work => processRelations(work.relations)(),
+                work => browse('recording', 'work', work),
+                work => {
+                    for (const lang of work.languages) {
+                        if (tryEnqueueTypedTopLevelTask(lang, mb(`work-language`))) {
+                            return true
+                        }
+                    }
+                    return undefined;
+                },
                 work => {
                     openMB('work', work.id);
                     completed();
@@ -2176,62 +2225,78 @@ function processCurrent(): boolean {
                 }
             ]);
         case 'mb:area-type':
-            return processDefaultSearch('area', 'type');
+            return processDefaultSearch<AreaList, Area>('area', 'type', 'areas', fail);
         case 'mb:artist-type':
-            return processDefaultSearch('artist', 'type');
+            return processDefaultSearch<ArtistList, Artist>('artist', 'type', 'artists', (artist, searchValue) => artist.type === searchValue);
         case 'mb:release-status':
-            return processDefaultSearch('release', 'status');
+            return processDefaultSearch<ReleaseList, Release>('release', 'status', 'releases', fail);
         case 'mb:release-quality':
-            return processDefaultSearch('release', 'quality');
+            return processDefaultSearch<ReleaseList, Release>('release', 'quality', 'releases', fail);
         case 'mb:release-title':
-            return processDefaultSearch('release', 'title');
+            return processEntityTypeSearch<ReleaseList, Release>('release', 'title', 'releases', (release, searchValue) => release.title === searchValue);
         case 'mb:recording-title':
-            return processEntityTypeSearch('recording', 'title');
+            return processEntityTypeSearch<RecordingList, Recording>('recording', 'title', 'recordings', (recording, title) => recording.title === title);
         case 'mb:artist-name':
             //fail();
             // should search artist field and not name field
             // search string needs quote
             //return processDefaultSearch('artist', 'name');
-            return processEntityTypeSearch('artist', 'name');
+            return processEntityTypeSearch<ArtistList, Artist>('artist', 'name', 'artists', (artist, searchValue) => artist.name === searchValue);
         case 'mb:area-name':
-            return processDefaultSearch('area', 'name');
+            return processEntityTypeSearch<AreaList, Area>('area', 'name', 'areas', (area, searchValue) => area.name === searchValue);
         case 'mb:release-language':
-            return processEntitySearch('release', 'language', 'lang');
+            return processEntitySearch<ReleaseList, Release>('release', 'language', 'lang', 'releases', (release, searchValue) => release['text-representation'].language === searchValue);
         case 'mb:medium-format':
-            return processStringSearch('release', 'format', 'format', 'medium');
+            return processStringSearch<ReleaseList, Release>('release', 'format', 'format', 'medium', 'releases', (release, searchValue) => isDefined(release.media.find(media => media.format === searchValue)));
         case 'mb:work-title':
-            return processEntityTypeSearch('work', 'title');
+            return processEntityTypeSearch<WorkList, Work>('work', 'title', 'works', (work, searchValue) => work.title === searchValue);
         case 'mb:recording-length':
-            return processSearch('recording', 'length', 'n', 'dur', 'recording');
+            return processSearch<RecordingList, Recording>('recording', 'length', 'n', 'dur', 'recording', 'recordings', (recording, numberString) => recording.length === Number(numberString));
         case 'mb:release-script':
-            return processDefaultSearch('release', 'script');
+            return processDefaultSearch<ReleaseList, Release>('release', 'script', 'releases', fail);
         case 'mb:artist-begin':
-            return processDefaultSearch('artist', 'begin');
+            return processDefaultSearch<ArtistList, Artist>('artist', 'begin', 'artists', (artist, searchValue) => artist["life-span"].begin === searchValue);
         case 'mb:area-iso1':
-            return processDefaultSearch('area', 'iso1');
+            return processDefaultSearch<AreaList, Area>('area', 'iso1', 'areas', (area, searchValue) => {
+                const codes = area['iso-3166-1-codes'];
+                return isDefined(codes) && isDefined(codes.find(code => code === searchValue));
+            });
         case 'mb:release-date':
-            return processDefaultSearch('release', 'date');
+            return processDefaultSearch<ReleaseList, Release>('release', 'date', 'releases', (release, searchValue) => release.date === searchValue);
         case 'mb:area-alias':
-            return processDefaultSearch('area', 'alias');
+            return processDefaultSearch<AreaList, Area>('area', 'alias', 'areas', (area, searchValue) => isDefined(area.aliases.find(alias => alias.name == searchValue)));
         case 'mb:release-barcode':
-            return processDefaultSearch('release', 'barcode');
+            return processDefaultSearch<ReleaseList, Release>('release', 'barcode', 'releases', (release, searchValue) => release.barcode === searchValue);
         case 'mb:discid':
             return getTypedMBEntity<Disc>('mb:mbid', 'cdtoc', 'discid', {}, id => id, disc => {
                 const releases = disc.releases;
                 return processHandlers([
                     () => processNextEntityFromList(releases, 'release'),
                     () => {
-                        failIf(disc.releases.length != 1);
+                        //failIf(disc.releases.length !== 1);
+                        if (releases.length !== 1) {
+                            for (const release of releases) {
+                                for (const media of release.media) {
+                                    if (isDefined(media.discs.find(discid => discid.id === disc.id))) {
+                                        if (media.discs.length !== 1) {
+                                            log(`  disc id can be removed from ${release.id}`);
+                                            moveToNext();
+                                            return false;
+                                        }
+                                    }
+                                    else {
+                                        fail();
+                                    }
+                                }
+                            }
+                        }
                         return undefined;
+                        // check releases, whether or not have additional disc ids, would indicate wrong addition
                     },
                     COMPLETED_HANDLER
                 ]);
             });
         case 'mb:tag':
-            //console.log(getPropertyFromCurrent('mb:tag'));
-            //const tag = decodeLiteral(getPropertyFromCurrent(mb(`tag`)), 's');
-            //        failIf(isEmpty(escapedKey)); // found issue with empty barcode
-            // const searchField = isDefined(queryField) ? queryField : field;
             const key = decodeStringLiteral(getPropertyFromCurrent(mb(`tag`)));
             //log(`https://musicbrainz.org/tag/${encodeURIComponent(decodeLiteral(getPropertyFromCurrent(mb(`tag`)), 's'))}`);
             //return handleSearch(`tag/${encodeURIComponent(key)}`, escapeLucene(key), 'area', 'tag', fail);
@@ -2254,7 +2319,7 @@ function processCurrent(): boolean {
 
             function tagUsageHandler(type: string): () => boolean | undefined {
                 return () => {
-                    const list: EntityList = mbGetList(type, { query: `tag:${escapeLucene(key)}` });
+                    const list: EntityList = mbGetList(type, { query: `tag:${escapeLucene(key)}` }, 0);
                     const count: number = list.count;
                     failIfZero(count);
                     const entities = (list as any)[`${type}s`];
@@ -2295,9 +2360,9 @@ function processCurrent(): boolean {
                 */
             ])
         case 'mb:release-asin':
-            return processDefaultSearch('release', 'asin');
+            return processDefaultSearch<ReleaseList, Release>('release', 'asin', 'releases', (release, searchValue) => release.asin === searchValue);
         case 'mb:release-catno':
-            return processDefaultSearch('release', 'catno');
+            return processDefaultSearch<ReleaseList, Release>('release', 'catno', 'releases', (release, searchValue) => isDefined(release['label-info'].find(labelInfo => labelInfo['catalog-number'] === searchValue)));
         /*
         case 'mb:mb:discid':
             deleteCurrentTask('invalid: mb:mb:discid');
@@ -2310,7 +2375,12 @@ function processCurrent(): boolean {
         //return fail();
         case 'mb:url':
             return processMBCoreEntity<URL>('url', [
-                url => tryEnqueueTypedTopLevelTask(url.resource, 'url')
+                url => {
+                    openMB("url", url.id);
+                    log("  please check external data");
+                    moveToNext();
+                    return false;
+                },
             ]);
         //fail();
         //return false;
@@ -2330,15 +2400,22 @@ function processCurrent(): boolean {
             return false;
         //return fail();
         case 'mb:artist-disambiguation':
-            return processEntitySearch('artist', 'disambiguation', 'comment');
+            return processEntitySearch<ArtistList, Artist>('artist', 'disambiguation', 'comment', 'artists', (artist, searchValue) => artist.disambiguation === searchValue);
         //return fail();
         case 'url':
+            deleteCurrentTask("not anymore supported");
+            /*
             const urlp = getStringProperty('url');
             log(urlp);
             browser(urlp);
-            return false;
+            */
+            return true;
         case 'mb:release-group-title':
-            return processDefaultSearch('release-group', 'title');
+            return processEntityTypeSearch<ReleaseGroupList, ReleaseGroup>('release-group', 'title', 'release-groups', (releaseGroup, searchValue) => releaseGroup.title === searchValue);
+        case 'mb:artist-sort-name':
+            return processEntitySearch<ArtistList, Artist>('artist', 'sort-name', 'sortname', 'artists', (artist, searchValue) => artist['sort-name'] === searchValue);
+        case 'mb:work-type':
+            return processDefaultSearch<WorkList, Work>('work', 'type', 'works', (work, searchValue) => work.type === searchValue);
         default:
             console.error(type);
             fail();
@@ -2393,7 +2470,7 @@ tripleCommand("delete", "removes a triple from the database", "del");
 
 function specCommand(cmdName: string, description: string, specHandler: (content: any) => void) {
     defineCommand<string>(`${cmdName} <${cmdName}spec>`, description, [], (spec) => {
-        const res: Pair<NodeJS.ErrnoException, string> = waitFor2(callback => fs.readFile(spec, 'utf8', callback));
+        const res: Pair<NodeJS.ErrnoException | null, string> = waitFor2(callback => fs.readFile(spec, 'utf8', callback));
         assertUndefined(res.first);
         specHandler(JSON.parse(res.second));
     })
@@ -2722,6 +2799,10 @@ defineCommand('dump', 'dump database to text format', [], () => {
             case 'mb:release-country':
                 search('country', 'release');
                 break;
+            case 'isrc':
+                mbResource('isrc');
+                fail();
+                break;
             default:
                 console.error(`Cannot dump type ${type}!`);
                 fail();
@@ -2740,7 +2821,7 @@ defineCommand('dump', 'dump database to text format', [], () => {
 // To include
 // /Volumes/Musik/2/2 Unlimited/No Limit_ Complete Best of 2 Unlimited/f67a9109-95f3-417a-9c7e-7c9be1e3f303/04 Workaholic (vocal edit).flac
 
-defineCommand<string>("include <path | url>", "include path or url into database", [], givenPath => {
+defineCommand<string>("include <path-or-url>", "include path or url into database", [], givenPath => {
     if (givenPath.startsWith("https:")) {
         log(`including url: ${givenPath}`);
         enqueueTypedTopLevelTask(givenPath, 'url', () => log('already added'))
@@ -2815,6 +2896,7 @@ defineCommand('remove', 'remove current task from queue', [], () => {
     removeCurrent();
 });
 
+defineCommand('skip', 'skip current task', [], moveToNext);
 
 Fiber(() => {
 
